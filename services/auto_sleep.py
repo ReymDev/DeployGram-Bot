@@ -8,7 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.config import settings
 from models.project import Project
 from repositories.project import ProjectRepository
-from services.docker_manager import DockerManager
+
+try:
+    from services.docker_manager import DockerManager
+    _HAS_DOCKER = True
+except ImportError:
+    _HAS_DOCKER = False
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +22,7 @@ class AutoSleepService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.project_repo = ProjectRepository(session)
-        self.docker = DockerManager()
+        self.docker = DockerManager() if _HAS_DOCKER else None
 
     async def check_and_sleep(self) -> int:
         if settings.AUTO_SLEEP_MINUTES <= 0:

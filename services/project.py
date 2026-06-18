@@ -12,7 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.config import settings
 from models.project import Project, ProjectVersion, ProjectStats
 from repositories.project import ProjectRepository, ProjectVersionRepository, ProjectStatsRepository
-from services.docker_manager import DockerManager
+
+try:
+    from services.docker_manager import DockerManager
+    _HAS_DOCKER = True
+except ImportError:
+    _HAS_DOCKER = False
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +31,7 @@ class ProjectService:
         self.project_repo = ProjectRepository(session)
         self.version_repo = ProjectVersionRepository(session)
         self.stats_repo = ProjectStatsRepository(session)
-        self.docker = DockerManager()
+        self.docker = DockerManager() if _HAS_DOCKER else None
 
     async def create_project(
         self,

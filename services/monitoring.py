@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.project import ProjectStats
 from repositories.project import ProjectRepository, ProjectStatsRepository
-from services.docker_manager import DockerManager
+
+try:
+    from services.docker_manager import DockerManager
+    _HAS_DOCKER = True
+except ImportError:
+    _HAS_DOCKER = False
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +22,7 @@ class MonitoringService:
         self.session = session
         self.project_repo = ProjectRepository(session)
         self.stats_repo = ProjectStatsRepository(session)
-        self.docker = DockerManager()
+        self.docker = DockerManager() if _HAS_DOCKER else None
 
     async def collect_stats(self, project_id: int) -> ProjectStats | None:
         project = await self.project_repo.get_by_id(project_id)

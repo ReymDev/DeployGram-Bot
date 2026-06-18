@@ -6,6 +6,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, Update, Message, CallbackQuery
 
 from services.user import UserService
+from services.project import ProjectService
 
 
 class AuthMiddleware(BaseMiddleware):
@@ -20,6 +21,7 @@ class AuthMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         user_service = UserService(session)
+        project_service = ProjectService(session)
 
         telegram_user = None
         if isinstance(event, Message) and event.from_user:
@@ -35,5 +37,7 @@ class AuthMiddleware(BaseMiddleware):
             )
             data["db_user"] = user
             data["user_service"] = user_service
+
+        data["project_service"] = project_service
 
         return await handler(event, data)
