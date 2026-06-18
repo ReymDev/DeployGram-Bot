@@ -9,9 +9,9 @@ from bot.keyboards.user import (
     get_python_version_keyboard,
     get_entry_type_keyboard,
     get_server_select_keyboard,
-    get_back_keyboard,
     get_confirm_start_keyboard,
 )
+from bot.keyboards.common import get_back_keyboard
 from bot.states.project import ProjectCreateStates
 from bot.utils.emojis import Emoji
 from services.github import GitHubService
