@@ -1,0 +1,46 @@
+services:
+  bot:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.bot
+    restart: always
+    env_file:
+      - ../.env
+    depends_on:
+      - redis
+    volumes:
+      - bot_data:/app/data
+    networks:
+      - deploygram
+
+  agent:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - agent_data:/app/data
+    networks:
+      - deploygram
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - deploygram
+
+volumes:
+  bot_data:
+  agent_data:
+  redis_data:
+
+networks:
+  deploygram:
+    driver: bridge

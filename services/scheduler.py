@@ -1,0 +1,58 @@
+from __future__ import annotations
+
+import logging
+from datetime import datetime
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from bot.config import settings
+from db.engine import async_session_factory
+from services.project import ProjectService
+from services.monitoring import MonitoringService
+
+logger = logging.getLogger(__name__)
+
+
+class SchedulerService:
+    def __init__(self) -> None:
+        self._jobs: list = []
+
+    async def collect_metrics(self) -> None:
+        async with async_session_factory() as session:
+            service = ProjectService(session)
+            monitoring = MonitoringService(session)
+            await monitoring.collect_all_stats()
+
+    async def check_auto_sleep(self) -> None:
+        if settings.AUTO_SLEEP_MINUTES <= 0:
+            return
+        async with async_session_factory() as session:
+            service = ProjectService(session)
+            projects = await service.project_repo.get_running_projects()
+            for project in projects:
+                logger.info("Auto-sleep check for project %d", project.id)
+
+    async def cleanup_inactive_projects(self) -> None:
+        async with async_session_factory() as session:
+            service = ProjectService(session)
+            projects = await service.project_repo.get_all()
+            for project in projects:
+                user = await service.project_repo.get_by_id(project.id)
+                if user and user.user and user.user.tariff == "free":
+                    days_inactive = (datetime.utcnow() - project.updated_at).days
+                    if days_inactive >= settings.INACTIVE_DELETE_DAYS:
+                        logger.info("Deleting inactive project %d", project.id)
+
+    async def auto_backup(self) -> None:
+        async with async_session_factory() as session:
+            from services.backup import BackupService
+            backup_service = BackupService(session)
+            projects = await session.execute(
+                __import__("sqlalchemy").select(
+                    __import__("models.project", fromlist=["Project"]).Project
+                ).where(
+                    __import__("models.project", fromlist=["Project"]).Project.status == "running"
+                )
+            )
+            for project in projects.scalars().all():
+                logger.info("Auto-backup for project %d", project.id)

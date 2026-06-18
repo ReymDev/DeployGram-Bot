@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+data/
+*.db
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Промпты и скиллы
+основной промпт.txt
+скиллы/
+
+# VPS Agent (отдельный репозиторий)
+на vps/
