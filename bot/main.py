@@ -67,6 +67,15 @@ def setup_dispatcher() -> Dispatcher:
 
 
 async def main() -> None:
+    from db.engine import engine
+    from models.base import Base
+    import models  # noqa: F401 — ensure all models are registered
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    logger.info("Database tables ensured")
+
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = setup_dispatcher()
 
