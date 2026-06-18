@@ -4,7 +4,8 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from bot.config import settings
-from bot.keyboards.user import get_settings_keyboard, get_back_keyboard
+from bot.keyboards.user import get_settings_keyboard
+from bot.keyboards.common import get_back_keyboard
 from bot.utils.text import profile_text
 from bot.utils.emojis import Emoji
 

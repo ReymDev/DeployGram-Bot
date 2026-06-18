@@ -3,7 +3,7 @@ from __future__ import annotations
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
-from bot.keyboards.user import get_back_keyboard
+from bot.keyboards.common import get_back_keyboard
 from bot.utils.emojis import Emoji
 
 router = Router()
