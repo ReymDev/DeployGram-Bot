@@ -3,10 +3,12 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import settings
 from db.engine import async_session_factory
+from models.project import Project
 from services.project import ProjectService
 from services.monitoring import MonitoringService
 
@@ -19,7 +21,6 @@ class SchedulerService:
 
     async def collect_metrics(self) -> None:
         async with async_session_factory() as session:
-            service = ProjectService(session)
             monitoring = MonitoringService(session)
             await monitoring.collect_all_stats()
 
@@ -37,8 +38,7 @@ class SchedulerService:
             service = ProjectService(session)
             projects = await service.project_repo.get_all()
             for project in projects:
-                user = await service.project_repo.get_by_id(project.id)
-                if user and user.user and user.user.tariff == "free":
+                if project.user and project.user.tariff == "free":
                     days_inactive = (datetime.utcnow() - project.updated_at).days
                     if days_inactive >= settings.INACTIVE_DELETE_DAYS:
                         logger.info("Deleting inactive project %d", project.id)
@@ -47,12 +47,8 @@ class SchedulerService:
         async with async_session_factory() as session:
             from services.backup import BackupService
             backup_service = BackupService(session)
-            projects = await session.execute(
-                __import__("sqlalchemy").select(
-                    __import__("models.project", fromlist=["Project"]).Project
-                ).where(
-                    __import__("models.project", fromlist=["Project"]).Project.status == "running"
-                )
+            result = await session.execute(
+                select(Project).where(Project.status == "running")
             )
-            for project in projects.scalars().all():
+            for project in result.scalars().all():
                 logger.info("Auto-backup for project %d", project.id)

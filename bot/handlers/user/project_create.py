@@ -22,9 +22,6 @@ router = Router()
 @router.callback_query(F.data == "create_project")
 async def create_project_start(callback: CallbackQuery, user_service, db_user, state: FSMContext):
     max_projects = await user_service.get_max_projects(db_user.tariff)
-    from services.project import ProjectService
-    project_service = None
-    session = None
 
     await callback.message.edit_text(
         f"{Emoji.FILE} <b>Создание проекта</b>\n\n"

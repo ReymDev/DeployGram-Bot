@@ -21,13 +21,8 @@ async def promo_menu(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.message(F.text, state=None)
+@router.message(F.text, state="promo_waiting_code")
 async def promo_code_received(message: Message, state: FSMContext):
-    from aiogram.fsm.state import State, StatesGroup
-    current_state = await state.get_state()
-    if current_state != "promo_waiting_code":
-        return
-
     code = message.text.strip()
     from db.engine import async_session_factory
     from services.promo import PromoService
@@ -38,9 +33,7 @@ async def promo_code_received(message: Message, state: FSMContext):
 
     await state.clear()
     if success:
-        from bot.config import settings
         if promo and promo.reward_type == "tariff":
-            from db.engine import async_session_factory
             from services.user import UserService
             async with async_session_factory() as session:
                 user_svc = UserService(session)

@@ -14,11 +14,13 @@ router = Router()
 @router.callback_query(F.data == "profile")
 async def profile(callback: CallbackQuery, db_user, user_service, session):
     from services.referral import ReferralService
+    from services.project import ProjectService
     ref_svc = ReferralService(session)
     referral_link = await ref_svc.get_referral_link(db_user.telegram_id)
     max_projects = await user_service.get_max_projects(db_user.tariff)
-    projects = await user_service.get_user_by_id(db_user.id)
-    projects_count = len(projects.projects) if projects else 0
+    project_svc = ProjectService(session)
+    projects = await project_svc.get_user_projects(db_user.id)
+    projects_count = len(projects)
 
     text = profile_text(
         username=db_user.username or str(db_user.telegram_id),

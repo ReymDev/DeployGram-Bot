@@ -20,7 +20,7 @@ async def secrets_menu(callback: CallbackQuery, project_service):
         await callback.answer("Проект не найден", show_alert=True)
         return
 
-    from services.project import ProjectVersionRepository
+    from repositories.project import ProjectVersionRepository
     from db.engine import async_session_factory
 
     async with async_session_factory() as session:
@@ -55,14 +55,8 @@ async def secret_add_start(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.message(lambda m: m.text and not m.text.startswith("/"))
+@router.message(F.text, state="secret_waiting_key")
 async def secret_key_received(message: Message, state: FSMContext):
-    from aiogram.fsm.state import State, StatesGroup
-
-    current_state = await state.get_state()
-    if current_state != "secret_waiting_key":
-        return
-
     key = message.text.strip()
     data = await state.get_data()
     project_id = data.get("secret_project_id")
@@ -75,12 +69,8 @@ async def secret_key_received(message: Message, state: FSMContext):
     await state.set_state("secret_waiting_value")
 
 
-@router.message(lambda m: m.text and not m.text.startswith("/"))
+@router.message(F.text, state="secret_waiting_value")
 async def secret_value_received(message: Message, state: FSMContext):
-    current_state = await state.get_state()
-    if current_state != "secret_waiting_value":
-        return
-
     value = message.text.strip()
     data = await state.get_data()
     project_id = data.get("secret_project_id")

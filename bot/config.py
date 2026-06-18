@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from typing import List
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,6 +20,13 @@ class Settings(BaseSettings):
 
     BOT_TOKEN: str = ""
     ADMIN_IDS: List[int] = []
+
+    @field_validator("ADMIN_IDS", mode="before")
+    @classmethod
+    def parse_admin_ids(cls, v):
+        if isinstance(v, str):
+            return [int(x.strip()) for x in v.split(",") if x.strip()]
+        return v
 
     DATABASE_URL: str = "sqlite+aiosqlite:///data/deploygram.db"
     REDIS_URL: str = "redis://localhost:6379/0"

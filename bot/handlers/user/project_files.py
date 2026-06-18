@@ -27,11 +27,16 @@ async def files_menu(callback: CallbackQuery, project_service):
     await callback.answer()
 
 
+def _parse_file_callback(data: str, prefix: str) -> tuple[int, str]:
+    parts = data.split("_")
+    project_id = int(parts[2])
+    file_path = "_".join(parts[3:]) if len(parts) > 3 else "main.py"
+    return project_id, file_path
+
+
 @router.callback_query(F.data.startswith("file_view_"))
 async def file_view(callback: CallbackQuery, project_service):
-    parts = callback.data.split("_", 2)
-    project_id = int(parts[2])
-    file_path = parts[3] if len(parts) > 3 else "main.py"
+    project_id, file_path = _parse_file_callback(callback.data, "file_view")
 
     from bot.keyboards.user import get_file_action_keyboard
     await callback.message.edit_text(
@@ -43,9 +48,7 @@ async def file_view(callback: CallbackQuery, project_service):
 
 @router.callback_query(F.data.startswith("file_nav_"))
 async def file_nav(callback: CallbackQuery, project_service):
-    parts = callback.data.split("_", 2)
-    project_id = int(parts[2])
-    path = parts[3] if len(parts) > 3 else "/"
+    project_id, path = _parse_file_callback(callback.data, "file_nav")
 
     from bot.keyboards.user import get_file_manager_keyboard
     files = ["main.py", "requirements.txt", "src/"]
@@ -59,9 +62,7 @@ async def file_nav(callback: CallbackQuery, project_service):
 
 @router.callback_query(F.data.startswith("file_delete_"))
 async def file_delete(callback: CallbackQuery, project_service):
-    parts = callback.data.split("_", 2)
-    project_id = int(parts[2])
-    file_path = parts[3] if len(parts) > 3 else ""
+    project_id, file_path = _parse_file_callback(callback.data, "file_delete")
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton
