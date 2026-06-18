@@ -29,8 +29,12 @@ async def editor_menu(callback: CallbackQuery, project_service, state: FSMContex
     await callback.answer()
 
 
-@router.message(F.document, state="editor_waiting_file")
+@router.message(F.document)
 async def editor_file_uploaded(message: Message, state: FSMContext, project_service):
+    current_state = await state.get_state()
+    if current_state != "editor_waiting_file":
+        return
+
     if not message.document or not message.document.file_name:
         return
 
@@ -59,8 +63,12 @@ async def editor_file_uploaded(message: Message, state: FSMContext, project_serv
     await state.set_state("editor_sending")
 
 
-@router.message(F.text, state="editor_waiting_file")
+@router.message(F.text)
 async def editor_text_input(message: Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state != "editor_waiting_file":
+        return
+
     file_path = message.text.strip()
     await state.update_data(editor_file_name=file_path)
     await message.answer(
@@ -70,8 +78,12 @@ async def editor_text_input(message: Message, state: FSMContext):
     await state.set_state("editor_sending")
 
 
-@router.message(F.text, state="editor_sending")
+@router.message(F.text)
 async def editor_save(message: Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state != "editor_sending":
+        return
+
     data = await state.get_data()
     file_name = data.get("editor_file_name", "file.txt")
     project_id = data.get("editor_project_id")

@@ -55,8 +55,12 @@ async def secret_add_start(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.message(F.text, state="secret_waiting_key")
+@router.message(F.text)
 async def secret_key_received(message: Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state != "secret_waiting_key":
+        return
+
     key = message.text.strip()
     data = await state.get_data()
     project_id = data.get("secret_project_id")
@@ -69,8 +73,12 @@ async def secret_key_received(message: Message, state: FSMContext):
     await state.set_state("secret_waiting_value")
 
 
-@router.message(F.text, state="secret_waiting_value")
+@router.message(F.text)
 async def secret_value_received(message: Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state != "secret_waiting_value":
+        return
+
     value = message.text.strip()
     data = await state.get_data()
     project_id = data.get("secret_project_id")

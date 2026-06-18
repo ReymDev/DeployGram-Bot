@@ -21,8 +21,12 @@ async def promo_menu(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.message(F.text, state="promo_waiting_code")
+@router.message(F.text)
 async def promo_code_received(message: Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state != "promo_waiting_code":
+        return
+
     code = message.text.strip()
     from db.engine import async_session_factory
     from services.promo import PromoService
