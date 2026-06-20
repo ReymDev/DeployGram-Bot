@@ -34,4 +34,4 @@ class RateLimitMiddleware(BaseMiddleware):
                 return None
             self.last_call[user_id] = now
 
-        return await handler(event, **data)
+        return await handler(event, data)
