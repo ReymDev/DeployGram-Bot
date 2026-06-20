@@ -138,16 +138,24 @@ async def project_delete_confirm(callback: CallbackQuery, project_service, db_us
     project_id = int(callback.data.split("_")[-1])
     project = await _check_owner(callback, project_service, db_user, project_id)
     if project is None:
+        await callback.answer("Проект не найден", show_alert=True)
         return
 
-    success = await project_service.delete_project(project_id)
+    try:
+        success = await project_service.delete_project(project_id)
+    except Exception as e:
+        await callback.answer(f"Ошибка: {e}", show_alert=True)
+        return
 
     if success:
         projects = await project_service.get_user_projects(db_user.id)
-        await callback.message.edit_text(
-            f"{Emoji.CHECK} Проект удалён.",
-            reply_markup=get_project_list_keyboard(projects),
-        )
+        try:
+            await callback.message.edit_text(
+                f"{Emoji.CHECK} Проект удалён.",
+                reply_markup=get_project_list_keyboard(projects),
+            )
+        except Exception:
+            pass
     else:
         await callback.answer("Ошибка удаления", show_alert=True)
     await callback.answer()
