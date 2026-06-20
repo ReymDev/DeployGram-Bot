@@ -15,6 +15,7 @@ class AuthMiddleware(BaseMiddleware):
         handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
         data: dict[str, Any],
+        **kwargs,
     ) -> Any:
         session = data.get("session")
         if session is None:

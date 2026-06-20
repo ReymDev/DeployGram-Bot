@@ -106,5 +106,5 @@ async def main() -> None:
     await dp.start_polling(bot)
 
 
-async def error_handler(event: ErrorEvent, exception: Exception):
-    logger.error("Unhandled exception in update %s: %s", event.update.update_id, exception, exc_info=True)
+async def error_handler(event: ErrorEvent):
+    logger.error("Unhandled exception in update %s: %s", event.update.update_id, event.exception, exc_info=True)

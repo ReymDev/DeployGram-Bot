@@ -17,6 +17,7 @@ class RateLimitMiddleware(BaseMiddleware):
         handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
         data: dict[str, Any],
+        **kwargs,
     ) -> Any:
         user_id = 0
         if isinstance(event, Message) and event.from_user:
