@@ -121,12 +121,15 @@ async def project_delete(callback: CallbackQuery, project_service, db_user):
         ),
     )
 
-    await callback.message.edit_text(
-        f"{Emoji.TRASH} <b>Удаление проекта</b>\n\n"
-        f"Вы уверены что хотите удалить <b>{project.name}</b>?\n"
-        f"Это действие необратимо.",
-        reply_markup=builder.as_markup(),
-    )
+    try:
+        await callback.message.edit_text(
+            f"{Emoji.TRASH} <b>Удаление проекта</b>\n\n"
+            f"Вы уверены что хотите удалить <b>{project.name}</b>?\n"
+            f"Это действие необратимо.",
+            reply_markup=builder.as_markup(),
+        )
+    except Exception:
+        pass
     await callback.answer()
 
 

@@ -51,7 +51,10 @@ async def project_monitor(callback: CallbackQuery, project_service, db_user):
         InlineKeyboardButton(text="◁ Назад", callback_data=f"project_view_{project_id}"),
     )
 
-    await callback.message.edit_text(text, reply_markup=builder.as_markup())
+    try:
+        await callback.message.edit_text(text, reply_markup=builder.as_markup())
+    except Exception:
+        pass
     await callback.answer()
 
 
@@ -106,5 +109,8 @@ async def project_graphs(callback: CallbackQuery, project_service, db_user, sess
         InlineKeyboardButton(text="◁ Назад", callback_data=f"project_monitor_{project_id}"),
     )
 
-    await callback.message.edit_text(text, reply_markup=builder.as_markup())
+    try:
+        await callback.message.edit_text(text, reply_markup=builder.as_markup())
+    except Exception:
+        pass
     await callback.answer()
