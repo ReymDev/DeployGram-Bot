@@ -101,7 +101,8 @@ async def project_restart(callback: CallbackQuery, project_service, db_user):
 
 @router.callback_query(F.data.startswith("project_delete_"))
 async def project_delete(callback: CallbackQuery, project_service, db_user):
-    project_id = int(callback.data.split("_")[-1])
+    parts = callback.data.split("_")
+    project_id = int(parts[2])
     project = await _check_owner(callback, project_service, db_user, project_id)
     if project is None:
         return
@@ -112,7 +113,7 @@ async def project_delete(callback: CallbackQuery, project_service, db_user):
     builder.row(
         InlineKeyboardButton(
             text="✅ Да, удалить",
-            callback_data=f"project_delete_confirm_{project_id}",
+            callback_data=f"project_del_confirm_{project_id}",
             style="danger",
         ),
         InlineKeyboardButton(
@@ -133,7 +134,7 @@ async def project_delete(callback: CallbackQuery, project_service, db_user):
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("project_delete_confirm_"))
+@router.callback_query(F.data.startswith("project_del_confirm_"))
 async def project_delete_confirm(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
     project = await _check_owner(callback, project_service, db_user, project_id)
