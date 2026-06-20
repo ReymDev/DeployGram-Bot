@@ -17,6 +17,7 @@ from bot.keyboards.admin import (
 from bot.keyboards.common import get_back_keyboard
 from bot.utils.emojis import Emoji
 from bot.states.project import BroadcastStates, AdminUserStates, AdminServerStates, AdminPromoStates
+from services.user import UserService
 
 router = Router()
 
