@@ -261,8 +261,113 @@ async def admin_servers(callback: CallbackQuery, session):
 
 
 @router.callback_query(F.data.startswith("admin_server_view_"))
-async def admin_server_view(callback: CallbackQuery):
-    await callback.answer("Информация о сервере в разработке", show_alert=True)
+async def admin_server_view(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
+
+    server_id = int(callback.data.split("_")[-1])
+    from repositories.server import ServerRepository
+    server_repo = ServerRepository(session)
+    server = await server_repo.get_by_id(server_id)
+
+    if server is None:
+        await callback.answer("Сервер не найден", show_alert=True)
+        return
+
+    text = (
+        f"{Emoji.HOME} <b>{server.name}</b>\n\n"
+        f"🌍 Страна: {server.country}\n"
+        f"📡 IP: {server.ip}:{server.port}\n"
+        f"🔑 API Key: {'Есть' if server.api_key else 'Нет'}\n"
+        f"💻 Слоты: {server.free_slots}/{server.total_slots}\n"
+        f"⭐ Рейтинг: {server.rating:.1f}\n"
+        f"📡 Пинг: {server.ping}ms\n"
+        f"📊 CPU: {server.load_cpu:.1f}%\n"
+        f"🧠 RAM: {server.load_ram:.1f}%\n"
+        f"Статус: {'🟢 Онлайн' if server.status == 'online' else '🔴 Оффлайн'}"
+    )
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from aiogram.types import InlineKeyboardButton
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="🗑 Удалить сервер",
+            callback_data=f"admin_server_delete_{server_id}",
+            style="danger",
+            icon_custom_emoji_id=EmojiID.TRASH,
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(text="◁ Назад", callback_data="admin_locations"),
+    )
+
+    await callback.message.edit_text(text, reply_markup=builder.as_markup())
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("admin_server_delete_"))
+async def admin_server_delete(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
+
+    server_id = int(callback.data.split("_")[-1])
+    from repositories.server import ServerRepository
+    server_repo = ServerRepository(session)
+    server = await server_repo.get_by_id(server_id)
+
+    if server is None:
+        await callback.answer("Сервер не найден", show_alert=True)
+        return
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from aiogram.types import InlineKeyboardButton
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="✅ Да, удалить",
+            callback_data=f"admin_server_delete_confirm_{server_id}",
+            style="danger",
+        ),
+        InlineKeyboardButton(
+            text="❌ Нет",
+            callback_data=f"admin_server_view_{server_id}",
+        ),
+    )
+
+    try:
+        await callback.message.edit_text(
+            f"{Emoji.TRASH} Удалить сервер <b>{server.name}</b>?",
+            reply_markup=builder.as_markup(),
+        )
+    except Exception:
+        pass
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("admin_server_delete_confirm_"))
+async def admin_server_delete_confirm(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
+
+    server_id = int(callback.data.split("_")[-1])
+    from repositories.server import ServerRepository
+    server_repo = ServerRepository(session)
+    await server_repo.delete(server_id)
+
+    await callback.answer("Сервер удалён", show_alert=True)
+
+    servers = await server_repo.get_all()
+    try:
+        await callback.message.edit_text(
+            f"{Emoji.HOME} <b>Серверы</b> ({len(servers)})",
+            reply_markup=get_admin_servers_keyboard(servers),
+        )
+    except Exception:
+        pass
 
 
 # ─── STATS ───
