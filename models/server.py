@@ -17,7 +17,7 @@ class Server(Base):
     country: Mapped[str] = mapped_column(String(100), nullable=False)
     ip: Mapped[str] = mapped_column(String(45), nullable=False)
     port: Mapped[int] = mapped_column(Integer, default=8080, nullable=False)
-    api_key: Mapped[str] = mapped_column(String(256), nullable=False)
+    api_key: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
     total_slots: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
     free_slots: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
     free_slots_premium: Mapped[int] = mapped_column(Integer, default=5, nullable=False)

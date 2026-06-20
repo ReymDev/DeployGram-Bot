@@ -450,6 +450,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         name=data["server_name"],
         country=data["server_country"],
         ip=data["server_ip"],
+        api_key="",
         total_slots=slots,
         free_slots=slots,
         status="online",
