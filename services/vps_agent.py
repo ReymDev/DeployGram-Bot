@@ -87,3 +87,50 @@ class VPSClient:
                 headers=self._headers(),
             ) as resp:
                 return await resp.json()
+
+    async def upload_project(self, project_id: int, files_zip: bytes) -> dict:
+        async with aiohttp.ClientSession() as session:
+            data = aiohttp.FormData()
+            data.add_field("file", files_zip, filename="project.zip", content_type="application/zip")
+            async with session.post(
+                f"{self.base_url}/project/{project_id}/upload",
+                data=data,
+                headers=self._headers(),
+            ) as resp:
+                return await resp.json()
+
+    async def list_files(self, project_id: int, path: str = "/") -> dict:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{self.base_url}/project/{project_id}/files",
+                params={"path": path},
+                headers=self._headers(),
+            ) as resp:
+                return await resp.json()
+
+    async def read_file(self, project_id: int, file_path: str) -> dict:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{self.base_url}/project/{project_id}/file",
+                params={"path": file_path},
+                headers=self._headers(),
+            ) as resp:
+                return await resp.json()
+
+    async def write_file(self, project_id: int, file_path: str, content: str) -> dict:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.base_url}/project/{project_id}/file",
+                json={"path": file_path, "content": content},
+                headers=self._headers(),
+            ) as resp:
+                return await resp.json()
+
+    async def delete_file(self, project_id: int, file_path: str) -> dict:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.base_url}/project/{project_id}/file/delete",
+                json={"path": file_path},
+                headers=self._headers(),
+            ) as resp:
+                return await resp.json()

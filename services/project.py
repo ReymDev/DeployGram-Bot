@@ -95,14 +95,12 @@ class ProjectService:
         if project is None:
             return False, "Проект не найден"
 
-        if not self.docker:
-            return False, "Docker недоступен"
-
         if project.docker_container_id:
-            status = await self.docker.get_container_status(project.docker_container_id)
-            if status.get("running"):
-                return True, "Контейнер уже запущен"
-            await self.docker.remove_container(project.docker_container_id)
+            if self.docker:
+                status = await self.docker.get_container_status(project.docker_container_id)
+                if status.get("running"):
+                    return True, "Контейнер уже запущен"
+                await self.docker.remove_container(project.docker_container_id)
 
         user_repo = UserRepository(self.session)
         user = await user_repo.get_by_id(project.user_id)
@@ -116,25 +114,65 @@ class ProjectService:
             except (json.JSONDecodeError, TypeError):
                 pass
 
-        try:
-            project_dir = str(self.get_project_dir(project_id))
-            container_id = await self.docker.create_container(
-                project_id=project_id,
-                project_name=project.name,
-                python_version=project.python_version,
-                entry_point=project.entry_point,
-                entry_type=project.entry_type,
-                tariff=tariff,
-                env_vars=env_vars,
-                project_dir=project_dir,
+        if project.server_id:
+            from repositories.server import ServerRepository
+            from services.vps_agent import VPSClient
+            server_repo = ServerRepository(self.session)
+            server = await server_repo.get_by_id(project.server_id)
+            if server is None:
+                return False, "Сервер не найден"
+
+            client = VPSClient(
+                base_url=f"http://{server.ip}:{server.port}",
+                api_key=server.api_key or "",
             )
-            await self.docker.start_container(container_id)
+
+            project_dir = str(self.get_project_dir(project_id))
+            import os
+            zip_path = os.path.join(project_dir, "project.zip")
+            if os.path.exists(zip_path):
+                with open(zip_path, "rb") as f:
+                    await client.upload_project(project_id, f.read())
+
+            result = await client.create_container({
+                "project_id": project_id,
+                "project_name": project.name,
+                "python_version": project.python_version,
+                "entry_point": project.entry_point,
+                "entry_type": project.entry_type,
+                "tariff": tariff,
+                "env_vars": env_vars,
+            })
+            if "error" in result:
+                return False, result["error"]
+
+            container_id = result.get("container_id", "")
+            await client.start_container(container_id)
             await self.project_repo.update(project_id, docker_container_id=container_id, status="running")
             return True, "Проект запущен"
-        except Exception as e:
-            logger.error("Failed to start project %d: %s", project_id, e)
-            await self.project_repo.update(project_id, status="error")
-            return False, f"Ошибка запуска: {e}"
+        else:
+            if not self.docker:
+                return False, "Docker недоступен"
+
+            try:
+                project_dir = str(self.get_project_dir(project_id))
+                container_id = await self.docker.create_container(
+                    project_id=project_id,
+                    project_name=project.name,
+                    python_version=project.python_version,
+                    entry_point=project.entry_point,
+                    entry_type=project.entry_type,
+                    tariff=tariff,
+                    env_vars=env_vars,
+                    project_dir=project_dir,
+                )
+                await self.docker.start_container(container_id)
+                await self.project_repo.update(project_id, docker_container_id=container_id, status="running")
+                return True, "Проект запущен"
+            except Exception as e:
+                logger.error("Failed to start project %d: %s", project_id, e)
+                await self.project_repo.update(project_id, status="error")
+                return False, f"Ошибка запуска: {e}"
 
     async def stop_project(self, project_id: int) -> tuple[bool, str]:
         project = await self.project_repo.get_by_id(project_id)
