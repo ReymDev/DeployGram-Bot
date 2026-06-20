@@ -256,15 +256,28 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
         )
         return
 
+    files_zip = None
+    source_type = data.get("source_type", "zip")
+    if source_type == "zip":
+        zip_file_id = data.get("zip_file_id")
+        if zip_file_id:
+            try:
+                file = await callback.bot.get_file(zip_file_id)
+                files_zip = await callback.bot.download_file(file.file_path)
+            except Exception as e:
+                await callback.answer(f"Ошибка загрузки файла: {e}", show_alert=True)
+                return
+
     project = await project_service.create_project(
         user_id=db_user.id,
         name=data.get("name", "my_project"),
-        source_type=data.get("source_type", "zip"),
+        source_type=source_type,
         source_url=data.get("source_url"),
         python_version=data.get("python_version", "3.12"),
         entry_point=data.get("entry_point", "main.py"),
         entry_type=data.get("entry_type", "script"),
         server_id=data.get("server_id"),
+        files_zip=files_zip,
     )
 
     await state.clear()
@@ -272,7 +285,7 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
     from bot.keyboards.user import get_project_manage_keyboard
     await callback.message.edit_text(
         f"{Emoji.PARTY} Проект <b>{project.name}</b> создан!\n\n"
-        f"Загрузите файлы и запустите проект.",
+        f"Запустите проект из меню управления.",
         reply_markup=get_project_manage_keyboard(project.id, project.status),
     )
     await callback.answer()

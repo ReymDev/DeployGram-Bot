@@ -47,6 +47,7 @@ class DockerManager:
         tariff: str,
         env_vars: dict[str, str] | None = None,
         work_dir: str = "/app",
+        project_dir: str | None = None,
     ) -> str:
         def _create() -> str:
             image = PYTHON_IMAGES.get(python_version, PYTHON_IMAGES["3.12"])
@@ -59,13 +60,17 @@ class DockerManager:
             else:
                 cmd = f"python {entry_point}"
 
+            volumes = {}
+            if project_dir:
+                volumes[project_dir] = {"bind": "/app", "mode": "rw"}
+
             container = self.client.containers.run(
                 image=image,
                 command=["/bin/sh", "-c", f"pip install -r /app/requirements.txt 2>/dev/null; {cmd}"],
                 detach=True,
                 name=f"deploygram_{project_id}_{project_name}",
                 working_dir=work_dir,
-                volumes={},
+                volumes=volumes,
                 environment=env_list,
                 cpu_quota=limits["cpu_quota"],
                 mem_limit=limits["mem_limit"],

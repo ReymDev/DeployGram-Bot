@@ -34,6 +34,21 @@ class ProjectService:
         self.stats_repo = ProjectStatsRepository(session)
         self.docker = DockerManager() if _HAS_DOCKER else None
 
+    def get_project_dir(self, project_id: int) -> Path:
+        project_dir = BASE_DIR / "data" / "projects" / str(project_id)
+        project_dir.mkdir(parents=True, exist_ok=True)
+        return project_dir
+
+    async def save_project_files(self, project_id: int, files_zip: bytes) -> bool:
+        project_dir = self.get_project_dir(project_id)
+        try:
+            with zipfile.ZipFile(io.BytesIO(files_zip), "r") as zf:
+                zf.extractall(project_dir)
+            return True
+        except Exception as e:
+            logger.error("Failed to save project files for %d: %s", project_id, e)
+            return False
+
     async def create_project(
         self,
         user_id: int,
@@ -44,6 +59,7 @@ class ProjectService:
         entry_point: str = "main.py",
         entry_type: str = "script",
         server_id: int | None = None,
+        files_zip: bytes | None = None,
     ) -> Project:
         project = await self.project_repo.create(
             user_id=user_id,
@@ -56,6 +72,8 @@ class ProjectService:
             server_id=server_id,
             status="stopped",
         )
+        if files_zip:
+            await self.save_project_files(project.id, files_zip)
         return project
 
     async def get_user_projects(self, user_id: int) -> list[Project]:
@@ -99,6 +117,7 @@ class ProjectService:
                 pass
 
         try:
+            project_dir = str(self.get_project_dir(project_id))
             container_id = await self.docker.create_container(
                 project_id=project_id,
                 project_name=project.name,
@@ -107,6 +126,7 @@ class ProjectService:
                 entry_type=project.entry_type,
                 tariff=tariff,
                 env_vars=env_vars,
+                project_dir=project_dir,
             )
             await self.docker.start_container(container_id)
             await self.project_repo.update(project_id, docker_container_id=container_id, status="running")
