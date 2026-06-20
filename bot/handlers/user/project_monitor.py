@@ -4,16 +4,16 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from bot.keyboards.common import get_back_keyboard
-from bot.utils.emojis import Emoji
+from bot.utils.emojis import Emoji, EmojiID
 
 router = Router()
 
 
 @router.callback_query(F.data.startswith("project_monitor_"))
-async def project_monitor(callback: CallbackQuery, project_service):
+async def project_monitor(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
-    if project is None:
+    if project is None or project.user_id != db_user.id:
         await callback.answer("Проект не найден", show_alert=True)
         return
 
@@ -34,10 +34,18 @@ async def project_monitor(callback: CallbackQuery, project_service):
     from aiogram.types import InlineKeyboardButton
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="🔄 Обновить", callback_data=f"project_monitor_{project_id}"),
+        InlineKeyboardButton(
+            text="🔄 Обновить",
+            callback_data=f"project_monitor_{project_id}",
+            icon_custom_emoji_id=EmojiID.LOADING,
+        ),
     )
     builder.row(
-        InlineKeyboardButton(text="📊 Графики (24ч)", callback_data=f"project_graphs_24_{project_id}"),
+        InlineKeyboardButton(
+            text="📊 Графики (24ч)",
+            callback_data=f"project_graphs_24_{project_id}",
+            icon_custom_emoji_id=EmojiID.GRAPH_STATS,
+        ),
     )
     builder.row(
         InlineKeyboardButton(text="◁ Назад", callback_data=f"project_view_{project_id}"),
@@ -48,17 +56,19 @@ async def project_monitor(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("project_graphs_"))
-async def project_graphs(callback: CallbackQuery, project_service):
+async def project_graphs(callback: CallbackQuery, project_service, db_user, session):
     parts = callback.data.split("_")
     hours = int(parts[2])
     project_id = int(parts[3])
 
-    from services.monitoring import MonitoringService
-    from db.engine import async_session_factory
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer("Нет доступа", show_alert=True)
+        return
 
-    async with async_session_factory() as session:
-        monitoring = MonitoringService(session)
-        stats = await monitoring.get_stats_history(project_id, hours)
+    from services.monitoring import MonitoringService
+    monitoring = MonitoringService(session)
+    stats = await monitoring.get_stats_history(project_id, hours)
 
     if not stats:
         await callback.answer("Нет данных за этот период", show_alert=True)
@@ -71,13 +81,13 @@ async def project_graphs(callback: CallbackQuery, project_service):
 
     text = (
         f"{Emoji.GRAPH_UP} <b>Графики за {hours}ч</b>\n\n"
-        f"📊 CPU:\n"
+        f"{Emoji.GRAPH_STATS} CPU:\n"
         f"  Среднее: {avg_cpu:.1f}%\n"
         f"  Максимум: {max_cpu:.1f}%\n\n"
-        f"🧠 RAM:\n"
+        f"{Emoji.GRAPH_UP} RAM:\n"
         f"  Среднее: {avg_ram:.1f} MB\n"
         f"  Максимум: {max_ram:.1f} MB\n\n"
-        f"📈 Точек данных: {len(stats)}"
+        f"{Emoji.INFO} Точек данных: {len(stats)}"
     )
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -86,7 +96,11 @@ async def project_graphs(callback: CallbackQuery, project_service):
     for h in [24, 168, 720]:
         label = {24: "24ч", 168: "7д", 720: "30д"}[h]
         builder.row(
-            InlineKeyboardButton(text=f"📊 {label}", callback_data=f"project_graphs_{h}_{project_id}")
+            InlineKeyboardButton(
+                text=f"📊 {label}",
+                callback_data=f"project_graphs_{h}_{project_id}",
+                icon_custom_emoji_id=EmojiID.GRAPH_STATS,
+            )
         )
     builder.row(
         InlineKeyboardButton(text="◁ Назад", callback_data=f"project_monitor_{project_id}"),

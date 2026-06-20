@@ -365,3 +365,162 @@ async def admin_settings(callback: CallbackQuery):
 async def admin_set_sleep(callback: CallbackQuery):
     minutes = int(callback.data.split("_")[-1])
     await callback.answer(f"✅ Автосон: {minutes} минут", show_alert=True)
+
+
+# ─── BROADCAST HANDLER ───
+
+@router.message(F.text, BroadcastStates.waiting_for_message)
+async def broadcast_receive(message: Message, state: FSMContext, session):
+    if not is_admin(message.from_user.id):
+        return
+
+    from services.user import UserService
+    user_svc = UserService(session)
+    users = await user_svc.get_all_users()
+
+    sent = 0
+    failed = 0
+    for user in users:
+        try:
+            from aiogram import Bot
+            from bot.config import settings
+            bot = Bot(token=settings.BOT_TOKEN)
+            await bot.send_message(user.telegram_id, message.text)
+            sent += 1
+        except Exception:
+            failed += 1
+
+    await state.clear()
+    await message.answer(
+        f"{Emoji.CHECK} Рассылка завершена.\n\n"
+        f"✅ Отправлено: {sent}\n"
+        f"❌ Ошибок: {failed}",
+        reply_markup=get_back_keyboard("admin_panel"),
+    )
+
+
+# ─── SERVER ADD HANDLERS ───
+
+@router.message(F.text, AdminServerStates.waiting_name)
+async def server_name_received(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        return
+
+    await state.update_data(server_name=message.text.strip())
+    await message.answer(f"{Emoji.HOME} Введите страну сервера:")
+    await state.set_state(AdminServerStates.waiting_country)
+
+
+@router.message(F.text, AdminServerStates.waiting_country)
+async def server_country_received(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        return
+
+    await state.update_data(server_country=message.text.strip())
+    await message.answer(f"{Emoji.HOME} Введите IP адрес сервера:")
+    await state.set_state(AdminServerStates.waiting_ip)
+
+
+@router.message(F.text, AdminServerStates.waiting_ip)
+async def server_ip_received(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        return
+
+    await state.update_data(server_ip=message.text.strip())
+    await message.answer(f"{Emoji.HOME} Введите количество слотов:")
+    await state.set_state(AdminServerStates.waiting_slots)
+
+
+@router.message(F.text, AdminServerStates.waiting_slots)
+async def server_slots_received(message: Message, state: FSMContext, session):
+    if not is_admin(message.from_user.id):
+        return
+
+    try:
+        slots = int(message.text.strip())
+    except ValueError:
+        await message.answer("❌ Введите число:")
+        return
+
+    data = await state.get_data()
+    from repositories.server import ServerRepository
+    server_repo = ServerRepository(session)
+    await server_repo.create(
+        name=data["server_name"],
+        country=data["server_country"],
+        ip=data["server_ip"],
+        total_slots=slots,
+        free_slots=slots,
+        status="online",
+    )
+
+    await state.clear()
+    await message.answer(
+        f"{Emoji.CHECK} Сервер <b>{data['server_name']}</b> добавлен.",
+        reply_markup=get_back_keyboard("admin_panel"),
+    )
+
+
+# ─── PROMO CREATE HANDLERS ───
+
+@router.message(F.text, AdminPromoStates.waiting_code)
+async def promo_code_input(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        return
+
+    await state.update_data(promo_code=message.text.strip())
+    await message.answer(f"{Emoji.GIFT} Введите тип награды (tariff/projects/balance):")
+    await state.set_state(AdminPromoStates.waiting_reward_type)
+
+
+@router.message(F.text, AdminPromoStates.waiting_reward_type)
+async def promo_reward_type_input(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        return
+
+    reward_type = message.text.strip().lower()
+    if reward_type not in ("tariff", "projects", "balance"):
+        await message.answer("❌ Допустимые типы: tariff, projects, balance")
+        return
+
+    await state.update_data(promo_reward_type=reward_type)
+    await message.answer(f"{Emoji.GIFT} Введите значение награды:")
+    await state.set_state(AdminPromoStates.waiting_reward_value)
+
+
+@router.message(F.text, AdminPromoStates.waiting_reward_value)
+async def promo_reward_value_input(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        return
+
+    await state.update_data(promo_reward_value=message.text.strip())
+    await message.answer(f"{Emoji.GIFT} Введите макс. количество активаций:")
+    await state.set_state(AdminPromoStates.waiting_max_activations)
+
+
+@router.message(F.text, AdminPromoStates.waiting_max_activations)
+async def promo_max_input(message: Message, state: FSMContext, session):
+    if not is_admin(message.from_user.id):
+        return
+
+    try:
+        max_act = int(message.text.strip())
+    except ValueError:
+        await message.answer("❌ Введите число:")
+        return
+
+    data = await state.get_data()
+    from services.promo import PromoService
+    promo_svc = PromoService(session)
+    await promo_svc.create_promo(
+        code=data["promo_code"],
+        reward_type=data["promo_reward_type"],
+        reward_value=data["promo_reward_value"],
+        max_activations=max_act,
+    )
+
+    await state.clear()
+    await message.answer(
+        f"{Emoji.CHECK} Промокод <b>{data['promo_code']}</b> создан.",
+        reply_markup=get_back_keyboard("admin_panel"),
+    )

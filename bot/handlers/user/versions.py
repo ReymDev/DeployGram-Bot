@@ -3,16 +3,16 @@ from __future__ import annotations
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
-from bot.utils.emojis import Emoji
+from bot.utils.emojis import Emoji, EmojiID
 
 router = Router()
 
 
 @router.callback_query(F.data.startswith("project_versions_"))
-async def versions_menu(callback: CallbackQuery, project_service):
+async def versions_menu(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
-    if project is None:
+    if project is None or project.user_id != db_user.id:
         await callback.answer("Проект не найден", show_alert=True)
         return
 
@@ -28,17 +28,19 @@ async def versions_menu(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("version_view_"))
-async def version_view(callback: CallbackQuery, project_service):
+async def version_view(callback: CallbackQuery, project_service, db_user, session):
     parts = callback.data.split("_")
     project_id = int(parts[2])
     version_id = int(parts[3])
 
-    from db.engine import async_session_factory
-    from repositories.project import ProjectVersionRepository
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer("Нет доступа", show_alert=True)
+        return
 
-    async with async_session_factory() as session:
-        version_repo = ProjectVersionRepository(session)
-        version = await version_repo.get_by_id(version_id)
+    from repositories.project import ProjectVersionRepository
+    version_repo = ProjectVersionRepository(session)
+    version = await version_repo.get_by_id(version_id)
 
     if version is None:
         await callback.answer("Версия не найдена", show_alert=True)
@@ -52,6 +54,7 @@ async def version_view(callback: CallbackQuery, project_service):
             text="🔄 Откатить",
             callback_data=f"version_restore_{project_id}_{version_id}",
             style="primary",
+            icon_custom_emoji_id=EmojiID.LOADING,
         ),
     )
     builder.row(
@@ -69,10 +72,15 @@ async def version_view(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("version_restore_"))
-async def version_restore(callback: CallbackQuery, project_service):
+async def version_restore(callback: CallbackQuery, project_service, db_user):
     parts = callback.data.split("_")
     project_id = int(parts[2])
     version_id = int(parts[3])
+
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer("Нет доступа", show_alert=True)
+        return
 
     success = await project_service.restore_version(project_id, version_id)
     if success:

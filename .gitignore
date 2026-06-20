@@ -4,6 +4,7 @@ __pycache__/
 .env
 data/
 *.db
+bot.log
 .venv/
 venv/
 *.egg-info/

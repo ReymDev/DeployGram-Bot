@@ -20,6 +20,7 @@ def get_main_menu_keyboard() -> InlineKeyboardMarkup:
             text="➕ Создать проект",
             callback_data="create_project",
             icon_custom_emoji_id=EmojiID.CHECK,
+            style="primary",
         ),
     )
     builder.row(
@@ -67,11 +68,13 @@ def get_confirm_keyboard(confirm_data: str, cancel_data: str = "main_menu") -> I
             text="✅ Да",
             callback_data=confirm_data,
             style="success",
+            icon_custom_emoji_id=EmojiID.CHECK,
         ),
         InlineKeyboardButton(
             text="❌ Нет",
             callback_data=cancel_data,
             style="danger",
+            icon_custom_emoji_id=EmojiID.CROSS,
         ),
     )
     return builder.as_markup()

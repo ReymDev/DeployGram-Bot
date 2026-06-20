@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import logging
+import logging.handlers
+import sys
+from pathlib import Path
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.types import ErrorEvent
 
-from bot.config import settings
+from bot.config import settings, BASE_DIR
 from bot.middlewares.database import DatabaseMiddleware
 from bot.middlewares.auth import AuthMiddleware
 from bot.middlewares.rate_limit import RateLimitMiddleware
@@ -29,7 +33,22 @@ from bot.handlers.user.referrals import router as referrals_router
 from bot.handlers.user.promos import router as promos_router
 from bot.handlers.admin.panel import router as admin_router
 
-logging.basicConfig(level=logging.INFO)
+LOG_DIR = BASE_DIR / "data"
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / "bot.log"
+
+LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+file_handler = logging.handlers.RotatingFileHandler(
+    LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+)
+file_handler.setFormatter(logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT))
+
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT))
+
+logging.basicConfig(level=logging.INFO, handlers=[file_handler, console_handler])
 logger = logging.getLogger(__name__)
 
 
@@ -71,6 +90,8 @@ async def main() -> None:
     from models.base import Base
     import models  # noqa: F401 — ensure all models are registered
 
+    logger.info("ADMIN_IDS parsed as: %s", settings.ADMIN_IDS)
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -79,5 +100,11 @@ async def main() -> None:
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = setup_dispatcher()
 
+    dp.errors.register(error_handler)
+
     logger.info("DeployGram bot starting...")
     await dp.start_polling(bot)
+
+
+async def error_handler(event: ErrorEvent, exception: Exception):
+    logger.error("Unhandled exception in update %s: %s", event.update.update_id, exception, exc_info=True)

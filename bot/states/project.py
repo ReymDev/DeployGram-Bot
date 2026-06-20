@@ -37,7 +37,3 @@ class AdminPromoStates(StatesGroup):
     waiting_reward_value = State()
     waiting_max_activations = State()
     waiting_expiry = State()
-
-
-class EditorStates(StatesGroup):
-    editing = State()

@@ -12,10 +12,10 @@ router = Router()
 
 
 @router.callback_query(F.data.startswith("project_logs_"))
-async def project_logs_menu(callback: CallbackQuery, project_service):
+async def project_logs_menu(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
-    if project is None:
+    if project is None or project.user_id != db_user.id:
         await callback.answer("Проект не найден", show_alert=True)
         return
 
@@ -27,8 +27,13 @@ async def project_logs_menu(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("logs_view_"))
-async def logs_view(callback: CallbackQuery, project_service):
+async def logs_view(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer("Нет доступа", show_alert=True)
+        return
+
     logs = await project_service.get_logs(project_id, tail=100)
     truncated = truncate_text(logs, 3500)
 
@@ -41,9 +46,13 @@ async def logs_view(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("logs_download_"))
-async def logs_download(callback: CallbackQuery, project_service):
+async def logs_download(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer("Нет доступа", show_alert=True)
+        return
+
     logs = await project_service.get_logs(project_id, tail=1000)
 
     from aiogram.types import BufferedInputFile
@@ -55,6 +64,15 @@ async def logs_download(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("logs_clear_"))
-async def logs_clear(callback: CallbackQuery, project_service):
+async def logs_clear(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
-    await callback.answer("Логи очищены", show_alert=True)
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer("Нет доступа", show_alert=True)
+        return
+
+    success = await project_service.clear_logs(project_id)
+    if success:
+        await callback.answer("Логи очищены", show_alert=True)
+    else:
+        await callback.answer("Ошибка очистки логов", show_alert=True)

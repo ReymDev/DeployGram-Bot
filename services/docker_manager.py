@@ -261,3 +261,87 @@ class DockerManager:
                 return {"containers_running": 0, "containers_total": 0}
 
         return await asyncio.to_thread(_load)
+
+    async def list_files(self, container_id: str, path: str = "/app") -> list[str]:
+        def _list() -> list[str]:
+            try:
+                container = self.client.containers.get(container_id)
+                exit_code, output = container.exec_run(f"ls -1 {path}")
+                if exit_code != 0:
+                    return []
+                return output.decode("utf-8", errors="replace").strip().split("\n")
+            except (NotFound, APIError) as e:
+                logger.error("Failed to list files in %s: %s", container_id, e)
+                return []
+
+        return await asyncio.to_thread(_list)
+
+    async def read_file(self, container_id: str, file_path: str) -> str:
+        def _read() -> str:
+            try:
+                container = self.client.containers.get(container_id)
+                exit_code, output = container.exec_run(f"cat {file_path}")
+                if exit_code != 0:
+                    return ""
+                return output.decode("utf-8", errors="replace")
+            except (NotFound, APIError) as e:
+                logger.error("Failed to read file %s: %s", file_path, e)
+                return ""
+
+        return await asyncio.to_thread(_read)
+
+    async def write_file(self, container_id: str, file_path: str, content: str) -> bool:
+        def _write() -> bool:
+            try:
+                container = self.client.containers.get(container_id)
+                import tempfile
+                import os
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".tmp", delete=False) as f:
+                    f.write(content)
+                    tmp_path = f.name
+                try:
+                    container.put_archive(os.path.dirname(file_path), open(tmp_path, "rb"))
+                finally:
+                    os.unlink(tmp_path)
+                return True
+            except (NotFound, APIError) as e:
+                logger.error("Failed to write file %s: %s", file_path, e)
+                return False
+
+        return await asyncio.to_thread(_write)
+
+    async def delete_file(self, container_id: str, file_path: str) -> bool:
+        def _delete() -> bool:
+            try:
+                container = self.client.containers.get(container_id)
+                exit_code, _ = container.exec_run(f"rm -f {file_path}")
+                return exit_code == 0
+            except (NotFound, APIError) as e:
+                logger.error("Failed to delete file %s: %s", file_path, e)
+                return False
+
+        return await asyncio.to_thread(_delete)
+
+    async def create_dir(self, container_id: str, dir_path: str) -> bool:
+        def _mkdir() -> bool:
+            try:
+                container = self.client.containers.get(container_id)
+                exit_code, _ = container.exec_run(f"mkdir -p {dir_path}")
+                return exit_code == 0
+            except (NotFound, APIError) as e:
+                logger.error("Failed to create dir %s: %s", dir_path, e)
+                return False
+
+        return await asyncio.to_thread(_mkdir)
+
+    async def clear_logs(self, container_id: str) -> bool:
+        def _clear() -> bool:
+            try:
+                container = self.client.containers.get(container_id)
+                container.truncate()
+                return True
+            except (NotFound, APIError) as e:
+                logger.error("Failed to clear logs for %s: %s", container_id, e)
+                return False
+
+        return await asyncio.to_thread(_clear)

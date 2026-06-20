@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Optional
 
+from bot.utils.emojis import Emoji
+
 
 def format_bytes(size_bytes: int) -> str:
     if size_bytes < 1024:
@@ -26,13 +28,13 @@ def format_uptime(seconds: int) -> str:
 
 def format_status(status: str) -> str:
     statuses = {
-        "running": "🟢 Работает",
-        "stopped": "🔴 Остановлен",
-        "starting": "🟡 Запускается",
-        "error": "🔴 Ошибка",
-        "creating": "🟡 Создаётся",
+        "running": f"{Emoji.CHECK} Работает",
+        "stopped": f"{Emoji.CROSS} Остановлен",
+        "starting": f"{Emoji.LOADING} Запускается",
+        "error": f"{Emoji.CROSS} Ошибка",
+        "creating": f"{Emoji.LOADING} Создаётся",
     }
-    return statuses.get(status, f"⚪ {status}")
+    return statuses.get(status, status)
 
 
 def truncate_text(text: str, max_length: int = 3500) -> str:

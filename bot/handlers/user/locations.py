@@ -3,19 +3,17 @@ from __future__ import annotations
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
-from bot.utils.emojis import Emoji
+from bot.utils.emojis import Emoji, EmojiID
 
 router = Router()
 
 
 @router.callback_query(F.data == "locations")
-async def locations_menu(callback: CallbackQuery):
-    from db.engine import async_session_factory
+async def locations_menu(callback: CallbackQuery, session):
     from repositories.server import ServerRepository
 
-    async with async_session_factory() as session:
-        server_repo = ServerRepository(session)
-        servers = await server_repo.get_online_servers()
+    server_repo = ServerRepository(session)
+    servers = await server_repo.get_online_servers()
 
     if not servers:
         await callback.message.edit_text(
@@ -24,7 +22,6 @@ async def locations_menu(callback: CallbackQuery):
         await callback.answer()
         return
 
-    from bot.keyboards.admin import get_admin_servers_keyboard
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton
     builder = InlineKeyboardBuilder()
@@ -34,6 +31,7 @@ async def locations_menu(callback: CallbackQuery):
             InlineKeyboardButton(
                 text=f"🌍 {s.name} ({s.country}) — {s.free_slots} слотов",
                 callback_data=f"location_view_{s.id}",
+                icon_custom_emoji_id=EmojiID.EARTH,
             )
         )
     builder.row(
@@ -48,14 +46,12 @@ async def locations_menu(callback: CallbackQuery):
 
 
 @router.callback_query(F.data.startswith("location_view_"))
-async def location_view(callback: CallbackQuery):
+async def location_view(callback: CallbackQuery, session):
     server_id = int(callback.data.split("_")[-1])
-    from db.engine import async_session_factory
     from repositories.server import ServerRepository
 
-    async with async_session_factory() as session:
-        server_repo = ServerRepository(session)
-        server = await server_repo.get_by_id(server_id)
+    server_repo = ServerRepository(session)
+    server = await server_repo.get_by_id(server_id)
 
     if server is None:
         await callback.answer("Сервер не найден", show_alert=True)

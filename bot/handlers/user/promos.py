@@ -3,11 +3,16 @@ from __future__ import annotations
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 
 from bot.keyboards.common import get_back_keyboard
 from bot.utils.emojis import Emoji
 
 router = Router()
+
+
+class PromoStates(StatesGroup):
+    waiting_code = State()
 
 
 @router.callback_query(F.data == "promo_activate")
@@ -17,31 +22,24 @@ async def promo_menu(callback: CallbackQuery, state: FSMContext):
         f"Введите код:",
         reply_markup=get_back_keyboard("main_menu"),
     )
-    await state.set_state("promo_waiting_code")
+    await state.set_state(PromoStates.waiting_code)
     await callback.answer()
 
 
-@router.message(F.text)
-async def promo_code_received(message: Message, state: FSMContext):
-    current_state = await state.get_state()
-    if current_state != "promo_waiting_code":
-        return
-
+@router.message(F.text, PromoStates.waiting_code)
+async def promo_code_received(message: Message, state: FSMContext, db_user, session):
     code = message.text.strip()
-    from db.engine import async_session_factory
     from services.promo import PromoService
 
-    async with async_session_factory() as session:
-        promo_svc = PromoService(session)
-        success, msg, promo = await promo_svc.activate_promo(code)
+    promo_svc = PromoService(session)
+    success, msg, promo = await promo_svc.activate_promo(code)
 
     await state.clear()
     if success:
         if promo and promo.reward_type == "tariff":
             from services.user import UserService
-            async with async_session_factory() as session:
-                user_svc = UserService(session)
-                await user_svc.set_tariff(message.from_user.id, "premium")
+            user_svc = UserService(session)
+            await user_svc.set_tariff(db_user.id, "premium")
 
         await message.answer(
             f"{Emoji.PARTY} {msg}",

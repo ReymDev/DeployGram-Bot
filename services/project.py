@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.config import settings
 from models.project import Project, ProjectVersion, ProjectStats
 from repositories.project import ProjectRepository, ProjectVersionRepository, ProjectStatsRepository
+from repositories.user import UserRepository
 
 try:
     from services.docker_manager import DockerManager
@@ -67,7 +68,7 @@ class ProjectService:
         project = await self.project_repo.get_by_id(project_id)
         if project is None:
             return False
-        if project.docker_container_id:
+        if project.docker_container_id and self.docker:
             await self.docker.remove_container(project.docker_container_id)
         return await self.project_repo.delete(project_id)
 
@@ -76,11 +77,18 @@ class ProjectService:
         if project is None:
             return False, "Проект не найден"
 
+        if not self.docker:
+            return False, "Docker недоступен"
+
         if project.docker_container_id:
             status = await self.docker.get_container_status(project.docker_container_id)
             if status.get("running"):
                 return True, "Контейнер уже запущен"
             await self.docker.remove_container(project.docker_container_id)
+
+        user_repo = UserRepository(self.session)
+        user = await user_repo.get_by_id(project.user_id)
+        tariff = user.tariff if user else "free"
 
         version = await self.version_repo.get_latest(project_id)
         env_vars = {}
@@ -97,7 +105,7 @@ class ProjectService:
                 python_version=project.python_version,
                 entry_point=project.entry_point,
                 entry_type=project.entry_type,
-                tariff="free",
+                tariff=tariff,
                 env_vars=env_vars,
             )
             await self.docker.start_container(container_id)
@@ -116,7 +124,10 @@ class ProjectService:
             await self.project_repo.update(project_id, status="stopped")
             return True, "Проект уже остановлен"
 
-        success = await self.docker.stop_container(project.docker_container_id)
+        if not self.docker:
+            return False, "Docker недоступен"
+
+        await self.docker.stop_container(project.docker_container_id)
         await self.project_repo.update(project_id, status="stopped")
         return True, "Проект остановлен"
 
@@ -125,7 +136,7 @@ class ProjectService:
         if project is None:
             return False, "Проект не найден"
 
-        if project.docker_container_id:
+        if project.docker_container_id and self.docker:
             await self.docker.stop_container(project.docker_container_id)
             await self.docker.remove_container(project.docker_container_id)
 
@@ -138,8 +149,8 @@ class ProjectService:
 
     async def get_monitoring(self, project_id: int) -> dict:
         project = await self.project_repo.get_by_id(project_id)
-        if project is None or not project.docker_container_id:
-            return {"status": "stopped", "cpu": 0, "ram": 0, "disk": 0, "uptime": "0m", "restarts": 0}
+        if project is None or not project.docker_container_id or not self.docker:
+            return {"status": "stopped", "cpu": 0, "ram": 0, "disk": 0, "uptime": "—", "restarts": 0}
 
         status = await self.docker.get_container_status(project.docker_container_id)
         stats = await self.docker.get_container_stats(project.docker_container_id)
@@ -155,7 +166,7 @@ class ProjectService:
 
     async def get_logs(self, project_id: int, tail: int = 100) -> str:
         project = await self.project_repo.get_by_id(project_id)
-        if project is None or not project.docker_container_id:
+        if project is None or not project.docker_container_id or not self.docker:
             return "Проект не запущен"
         return await self.docker.get_container_logs(project.docker_container_id, tail)
 
@@ -213,6 +224,8 @@ class ProjectService:
     async def test_project(
         self, files_zip: bytes, python_version: str, entry_point: str, entry_type: str
     ) -> tuple[bool, str]:
+        if not self.docker:
+            return False, "Docker недоступен"
         return await self.docker.test_container(files_zip, python_version, entry_point, entry_type)
 
     async def auto_find_entry(self, files_zip: bytes) -> str | None:
@@ -270,3 +283,39 @@ class ProjectService:
 
     async def count_user_projects(self, user_id: int) -> int:
         return await self.project_repo.count_by_user(user_id)
+
+    async def list_files(self, project_id: int, path: str = "/app") -> list[str]:
+        project = await self.project_repo.get_by_id(project_id)
+        if not project or not project.docker_container_id or not self.docker:
+            return []
+        return await self.docker.list_files(project.docker_container_id, path)
+
+    async def read_file(self, project_id: int, file_path: str) -> str:
+        project = await self.project_repo.get_by_id(project_id)
+        if not project or not project.docker_container_id or not self.docker:
+            return ""
+        return await self.docker.read_file(project.docker_container_id, file_path)
+
+    async def write_file(self, project_id: int, file_path: str, content: str) -> bool:
+        project = await self.project_repo.get_by_id(project_id)
+        if not project or not project.docker_container_id or not self.docker:
+            return False
+        return await self.docker.write_file(project.docker_container_id, file_path, content)
+
+    async def delete_file(self, project_id: int, file_path: str) -> bool:
+        project = await self.project_repo.get_by_id(project_id)
+        if not project or not project.docker_container_id or not self.docker:
+            return False
+        return await self.docker.delete_file(project.docker_container_id, file_path)
+
+    async def create_dir(self, project_id: int, dir_path: str) -> bool:
+        project = await self.project_repo.get_by_id(project_id)
+        if not project or not project.docker_container_id or not self.docker:
+            return False
+        return await self.docker.create_dir(project.docker_container_id, dir_path)
+
+    async def clear_logs(self, project_id: int) -> bool:
+        project = await self.project_repo.get_by_id(project_id)
+        if not project or not project.docker_container_id or not self.docker:
+            return False
+        return await self.docker.clear_logs(project.docker_container_id)

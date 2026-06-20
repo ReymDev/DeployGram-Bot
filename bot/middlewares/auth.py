@@ -18,7 +18,7 @@ class AuthMiddleware(BaseMiddleware):
     ) -> Any:
         session = data.get("session")
         if session is None:
-            return await handler(event, data)
+        return await handler(event, **data)
 
         user_service = UserService(session)
         project_service = ProjectService(session)

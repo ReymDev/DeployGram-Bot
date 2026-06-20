@@ -40,8 +40,8 @@ async def profile(callback: CallbackQuery, db_user, user_service, session):
 
 
 @router.callback_query(F.data == "settings")
-async def settings_page(callback: CallbackQuery, user_service):
-    s = await user_service.get_settings(callback.from_user.id)
+async def settings_page(callback: CallbackQuery, user_service, db_user):
+    s = await user_service.get_settings(db_user.id)
     if s is None:
         await callback.answer("Настройки не найдены", show_alert=True)
         return
@@ -65,7 +65,7 @@ async def settings_page(callback: CallbackQuery, user_service):
 
 
 @router.callback_query(F.data.startswith("toggle_"))
-async def toggle_notification(callback: CallbackQuery, user_service):
+async def toggle_notification(callback: CallbackQuery, user_service, db_user):
     setting = callback.data.replace("toggle_", "")
     valid_settings = [
         "notify_container_stopped", "notify_container_started", "notify_error",
@@ -76,10 +76,10 @@ async def toggle_notification(callback: CallbackQuery, user_service):
         await callback.answer("Неизвестная настройка", show_alert=True)
         return
 
-    await user_service.toggle_setting(callback.from_user.id, setting)
+    await user_service.toggle_setting(db_user.id, setting)
     await callback.answer("Настройка изменена")
 
-    s = await user_service.get_settings(callback.from_user.id)
+    s = await user_service.get_settings(db_user.id)
     if s:
         from bot.keyboards.user import get_settings_keyboard
         keyboard = get_settings_keyboard(

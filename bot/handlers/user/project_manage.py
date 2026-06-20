@@ -10,13 +10,22 @@ from bot.utils.emojis import Emoji
 router = Router()
 
 
-@router.callback_query(F.data.startswith("project_view_"))
-async def project_view(callback: CallbackQuery, project_service):
-    project_id = int(callback.data.split("_")[-1])
+async def _check_owner(callback: CallbackQuery, project_service, db_user, project_id: int):
     project = await project_service.get_project(project_id)
-
     if project is None:
         await callback.answer("Проект не найден", show_alert=True)
+        return None
+    if project.user_id != db_user.id:
+        await callback.answer("Нет доступа к этому проекту", show_alert=True)
+        return None
+    return project
+
+
+@router.callback_query(F.data.startswith("project_view_"))
+async def project_view(callback: CallbackQuery, project_service, db_user):
+    project_id = int(callback.data.split("_")[-1])
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
         return
 
     monitoring = await project_service.get_monitoring(project_id)
@@ -40,10 +49,13 @@ async def project_view(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("project_start_"))
-async def project_start(callback: CallbackQuery, project_service):
+async def project_start(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
-    success, msg = await project_service.start_project(project_id)
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
+        return
 
+    success, msg = await project_service.start_project(project_id)
     project = await project_service.get_project(project_id)
     if project:
         await callback.message.edit_text(
@@ -54,10 +66,13 @@ async def project_start(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("project_stop_"))
-async def project_stop(callback: CallbackQuery, project_service):
+async def project_stop(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
-    success, msg = await project_service.stop_project(project_id)
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
+        return
 
+    success, msg = await project_service.stop_project(project_id)
     project = await project_service.get_project(project_id)
     if project:
         await callback.message.edit_text(
@@ -68,10 +83,13 @@ async def project_stop(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("project_restart_"))
-async def project_restart(callback: CallbackQuery, project_service):
+async def project_restart(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
-    success, msg = await project_service.restart_project(project_id)
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
+        return
 
+    success, msg = await project_service.restart_project(project_id)
     project = await project_service.get_project(project_id)
     if project:
         await callback.message.edit_text(
@@ -82,11 +100,10 @@ async def project_restart(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("project_delete_"))
-async def project_delete(callback: CallbackQuery, project_service):
+async def project_delete(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
-    project = await project_service.get_project(project_id)
+    project = await _check_owner(callback, project_service, db_user, project_id)
     if project is None:
-        await callback.answer("Проект не найден", show_alert=True)
         return
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -114,12 +131,16 @@ async def project_delete(callback: CallbackQuery, project_service):
 
 
 @router.callback_query(F.data.startswith("project_delete_confirm_"))
-async def project_delete_confirm(callback: CallbackQuery, project_service):
+async def project_delete_confirm(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
+        return
+
     success = await project_service.delete_project(project_id)
 
     if success:
-        projects = await project_service.get_user_projects(callback.from_user.id)
+        projects = await project_service.get_user_projects(db_user.id)
         await callback.message.edit_text(
             f"{Emoji.CHECK} Проект удалён.",
             reply_markup=get_project_list_keyboard(projects),

@@ -5,11 +5,17 @@ import json
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 
 from bot.keyboards.common import get_back_keyboard
 from bot.utils.emojis import Emoji
 
 router = Router()
+
+
+class SecretStates(StatesGroup):
+    waiting_key = State()
+    waiting_value = State()
 
 
 @router.callback_query(F.data.startswith("project_secrets_"))
@@ -51,16 +57,12 @@ async def secret_add_start(callback: CallbackQuery, state: FSMContext):
         f"{Emoji.PENCIL} Введите имя переменной (например BOT_TOKEN):",
         reply_markup=get_back_keyboard(f"project_secrets_{project_id}"),
     )
-    await state.set_state("secret_waiting_key")
+    await state.set_state(SecretStates.waiting_key)
     await callback.answer()
 
 
-@router.message(F.text)
+@router.message(F.text, SecretStates.waiting_key)
 async def secret_key_received(message: Message, state: FSMContext):
-    current_state = await state.get_state()
-    if current_state != "secret_waiting_key":
-        return
-
     key = message.text.strip()
     data = await state.get_data()
     project_id = data.get("secret_project_id")
@@ -70,21 +72,19 @@ async def secret_key_received(message: Message, state: FSMContext):
         f"🔑 {key} = ?\n\nВведите значение:",
         reply_markup=get_back_keyboard(f"project_secrets_{project_id}"),
     )
-    await state.set_state("secret_waiting_value")
+    await state.set_state(SecretStates.waiting_value)
 
 
-@router.message(F.text)
+@router.message(F.text, SecretStates.waiting_value)
 async def secret_value_received(message: Message, state: FSMContext):
-    current_state = await state.get_state()
-    if current_state != "secret_waiting_value":
-        return
 
     value = message.text.strip()
     data = await state.get_data()
     project_id = data.get("secret_project_id")
     key = data.get("secret_key")
 
-    from services.project import ProjectVersionRepository, ProjectService
+    from repositories.project import ProjectVersionRepository
+    from services.project import ProjectService
     from db.engine import async_session_factory
 
     async with async_session_factory() as session:

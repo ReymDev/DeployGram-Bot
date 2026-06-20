@@ -19,7 +19,7 @@ class DatabaseMiddleware(BaseMiddleware):
         async with async_session_factory() as session:
             data["session"] = session
             try:
-                result = await handler(event, data)
+                result = await handler(event, **data)
                 await session.commit()
                 return result
             except Exception:
