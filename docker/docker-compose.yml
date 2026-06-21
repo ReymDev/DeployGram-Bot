@@ -19,6 +19,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.agent
     restart: always
+    env_file:
+      - ../.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - agent_data:/app/data
