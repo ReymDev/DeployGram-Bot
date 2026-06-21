@@ -3,13 +3,12 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 from typing import Any
 
 import docker
 from docker.errors import APIError, ImageNotFound, NotFound
 from docker.models.containers import Container
-
-from bot.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -20,22 +19,18 @@ PYTHON_IMAGES = {
 }
 
 
-class DockerManager:
-    def __init__(self) -> None:
-        self.client = docker.from_env()
-
-    def _get_limits(self, tariff: str) -> dict[str, Any]:
-        if tariff == "premium":
-            return {
-                "cpu_quota": int(settings.PREMIUM_TARIFF_CPU * 100000),
-                "mem_limit": f"{settings.PREMIUM_TARIFF_RAM}m",
-                "storage_opt": {"size": f"{settings.PREMIUM_TARIFF_DISK}m"},
-            }
+def _get_limits(tariff: str) -> dict[str, Any]:
+    if tariff == "premium":
         return {
-            "cpu_quota": int(settings.FREE_TARIFF_CPU * 100000),
-            "mem_limit": f"{settings.FREE_TARIFF_RAM}m",
-            "storage_opt": {"size": f"{settings.FREE_TARIFF_DISK}m"},
+            "cpu_quota": int(float(os.getenv("PREMIUM_TARIFF_CPU", "1.0")) * 100000),
+            "mem_limit": f"{os.getenv('PREMIUM_TARIFF_RAM', '1024')}m",
+            "storage_opt": {"size": f"{os.getenv('PREMIUM_TARIFF_DISK', '500')}m"},
         }
+    return {
+        "cpu_quota": int(float(os.getenv("FREE_TARIFF_CPU", "0.3")) * 100000),
+        "mem_limit": f"{os.getenv('FREE_TARIFF_RAM', '256')}m",
+        "storage_opt": {"size": f"{os.getenv('FREE_TARIFF_DISK', '100')}m"},
+    }
 
     async def create_container(
         self,
@@ -51,7 +46,7 @@ class DockerManager:
     ) -> str:
         def _create() -> str:
             image = PYTHON_IMAGES.get(python_version, PYTHON_IMAGES["3.12"])
-            limits = self._get_limits(tariff)
+            limits = _get_limits(tariff)
 
             env_list = [f"{k}={v}" for k, v in (env_vars or {}).items()]
 
