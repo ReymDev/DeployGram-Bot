@@ -5,6 +5,7 @@ from aiogram.types import CallbackQuery
 
 from bot.utils.emojis import Emoji
 from bot.utils.media import edit_photo_or_text
+from bot.keyboards.common import get_back_keyboard
 
 router = Router()
 

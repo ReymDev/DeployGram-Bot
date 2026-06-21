@@ -647,7 +647,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
     log_lines = []
     log_lines.append(f"🔌 <b>Подключение к {server_name} ({server_ip}:8080)</b>\n")
 
-    await message.answer(
+    status_msg = await message.answer(
         f"{Emoji.LOADING} <b>Проверяю подключение к агенту...</b>\n\n"
         f"📋 Логи подключения:\n"
         + "\n".join(log_lines),
@@ -665,34 +665,43 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         health = await client.health()
         if health.get("status") != "ok":
             log_lines.append(f"   {Emoji.CROSS} Ответ агента: {health}")
-            await message.edit_text(
-                f"📋 <b>Логи подключения:</b>\n\n"
-                + "\n".join(log_lines)
-                + f"\n\n{Emoji.CROSS} <b>Агент ответил, но статус не OK</b>",
-                reply_markup=get_back_keyboard("admin_panel"),
-            )
+            try:
+                await status_msg.edit_text(
+                    f"📋 <b>Логи подключения:</b>\n\n"
+                    + "\n".join(log_lines)
+                    + f"\n\n{Emoji.CROSS} <b>Агент ответил, но статус не OK</b>",
+                    reply_markup=get_back_keyboard("admin_panel"),
+                )
+            except Exception:
+                pass
             return
         log_lines.append(f"   {Emoji.CHECK} Health: OK")
     except Exception as e:
         error_text = str(e)
         log_lines.append(f"   {Emoji.CROSS} Ошибка: <code>{error_text[:200]}</code>")
-        await message.edit_text(
-            f"📋 <b>Логи подключения:</b>\n\n"
-            + "\n".join(log_lines)
-            + f"\n\n{Emoji.CROSS} <b>Не удалось подключиться к агенту</b>\n\n"
-            f"Убедитесь что:\n"
-            f"1. Агент запущен на сервере\n"
-            f"2. Порт 8080 открыт в firewall\n"
-            f"3. IP адрес верный",
-            reply_markup=get_back_keyboard("admin_panel"),
-        )
+        try:
+            await status_msg.edit_text(
+                f"📋 <b>Логи подключения:</b>\n\n"
+                + "\n".join(log_lines)
+                + f"\n\n{Emoji.CROSS} <b>Не удалось подключиться к агенту</b>\n\n"
+                f"Убедитесь что:\n"
+                f"1. Агент запущен на сервере\n"
+                f"2. Порт 8080 открыт в firewall\n"
+                f"3. IP адрес верный",
+                reply_markup=get_back_keyboard("admin_panel"),
+            )
+        except Exception:
+            pass
         return
 
-    await message.edit_text(
-        f"📋 <b>Логи подключения:</b>\n\n"
-        + "\n".join(log_lines)
-        + f"\n\n{Emoji.LOADING} Проверка Docker...",
-    )
+    try:
+        await status_msg.edit_text(
+            f"📋 <b>Логи подключения:</b>\n\n"
+            + "\n".join(log_lines)
+            + f"\n\n{Emoji.LOADING} Проверка Docker...",
+        )
+    except Exception:
+        pass
 
     log_lines.append("2️⃣ Проверка Docker...")
 
@@ -703,19 +712,25 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         log_lines.append(f"   {Emoji.CHECK} Docker: OK (контейнеров: {containers_running}/{containers_total})")
     except Exception as e:
         log_lines.append(f"   {Emoji.CROSS} Docker недоступен: <code>{str(e)[:150]}</code>")
-        await message.edit_text(
-            f"📋 <b>Логи подключения:</b>\n\n"
-            + "\n".join(log_lines)
-            + f"\n\n{Emoji.CROSS} <b>Docker недоступен на сервере</b>",
-            reply_markup=get_back_keyboard("admin_panel"),
-        )
+        try:
+            await status_msg.edit_text(
+                f"📋 <b>Логи подключения:</b>\n\n"
+                + "\n".join(log_lines)
+                + f"\n\n{Emoji.CROSS} <b>Docker недоступен на сервере</b>",
+                reply_markup=get_back_keyboard("admin_panel"),
+            )
+        except Exception:
+            pass
         return
 
-    await message.edit_text(
-        f"📋 <b>Логи подключения:</b>\n\n"
-        + "\n".join(log_lines)
-        + f"\n\n{Emoji.LOADING} Тестовый запуск контейнера...",
-    )
+    try:
+        await status_msg.edit_text(
+            f"📋 <b>Логи подключения:</b>\n\n"
+            + "\n".join(log_lines)
+            + f"\n\n{Emoji.LOADING} Тестовый запуск контейнера...",
+        )
+    except Exception:
+        pass
 
     log_lines.append("3️⃣ Тестовый запуск контейнера...")
 
@@ -732,17 +747,20 @@ async def server_slots_received(message: Message, state: FSMContext, session):
 
         if "error" in test_result:
             log_lines.append(f"   {Emoji.CROSS} Ошибка создания: <code>{test_result['error'][:150]}</code>")
-            await message.edit_text(
-                f"📋 <b>Логи подключения:</b>\n\n"
-                + "\n".join(log_lines)
-                + f"\n\n{Emoji.CROSS} <b>Не удалось создать тестовый контейнер</b>\n\n"
-                f"Возможные причины:\n"
-                f"1. Docker не установлен\n"
-                f"2. Нет прав для запуска контейнеров\n"
-                f"3. Недостаточно ресурсов (RAM/Disk)\n"
-                f"4. Проблемы с сетью (нужен доступ к Docker Hub)",
-                reply_markup=get_back_keyboard("admin_panel"),
-            )
+            try:
+                await status_msg.edit_text(
+                    f"📋 <b>Логи подключения:</b>\n\n"
+                    + "\n".join(log_lines)
+                    + f"\n\n{Emoji.CROSS} <b>Не удалось создать тестовый контейнер</b>\n\n"
+                    f"Возможные причины:\n"
+                    f"1. Docker не установлен\n"
+                    f"2. Нет прав для запуска контейнеров\n"
+                    f"3. Недостаточно ресурсов (RAM/Disk)\n"
+                    f"4. Проблемы с сетью (нужен доступ к Docker Hub)",
+                    reply_markup=get_back_keyboard("admin_panel"),
+                )
+            except Exception:
+                pass
             return
 
         test_container_id = test_result.get("container_id", "")
@@ -759,19 +777,25 @@ async def server_slots_received(message: Message, state: FSMContext, session):
 
     except Exception as e:
         log_lines.append(f"   {Emoji.CROSS} Ошибка: <code>{str(e)[:150]}</code>")
-        await message.edit_text(
-            f"📋 <b>Логи подключения:</b>\n\n"
-            + "\n".join(log_lines)
-            + f"\n\n{Emoji.CROSS} <b>Ошибка при тестировании контейнера</b>",
-            reply_markup=get_back_keyboard("admin_panel"),
-        )
+        try:
+            await status_msg.edit_text(
+                f"📋 <b>Логи подключения:</b>\n\n"
+                + "\n".join(log_lines)
+                + f"\n\n{Emoji.CROSS} <b>Ошибка при тестировании контейнера</b>",
+                reply_markup=get_back_keyboard("admin_panel"),
+            )
+        except Exception:
+            pass
         return
 
-    await message.edit_text(
-        f"📋 <b>Логи подключения:</b>\n\n"
-        + "\n".join(log_lines)
-        + f"\n\n{Emoji.LOADING} Сохранение сервера...",
-    )
+    try:
+        await status_msg.edit_text(
+            f"📋 <b>Логи подключения:</b>\n\n"
+            + "\n".join(log_lines)
+            + f"\n\n{Emoji.LOADING} Сохранение сервера...",
+        )
+    except Exception:
+        pass
 
     from repositories.server import ServerRepository
     server_repo = ServerRepository(session)
@@ -789,16 +813,28 @@ async def server_slots_received(message: Message, state: FSMContext, session):
     log_lines.append(f"   {Emoji.CHECK} Готово")
 
     await state.clear()
-    await message.edit_text(
-        f"📋 <b>Логи подключения:</b>\n\n"
-        + "\n".join(log_lines)
-        + f"\n\n{Emoji.CHECK} <b>Сервер {server_name} успешно добавлен!</b>\n\n"
-        f"🌍 Страна: {data['server_country']}\n"
-        f"📡 IP: {server_ip}:8080\n"
-        f"💻 Слоты: {slots}\n"
-        f"🔑 API Key: {'Есть' if api_key else 'Нет'}",
-        reply_markup=get_back_keyboard("admin_panel"),
-    )
+    try:
+        await status_msg.edit_text(
+            f"📋 <b>Логи подключения:</b>\n\n"
+            + "\n".join(log_lines)
+            + f"\n\n{Emoji.CHECK} <b>Сервер {server_name} успешно добавлен!</b>\n\n"
+            f"🌍 Страна: {data['server_country']}\n"
+            f"📡 IP: {server_ip}:8080\n"
+            f"💻 Слоты: {slots}\n"
+            f"🔑 API Key: {'Есть' if api_key else 'Нет'}",
+            reply_markup=get_back_keyboard("admin_panel"),
+        )
+    except Exception:
+        await message.answer(
+            f"📋 <b>Логи подключения:</b>\n\n"
+            + "\n".join(log_lines)
+            + f"\n\n{Emoji.CHECK} <b>Сервер {server_name} успешно добавлен!</b>\n\n"
+            f"🌍 Страна: {data['server_country']}\n"
+            f"📡 IP: {server_ip}:8080\n"
+            f"💻 Слоты: {slots}\n"
+            f"🔑 API Key: {'Есть' if api_key else 'Нет'}",
+            reply_markup=get_back_keyboard("admin_panel"),
+        )
 
 
 # ─── PROMO CREATE HANDLERS ───
