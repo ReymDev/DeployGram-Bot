@@ -39,10 +39,17 @@ class ProjectService:
         project_dir.mkdir(parents=True, exist_ok=True)
         return project_dir
 
-    async def save_project_files(self, project_id: int, files_zip: bytes) -> bool:
+    async def save_project_files(self, project_id: int, files_zip) -> bool:
         project_dir = self.get_project_dir(project_id)
         try:
-            with zipfile.ZipFile(io.BytesIO(files_zip), "r") as zf:
+            if isinstance(files_zip, bytes):
+                zip_data = files_zip
+            elif isinstance(files_zip, io.BytesIO):
+                zip_data = files_zip.read()
+            else:
+                zip_data = bytes(files_zip)
+
+            with zipfile.ZipFile(io.BytesIO(zip_data), "r") as zf:
                 zf.extractall(project_dir)
             return True
         except Exception as e:
