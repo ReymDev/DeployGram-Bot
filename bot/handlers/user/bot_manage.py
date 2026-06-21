@@ -203,6 +203,7 @@ async def bot_settings(callback: CallbackQuery, project_service, db_user):
         f"Выбери, что хочешь сделать с ботом:"
     )
 
+    from bot.keyboards.user import get_bot_settings_keyboard
     await edit_photo_or_text(
         callback.message,
         text,
@@ -537,3 +538,581 @@ async def lib_del(callback: CallbackQuery, project_service, db_user):
 
     await callback.answer(f"✅ {lib_name} удалена", show_alert=True)
     await bot_libs(callback, project_service, db_user)
+
+
+# ─── SECRETS (ENV) ───
+
+@router.callback_query(F.data.startswith("bot_secrets_"))
+async def bot_secrets(callback: CallbackQuery, project_service, db_user):
+    project_id = int(callback.data.replace("bot_secrets_", ""))
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
+        return
+
+    import json
+    from db.engine import async_session_factory
+    from repositories.project import ProjectVersionRepository
+
+    secrets = {}
+    async with async_session_factory() as session:
+        version_repo = ProjectVersionRepository(session)
+        version = await version_repo.get_latest(project_id)
+        if version and version.secrets:
+            try:
+                secrets = json.loads(version.secrets)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from aiogram.types import InlineKeyboardButton
+    builder = InlineKeyboardBuilder()
+
+    for key, val in secrets.items():
+        hidden = val[:3] + "****" if len(val) > 3 else "****"
+        builder.row(
+            InlineKeyboardButton(text=f"🔒 {key} = {hidden}", callback_data=f"noop"),
+            InlineKeyboardButton(text="🗑", callback_data=f"secret_del_{project_id}_{key}", style="danger"),
+        )
+
+    builder.row(
+        InlineKeyboardButton(text="➕ Добавить секрет", callback_data=f"secret_add_{project_id}", style="primary"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="Назад", callback_data=f"bot_settings_{project_id}"),
+    )
+
+    await callback.message.edit_text(
+        f"🔒 <b>Секреты: {project.name}</b>\n\n"
+        f"Переменные окружения (ENV):",
+        reply_markup=builder.as_markup(),
+    )
+    await callback.answer()
+
+
+class SecretStates(StatesGroup):
+    waiting_key = State()
+    waiting_value = State()
+
+
+@router.callback_query(F.data.startswith("secret_add_"))
+async def secret_add_start(callback: CallbackQuery, state: FSMContext):
+    project_id = int(callback.data.replace("secret_add_", ""))
+    await state.update_data(secret_project_id=project_id)
+
+    await callback.message.edit_text(
+        "🔒 Введи имя переменной (например BOT_TOKEN):",
+        reply_markup=get_back_keyboard(f"bot_secrets_{project_id}"),
+    )
+    await state.set_state(SecretStates.waiting_key)
+    await callback.answer()
+
+
+@router.message(F.text, SecretStates.waiting_key)
+async def secret_key_received(message: Message, state: FSMContext):
+    key = message.text.strip()
+    data = await state.get_data()
+    project_id = data.get("secret_project_id")
+
+    await state.update_data(secret_key=key)
+    await message.answer(
+        f"🔑 {key} = ?\n\nВведи значение:",
+        reply_markup=get_back_keyboard(f"bot_secrets_{project_id}"),
+    )
+    await state.set_state(SecretStates.waiting_value)
+
+
+@router.message(F.text, SecretStates.waiting_value)
+async def secret_value_received(message: Message, state: FSMContext, project_service, db_user):
+    value = message.text.strip()
+    data = await state.get_data()
+    project_id = data.get("secret_project_id")
+    key = data.get("secret_key")
+
+    import json
+    from db.engine import async_session_factory
+    from repositories.project import ProjectVersionRepository
+    from services.project import ProjectService
+
+    async with async_session_factory() as session:
+        version_repo = ProjectVersionRepository(session)
+        version = await version_repo.get_latest(project_id)
+
+        secrets = {}
+        if version and version.secrets:
+            try:
+                secrets = json.loads(version.secrets)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        secrets[key] = value
+        project_svc = ProjectService(session)
+        project = await project_svc.get_project(project_id)
+        await project_svc.save_version(
+            project_id,
+            secrets=json.dumps(secrets),
+            entry_point=project.entry_point if project else "main.py",
+            python_version=project.python_version if project else "3.12",
+        )
+
+    await state.clear()
+    await message.answer(
+        f"✅ Секрет <b>{key}</b> сохранён.",
+        reply_markup=get_back_keyboard(f"bot_secrets_{project_id}"),
+    )
+
+
+@router.callback_query(F.data.startswith("secret_del_"))
+async def secret_delete(callback: CallbackQuery, project_service, db_user):
+    parts = callback.data.replace("secret_del_", "").split("_", 1)
+    project_id = int(parts[0])
+    key = parts[1] if len(parts) > 1 else ""
+
+    import json
+    from db.engine import async_session_factory
+    from repositories.project import ProjectVersionRepository
+    from services.project import ProjectService
+
+    async with async_session_factory() as session:
+        version_repo = ProjectVersionRepository(session)
+        version = await version_repo.get_latest(project_id)
+
+        secrets = {}
+        if version and version.secrets:
+            try:
+                secrets = json.loads(version.secrets)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        if key in secrets:
+            del secrets[key]
+            project_svc = ProjectService(session)
+            project = await project_svc.get_project(project_id)
+            await project_svc.save_version(
+                project_id,
+                secrets=json.dumps(secrets),
+                entry_point=project.entry_point if project else "main.py",
+                python_version=project.python_version if project else "3.12",
+            )
+
+    await callback.answer(f"✅ Секрет {key} удалён", show_alert=True)
+
+
+# ─── VERSIONS ───
+
+@router.callback_query(F.data.startswith("bot_versions_"))
+async def bot_versions(callback: CallbackQuery, project_service, db_user):
+    project_id = int(callback.data.replace("bot_versions_", ""))
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
+        return
+
+    versions = await project_service.get_versions(project_id)
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from aiogram.types import InlineKeyboardButton
+    builder = InlineKeyboardBuilder()
+
+    for v in versions[:10]:
+        builder.row(
+            InlineKeyboardButton(
+                text=f"v{v.version_number} — {v.created_at.strftime('%d.%m %H:%M')}",
+                callback_data=f"version_view_{project_id}_{v.id}",
+            )
+        )
+
+    builder.row(
+        InlineKeyboardButton(text="Назад", callback_data=f"bot_settings_{project_id}"),
+    )
+
+    await callback.message.edit_text(
+        f"📜 <b>Версии: {project.name}</b>\n\n"
+        f"Всего версий: {len(versions)}",
+        reply_markup=builder.as_markup(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("version_view_"))
+async def version_view(callback: CallbackQuery, project_service, db_user, session):
+    parts = callback.data.split("_")
+    project_id = int(parts[2])
+    version_id = int(parts[3])
+
+    from repositories.project import ProjectVersionRepository
+    version_repo = ProjectVersionRepository(session)
+    version = await version_repo.get_by_id(version_id)
+
+    if version is None:
+        await callback.answer("Версия не найдена", show_alert=True)
+        return
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from aiogram.types import InlineKeyboardButton
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="🔄 Откатить", callback_data=f"version_restore_{project_id}_{version_id}", style="primary"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="Назад", callback_data=f"bot_versions_{project_id}"),
+    )
+
+    await callback.message.edit_text(
+        f"📜 <b>Версия {version.version_number}</b>\n\n"
+        f"Создана: {version.created_at.strftime('%d.%m.%Y %H:%M')}\n"
+        f"Python: {version.python_version}\n"
+        f"Entry: <code>{version.entry_point}</code>",
+        reply_markup=builder.as_markup(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("version_restore_"))
+async def version_restore(callback: CallbackQuery, project_service, db_user):
+    parts = callback.data.split("_")
+    project_id = int(parts[2])
+    version_id = int(parts[3])
+
+    success = await project_service.restore_version(project_id, version_id)
+    if success:
+        await callback.answer("✅ Версия восстановлена", show_alert=True)
+    else:
+        await callback.answer("❌ Ошибка восстановления", show_alert=True)
+
+
+# ─── CO-OWNERS ───
+
+@router.callback_query(F.data.startswith("bot_coowners_"))
+async def bot_coowners(callback: CallbackQuery, project_service, db_user, session):
+    project_id = int(callback.data.replace("bot_coowners_", ""))
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
+        return
+
+    from repositories.coowner import CoOwnerRepository
+    coowner_repo = CoOwnerRepository(session)
+    coowners = await coowner_repo.get_by_project_id(project_id)
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from aiogram.types import InlineKeyboardButton
+    builder = InlineKeyboardBuilder()
+
+    for co in coowners:
+        builder.row(
+            InlineKeyboardButton(
+                text=f"👤 ID:{co.user_id} ({co.role})",
+                callback_data=f"noop",
+            ),
+            InlineKeyboardButton(text="🗑", callback_data=f"coowner_del_{project_id}_{co.id}", style="danger"),
+        )
+
+    builder.row(
+        InlineKeyboardButton(text="➕ Добавить", callback_data=f"coowner_add_{project_id}", style="primary"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="Назад", callback_data=f"bot_settings_{project_id}"),
+    )
+
+    await callback.message.edit_text(
+        f"👥 <b>Совладельцы: {project.name}</b>\n\n"
+        f"Роли:\n"
+        f"  <b>Owner</b> — полный доступ\n"
+        f"  <b>Developer</b> — запуск, остановка, логи, файлы",
+        reply_markup=builder.as_markup(),
+    )
+    await callback.answer()
+
+
+class CoOwnerStates(StatesGroup):
+    waiting_id = State()
+
+
+@router.callback_query(F.data.startswith("coowner_add_"))
+async def coowner_add(callback: CallbackQuery, state: FSMContext):
+    project_id = int(callback.data.replace("coowner_add_", ""))
+    await state.update_data(coowner_project_id=project_id)
+
+    await callback.message.edit_text(
+        "👤 Отправь Telegram ID пользователя для добавления:",
+        reply_markup=get_back_keyboard(f"bot_coowners_{project_id}"),
+    )
+    await state.set_state(CoOwnerStates.waiting_id)
+    await callback.answer()
+
+
+@router.message(F.text, CoOwnerStates.waiting_id)
+async def coowner_id_received(message: Message, state: FSMContext, session, db_user):
+    data = await state.get_data()
+    project_id = data.get("coowner_project_id")
+
+    try:
+        target_telegram_id = int(message.text.strip())
+    except ValueError:
+        await message.answer("❌ Введи числовой Telegram ID")
+        return
+
+    if target_telegram_id == db_user.telegram_id:
+        await message.answer("❌ Нельзя добавить самого себя")
+        return
+
+    from repositories.user import UserRepository
+    user_repo = UserRepository(session)
+    target_user = await user_repo.get_by_telegram_id(target_telegram_id)
+
+    if target_user is None:
+        await message.answer("❌ Пользователь не найден. Он должен хотя бы раз запустить бота.")
+        return
+
+    from repositories.coowner import CoOwnerRepository
+    coowner_repo = CoOwnerRepository(session)
+    existing = await coowner_repo.get_by_user_and_project(target_user.id, project_id)
+    if existing:
+        await message.answer("❌ Этот пользователь уже совладелец")
+        return
+
+    await coowner_repo.create(project_id=project_id, user_id=target_user.id, role="developer")
+
+    await state.clear()
+    await message.answer(
+        f"✅ Пользователь <b>{target_user.username or target_telegram_id}</b> добавлен как совладелец.",
+        reply_markup=get_back_keyboard(f"bot_coowners_{project_id}"),
+    )
+
+
+@router.callback_query(F.data.startswith("coowner_del_"))
+async def coowner_del(callback: CallbackQuery, project_service, db_user, session):
+    parts = callback.data.replace("coowner_del_", "").split("_")
+    project_id = int(parts[0])
+    coowner_id = int(parts[1])
+
+    from repositories.coowner import CoOwnerRepository
+    coowner_repo = CoOwnerRepository(session)
+    await coowner_repo.delete(coowner_id)
+
+    await callback.answer("✅ Совладелец удалён", show_alert=True)
+
+
+# ─── EDITOR ───
+
+@router.callback_query(F.data.startswith("bot_editor_"))
+async def bot_editor(callback: CallbackQuery, project_service, db_user, state: FSMContext):
+    project_id = int(callback.data.replace("bot_editor_", ""))
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
+        return
+
+    await state.update_data(editor_project_id=project_id)
+
+    await callback.message.edit_text(
+        f"🖋 <b>Редактор: {project.name}</b>\n\n"
+        f"Отправь файл для редактирования (.py, .txt, .env, .json, .yaml)\n"
+        f"Или введи путь к файлу в проекте:",
+        reply_markup=get_back_keyboard(f"bot_settings_{project_id}"),
+    )
+    await state.set_state(EditorStates.waiting_file)
+    await callback.answer()
+
+
+class EditorStates(StatesGroup):
+    waiting_file = State()
+    sending = State()
+
+
+@router.message(F.document, EditorStates.waiting_file)
+async def editor_file_uploaded(message: Message, state: FSMContext, project_service, db_user):
+    if not message.document or not message.document.file_name:
+        return
+
+    file_name = message.document.file_name
+    allowed = (".py", ".txt", ".env", ".json", ".yaml", ".yml", ".toml", ".cfg")
+    if not file_name.endswith(allowed):
+        await message.answer("❌ Поддерживаются только: .py, .txt, .env, .json, .yaml")
+        return
+
+    try:
+        content = await message.bot.download(message.document)
+        text = content.read().decode("utf-8", errors="replace")
+    except Exception:
+        await message.answer("❌ Ошибка чтения файла")
+        return
+
+    data = await state.get_data()
+    project_id = data.get("editor_project_id")
+
+    await state.update_data(editor_file_name=file_name, editor_content=text)
+    await message.answer(
+        f"🖋 <b>Редактирование: {file_name}</b>\n\n"
+        f"<code>{text[:2000]}</code>\n\n"
+        f"Отправь новый текст файла:",
+    )
+    await state.set_state(EditorStates.sending)
+
+
+@router.message(F.text, EditorStates.waiting_file)
+async def editor_text_input(message: Message, state: FSMContext):
+    file_path = message.text.strip()
+    await state.update_data(editor_file_name=file_path)
+    await message.answer(
+        f"🖋 Файл: <code>{file_path}</code>\n\nОтправь новый текст:",
+    )
+    await state.set_state(EditorStates.sending)
+
+
+@router.message(F.text, EditorStates.sending)
+async def editor_save(message: Message, state: FSMContext, project_service, db_user):
+    data = await state.get_data()
+    file_name = data.get("editor_file_name", "file.txt")
+    project_id = data.get("editor_project_id")
+    content = message.text
+
+    if project_id:
+        project = await project_service.get_project(project_id)
+        if project and project.user_id == db_user.id:
+            file_path = f"/app/{file_name}"
+            success = await project_service.write_file(project_id, file_path, content)
+            if success:
+                await message.answer(
+                    f"✅ Файл <b>{file_name}</b> сохранён.",
+                    reply_markup=get_back_keyboard(f"bot_view_{project_id}"),
+                )
+            else:
+                await message.answer(
+                    f"❌ Ошибка сохранения файла.",
+                    reply_markup=get_back_keyboard(f"bot_view_{project_id}"),
+                )
+    await state.clear()
+
+
+# ─── GRAPHS ───
+
+@router.callback_query(F.data.startswith("bot_graphs_"))
+async def bot_graphs(callback: CallbackQuery, project_service, db_user, session):
+    project_id = int(callback.data.replace("bot_graphs_", ""))
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
+        return
+
+    from services.monitoring import MonitoringService
+    monitoring = MonitoringService(session)
+    stats = await monitoring.get_stats_history(project_id, 24)
+
+    if not stats:
+        await callback.answer("Нет данных за этот период", show_alert=True)
+        return
+
+    avg_cpu = sum(s.cpu_percent for s in stats) / len(stats)
+    max_cpu = max(s.cpu_percent for s in stats)
+    avg_ram = sum(s.ram_mb for s in stats) / len(stats)
+    max_ram = max(s.ram_mb for s in stats)
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from aiogram.types import InlineKeyboardButton
+    builder = InlineKeyboardBuilder()
+    for h in [24, 168, 720]:
+        label = {24: "24ч", 168: "7д", 720: "30д"}[h]
+        builder.row(
+            InlineKeyboardButton(text=f"📊 {label}", callback_data=f"bot_graphs_{project_id}_{h}")
+        )
+    builder.row(
+        InlineKeyboardButton(text="Назад", callback_data=f"bot_view_{project_id}"),
+    )
+
+    await callback.message.edit_text(
+        f"📊 <b>Графики за 24ч</b>\n\n"
+        f"📊 CPU:\n  Среднее: {avg_cpu:.1f}%\n  Максимум: {max_cpu:.1f}%\n\n"
+        f"📈 RAM:\n  Среднее: {avg_ram:.1f} MB\n  Максимум: {max_ram:.1f} MB\n\n"
+        f"ℹ Точек данных: {len(stats)}",
+        reply_markup=builder.as_markup(),
+    )
+    await callback.answer()
+
+
+# ─── NOTIFICATIONS ───
+
+@router.callback_query(F.data.startswith("bot_notify_"))
+async def bot_notify(callback: CallbackQuery, user_service, db_user):
+    project_id = int(callback.data.replace("bot_notify_", ""))
+
+    s = await user_service.get_settings(db_user.id)
+    if s is None:
+        await callback.answer("Настройки не найдены", show_alert=True)
+        return
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from aiogram.types import InlineKeyboardButton
+    builder = InlineKeyboardBuilder()
+
+    items = [
+        ("notify_container_stopped", "Контейнер остановлен", s.notify_container_stopped),
+        ("notify_container_started", "Контейнер запущен", s.notify_container_started),
+        ("notify_error", "Ошибка запуска", s.notify_error),
+        ("notify_high_cpu", "Высокая нагрузка CPU", s.notify_high_cpu),
+        ("notify_high_ram", "Высокая нагрузка RAM", s.notify_high_ram),
+        ("notify_low_disk", "Мало места на диске", s.notify_low_disk),
+        ("notify_backup_created", "Бэкап создан", s.notify_backup_created),
+        ("notify_update_done", "Обновление завершено", s.notify_update_done),
+    ]
+
+    for data_key, label, val in items:
+        icon = "✅" if val else "❌"
+        builder.row(
+            InlineKeyboardButton(text=f"{icon} {label}", callback_data=f"toggle_{data_key}"),
+        )
+
+    builder.row(
+        InlineKeyboardButton(text="Назад", callback_data=f"bot_settings_{project_id}"),
+    )
+
+    await callback.message.edit_text(
+        f"🔔 <b>Настройки уведомлений</b>",
+        reply_markup=builder.as_markup(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("toggle_"))
+async def toggle_notification(callback: CallbackQuery, user_service, db_user):
+    setting = callback.data.replace("toggle_", "")
+    valid_settings = [
+        "notify_container_stopped", "notify_container_started", "notify_error",
+        "notify_high_cpu", "notify_high_ram", "notify_low_disk",
+        "notify_backup_created", "notify_update_done",
+    ]
+    if setting not in valid_settings:
+        await callback.answer("Неизвестная настройка", show_alert=True)
+        return
+
+    await user_service.toggle_setting(db_user.id, setting)
+    await callback.answer("Настройка изменена")
+
+    s = await user_service.get_settings(db_user.id)
+    if s:
+        from aiogram.utils.keyboard import InlineKeyboardBuilder
+        from aiogram.types import InlineKeyboardButton
+        builder = InlineKeyboardBuilder()
+
+        items = [
+            ("notify_container_stopped", "Контейнер остановлен", s.notify_container_stopped),
+            ("notify_container_started", "Контейнер запущен", s.notify_container_started),
+            ("notify_error", "Ошибка запуска", s.notify_error),
+            ("notify_high_cpu", "Высокая нагрузка CPU", s.notify_high_cpu),
+            ("notify_high_ram", "Высокая нагрузка RAM", s.notify_high_ram),
+            ("notify_low_disk", "Мало места на диске", s.notify_low_disk),
+            ("notify_backup_created", "Бэкап создан", s.notify_backup_created),
+            ("notify_update_done", "Обновление завершено", s.notify_update_done),
+        ]
+
+        for data_key, label, val in items:
+            icon = "✅" if val else "❌"
+            builder.row(
+                InlineKeyboardButton(text=f"{icon} {label}", callback_data=f"toggle_{data_key}"),
+            )
+
+        project_id = int(callback.data.split("_")[-1]) if callback.data.split("_")[-1].isdigit() else 0
+        builder.row(
+            InlineKeyboardButton(text="Назад", callback_data=f"bot_settings_{project_id}"),
+        )
+
+        try:
+            await callback.message.edit_reply_markup(reply_markup=builder.as_markup())
+        except Exception:
+            pass

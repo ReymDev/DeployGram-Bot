@@ -110,37 +110,30 @@ def get_bot_control_keyboard(bot_id: int, status: str) -> InlineKeyboardMarkup:
 def get_bot_settings_keyboard(bot_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(
-            text="📦 Библиотеки",
-            callback_data=f"bot_libs_{bot_id}",
-        ),
-        InlineKeyboardButton(
-            text="📁 Файловый менеджер",
-            callback_data=f"bot_files_{bot_id}",
-        ),
+        InlineKeyboardButton(text="📦 Библиотеки", callback_data=f"bot_libs_{bot_id}"),
+        InlineKeyboardButton(text="📁 Файлы", callback_data=f"bot_files_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(
-            text="🐍 Версия Python",
-            callback_data=f"bot_python_{bot_id}",
-        ),
-        InlineKeyboardButton(
-            text="📄 Точка входа",
-            callback_data=f"bot_entry_{bot_id}",
-        ),
+        InlineKeyboardButton(text="🐍 Версия Python", callback_data=f"bot_python_{bot_id}"),
+        InlineKeyboardButton(text="📄 Точка входа", callback_data=f"bot_entry_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(
-            text="✏ Переименовать",
-            callback_data=f"bot_rename_{bot_id}",
-        ),
+        InlineKeyboardButton(text="🔒 Секреты (ENV)", callback_data=f"bot_secrets_{bot_id}"),
+        InlineKeyboardButton(text="📜 Версии", callback_data=f"bot_versions_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(
-            text="🗑 Удалить бота",
-            callback_data=f"bot_delete_{bot_id}",
-            style="danger",
-        ),
+        InlineKeyboardButton(text="👥 Совладельцы", callback_data=f"bot_coowners_{bot_id}"),
+        InlineKeyboardButton(text="🖋 Редактор", callback_data=f"bot_editor_{bot_id}"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="📊 Графики", callback_data=f"bot_graphs_{bot_id}"),
+        InlineKeyboardButton(text="🔔 Уведомления", callback_data=f"bot_notify_{bot_id}"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="✏ Переименовать", callback_data=f"bot_rename_{bot_id}"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="🗑 Удалить бота", callback_data=f"bot_delete_{bot_id}", style="danger"),
     )
     builder.row(
         InlineKeyboardButton(text="Назад", callback_data=f"bot_view_{bot_id}"),

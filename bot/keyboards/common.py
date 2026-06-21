@@ -21,21 +21,15 @@ def get_welcome_keyboard() -> InlineKeyboardMarkup:
 def get_control_panel_keyboard(has_bots: bool = False) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(
-            text="💳 Подписка",
-            callback_data="subscription",
-        ),
-        InlineKeyboardButton(
-            text="☁ Бэкапы",
-            callback_data="backups_list",
-        ),
+        InlineKeyboardButton(text="💳 Подписка", callback_data="subscription"),
+        InlineKeyboardButton(text="☁ Бэкапы", callback_data="backups_list"),
     )
     builder.row(
-        InlineKeyboardButton(
-            text="➕ Добавить бота",
-            callback_data="add_bot",
-            style="primary",
-        ),
+        InlineKeyboardButton(text="🎁 Промокод", callback_data="promo_activate"),
+        InlineKeyboardButton(text="🔗 Рефералы", callback_data="referrals"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="➕ Добавить бота", callback_data="add_bot", style="primary"),
     )
     return builder.as_markup()
 
