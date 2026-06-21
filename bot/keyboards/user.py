@@ -244,14 +244,14 @@ def get_settings_keyboard(
         return "✅" if val else "❌"
 
     items = [
-        ("notify_stopped", "Контейнер остановлен", notify_stopped),
-        ("notify_started", "Контейнер запущен", notify_started),
+        ("notify_container_stopped", "Контейнер остановлен", notify_stopped),
+        ("notify_container_started", "Контейнер запущен", notify_started),
         ("notify_error", "Ошибка запуска", notify_error),
         ("notify_high_cpu", "Высокая нагрузка CPU", notify_high_cpu),
         ("notify_high_ram", "Высокая нагрузка RAM", notify_high_ram),
         ("notify_low_disk", "Мало места на диске", notify_low_disk),
-        ("notify_backup", "Бэкап создан", notify_backup),
-        ("notify_update", "Обновление завершено", notify_update),
+        ("notify_backup_created", "Бэкап создан", notify_backup),
+        ("notify_update_done", "Обновление завершено", notify_update),
     ]
 
     for data, label, val in items:
@@ -412,7 +412,12 @@ def get_secrets_keyboard(project_id: int, secrets: dict[str, str]) -> InlineKeyb
                 text=f"🔒 {key} = {hidden}",
                 callback_data=f"secret_view_{project_id}_{key}",
                 icon_custom_emoji_id=EmojiID.LOCK,
-            )
+            ),
+            InlineKeyboardButton(
+                text="🗑",
+                callback_data=f"secret_del_{project_id}_{key}",
+                style="danger",
+            ),
         )
 
     builder.row(

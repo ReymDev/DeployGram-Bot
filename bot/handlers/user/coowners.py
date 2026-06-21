@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from aiogram import Router, F
-from aiogram.types import CallbackQuery
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
@@ -70,4 +70,49 @@ async def coowner_remove(callback: CallbackQuery, project_service, db_user, sess
     await callback.message.edit_text(
         f"{Emoji.PEOPLE} <b>Совладельцы: {project.name}</b>",
         reply_markup=get_coowners_keyboard(project_id, coowners),
+    )
+
+
+@router.message(F.text, CoOwnerStates.waiting_id)
+async def coowner_id_received(message: Message, state: FSMContext, session, db_user):
+    data = await state.get_data()
+    project_id = data.get("coowner_project_id")
+
+    try:
+        target_telegram_id = int(message.text.strip())
+    except ValueError:
+        await message.answer("❌ Введите числовой Telegram ID")
+        return
+
+    if target_telegram_id == db_user.telegram_id:
+        await message.answer("❌ Нельзя добавить самого себя")
+        return
+
+    from repositories.user import UserRepository
+    user_repo = UserRepository(session)
+    target_user = await user_repo.get_by_telegram_id(target_telegram_id)
+
+    if target_user is None:
+        await message.answer(
+            "❌ Пользователь не найден. Он должен хотя бы раз запустить бота."
+        )
+        return
+
+    from repositories.coowner import CoOwnerRepository
+    coowner_repo = CoOwnerRepository(session)
+    existing = await coowner_repo.get_by_user_and_project(target_user.id, project_id)
+    if existing:
+        await message.answer("❌ Этот пользователь уже совладелец")
+        return
+
+    await coowner_repo.create(
+        project_id=project_id,
+        user_id=target_user.id,
+        role="developer",
+    )
+
+    await state.clear()
+    await message.answer(
+        f"{Emoji.CHECK} Пользователь <b>{target_user.username or target_telegram_id}</b> добавлен как совладелец.",
+        reply_markup=get_back_keyboard(f"project_coowners_{project_id}"),
     )

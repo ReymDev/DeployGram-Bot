@@ -250,9 +250,83 @@ async def admin_server_add(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
+@router.callback_query(F.data.startswith("admin_user_balance_"))
+async def admin_user_balance(callback: CallbackQuery, state: FSMContext):
+    user_id = int(callback.data.replace("admin_user_balance_", ""))
+    await state.update_data(admin_balance_user_id=user_id)
+    await callback.message.edit_text(
+        f"{Emoji.COIN} Введите сумму баланса (положительное = пополнение, отрицательное = списание):",
+    )
+    await state.set_state(AdminUserStates.waiting_balance)
+    await callback.answer()
+
+
+@router.message(F.text, AdminUserStates.waiting_balance)
+async def admin_balance_input(message: Message, state: FSMContext, session):
+    if not is_admin(message.from_user.id):
+        return
+
+    try:
+        amount = float(message.text.strip())
+    except ValueError:
+        await message.answer("❌ Введите число:")
+        return
+
+    data = await state.get_data()
+    user_id = data.get("admin_balance_user_id")
+
+    user_svc = UserService(session)
+    await user_svc.update_balance(user_id, amount)
+
+    user = await user_svc.get_user_by_id(user_id)
+    await state.clear()
+    await message.answer(
+        f"{Emoji.CHECK} Баланс изменён на {amount:.2f}\n"
+        f"Новый баланс: {user.balance:.2f}" if user else "Пользователь не найден",
+        reply_markup=get_back_keyboard("admin_panel"),
+    )
+
+
 @router.callback_query(F.data == "admin_subscriptions")
-async def admin_subscriptions(callback: CallbackQuery):
-    await callback.answer("Управление подписками в разработке", show_alert=True)
+async def admin_subscriptions(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
+
+    user_svc = UserService(session)
+    users = await user_svc.get_all_users()
+
+    premium_count = sum(1 for u in users if u.tariff == "premium")
+    free_count = sum(1 for u in users if u.tariff == "free")
+
+    text = (
+        f"💎 <b>Подписки</b>\n\n"
+        f"🆓 Free: {free_count}\n"
+        f"💎 Premium: {premium_count}\n"
+        f"Всего: {len(users)}"
+    )
+
+    await callback.message.edit_text(text, reply_markup=get_back_keyboard("admin_panel"))
+    await callback.answer()
+
+
+@router.callback_query(F.data == "admin_referrals")
+async def admin_referrals(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
+
+    from repositories.referral import ReferralRepository
+    ref_repo = ReferralRepository(session)
+    referrals = await ref_repo.get_all()
+
+    text = (
+        f"🔗 <b>Рефералы</b>\n\n"
+        f"Всего рефералов: {len(referrals)}"
+    )
+
+    await callback.message.edit_text(text, reply_markup=get_back_keyboard("admin_panel"))
+    await callback.answer()
 
 
 @router.callback_query(F.data == "admin_servers")
@@ -469,14 +543,21 @@ async def admin_settings(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("admin_sleep_"))
 async def admin_set_sleep(callback: CallbackQuery):
-    minutes = int(callback.data.split("_")[-1])
+    minutes = int(callback.data.replace("admin_sleep_", ""))
+
+    from bot.config import settings as cfg
+    cfg.AUTO_SLEEP_MINUTES = minutes
+
     await callback.answer(f"✅ Автосон: {minutes} минут", show_alert=True)
+
+    from bot.keyboards.admin import get_admin_settings_keyboard
+    await callback.message.edit_reply_markup(reply_markup=get_admin_settings_keyboard(minutes))
 
 
 # ─── BROADCAST HANDLER ───
 
 @router.message(F.text, BroadcastStates.waiting_for_message)
-async def broadcast_receive(message: Message, state: FSMContext, session):
+async def broadcast_receive(message: Message, state: FSMContext, session, bot):
     if not is_admin(message.from_user.id):
         return
 
@@ -488,9 +569,6 @@ async def broadcast_receive(message: Message, state: FSMContext, session):
     failed = 0
     for user in users:
         try:
-            from aiogram import Bot
-            from bot.config import settings
-            bot = Bot(token=settings.BOT_TOKEN)
             await bot.send_message(user.telegram_id, message.text)
             sent += 1
         except Exception:

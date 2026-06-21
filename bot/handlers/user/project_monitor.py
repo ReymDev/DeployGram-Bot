@@ -20,9 +20,10 @@ async def project_monitor(callback: CallbackQuery, project_service, db_user):
     monitoring = await project_service.get_monitoring(project_id)
 
     from bot.utils.formatters import format_status, format_uptime
+    status_text = format_status(monitoring.get('status', 'unknown'))
     text = (
         f"{Emoji.GRAPH_STATS} <b>Мониторинг: {project.name}</b>\n\n"
-        f"Статус: {format_status(monitoring.get('status', 'unknown'))}\n"
+        f"Статус: {status_text}\n"
         f"CPU: <b>{monitoring.get('cpu', 0):.1f}%</b>\n"
         f"RAM: <b>{monitoring.get('ram', 0):.1f} MB</b>\n"
         f"Disk: <b>{monitoring.get('disk', 0):.1f} MB</b>\n"

@@ -12,6 +12,8 @@ RUN pip install --no-cache-dir \
     psutil
 
 COPY agent/ .
+COPY services/docker_manager.py ./services/docker_manager.py
+RUN mkdir -p services && touch services/__init__.py
 
 EXPOSE 8080
 

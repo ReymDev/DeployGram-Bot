@@ -102,6 +102,20 @@ async def main() -> None:
 
     dp.errors.register(error_handler)
 
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from services.scheduler import SchedulerService
+
+    scheduler = AsyncIOScheduler()
+    scheduler_service = SchedulerService()
+
+    scheduler.add_job(scheduler_service.collect_metrics, "interval", minutes=5)
+    scheduler.add_job(scheduler_service.check_auto_sleep, "interval", minutes=1)
+    scheduler.add_job(scheduler_service.cleanup_inactive_projects, "interval", hours=1)
+    scheduler.add_job(scheduler_service.auto_backup, "interval", hours=settings.BACKUP_INTERVAL_HOURS)
+
+    scheduler.start()
+    logger.info("Scheduler started")
+
     logger.info("DeployGram bot starting...")
     await dp.start_polling(bot)
 

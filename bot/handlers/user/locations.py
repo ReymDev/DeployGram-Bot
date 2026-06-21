@@ -35,6 +35,9 @@ async def locations_menu(callback: CallbackQuery, session):
             )
         )
     builder.row(
+        InlineKeyboardButton(text="🔄 Обновить", callback_data="locations"),
+    )
+    builder.row(
         InlineKeyboardButton(text="◁ Меню", callback_data="main_menu"),
     )
 

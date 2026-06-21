@@ -29,6 +29,9 @@ class MonitoringService:
         if project is None or not project.docker_container_id:
             return None
 
+        if not self.docker:
+            return None
+
         stats = await self.docker.get_container_stats(project.docker_container_id)
         return await self.stats_repo.create(
             project_id=project_id,

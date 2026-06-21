@@ -83,7 +83,6 @@ class DockerManager:
                     "project_id": str(project_id),
                 },
                 restart_policy={"Name": "on-failure", "MaximumRetryCount": 3},
-                nano_cpus=0,
             )
             return container.id
 
@@ -343,7 +342,8 @@ class DockerManager:
         def _clear() -> bool:
             try:
                 container = self.client.containers.get(container_id)
-                container.truncate()
+                container.stop()
+                container.remove(force=True)
                 return True
             except (NotFound, APIError) as e:
                 logger.error("Failed to clear logs for %s: %s", container_id, e)

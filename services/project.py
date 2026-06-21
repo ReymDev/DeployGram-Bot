@@ -182,6 +182,20 @@ class ProjectService:
             await self.project_repo.update(project_id, status="stopped")
             return True, "Проект уже остановлен"
 
+        if project.server_id:
+            from repositories.server import ServerRepository
+            from services.vps_agent import VPSClient
+            server_repo = ServerRepository(self.session)
+            server = await server_repo.get_by_id(project.server_id)
+            if server:
+                client = VPSClient(
+                    base_url=f"http://{server.ip}:{server.port}",
+                    api_key=server.api_key or "",
+                )
+                await client.stop_container(project.docker_container_id)
+                await self.project_repo.update(project_id, status="stopped")
+                return True, "Проект остановлен"
+
         if not self.docker:
             return False, "Docker недоступен"
 
@@ -207,7 +221,34 @@ class ProjectService:
 
     async def get_monitoring(self, project_id: int) -> dict:
         project = await self.project_repo.get_by_id(project_id)
-        if project is None or not project.docker_container_id or not self.docker:
+        if project is None or not project.docker_container_id:
+            return {"status": "stopped", "cpu": 0, "ram": 0, "disk": 0, "uptime": "—", "restarts": 0}
+
+        if project.server_id:
+            from repositories.server import ServerRepository
+            from services.vps_agent import VPSClient
+            server_repo = ServerRepository(self.session)
+            server = await server_repo.get_by_id(project.server_id)
+            if server:
+                client = VPSClient(
+                    base_url=f"http://{server.ip}:{server.port}",
+                    api_key=server.api_key or "",
+                )
+                try:
+                    status = await client.get_status(project.docker_container_id)
+                    stats = await client.get_stats(project.docker_container_id)
+                    return {
+                        "status": "running" if status.get("running") else "stopped",
+                        "cpu": stats.get("cpu_percent", 0),
+                        "ram": stats.get("ram_mb", 0),
+                        "disk": stats.get("disk_mb", 0),
+                        "uptime": "—",
+                        "restarts": project.restart_count,
+                    }
+                except Exception:
+                    pass
+
+        if not self.docker:
             return {"status": "stopped", "cpu": 0, "ram": 0, "disk": 0, "uptime": "—", "restarts": 0}
 
         status = await self.docker.get_container_status(project.docker_container_id)
@@ -224,8 +265,28 @@ class ProjectService:
 
     async def get_logs(self, project_id: int, tail: int = 100) -> str:
         project = await self.project_repo.get_by_id(project_id)
-        if project is None or not project.docker_container_id or not self.docker:
+        if project is None or not project.docker_container_id:
             return "Проект не запущен"
+
+        if project.server_id:
+            from repositories.server import ServerRepository
+            from services.vps_agent import VPSClient
+            server_repo = ServerRepository(self.session)
+            server = await server_repo.get_by_id(project.server_id)
+            if server:
+                client = VPSClient(
+                    base_url=f"http://{server.ip}:{server.port}",
+                    api_key=server.api_key or "",
+                )
+                try:
+                    result = await client.get_logs(project.docker_container_id, tail)
+                    return result.get("logs", "")
+                except Exception:
+                    return "Ошибка получения логов"
+
+        if not self.docker:
+            return "Docker недоступен"
+
         return await self.docker.get_container_logs(project.docker_container_id, tail)
 
     async def save_version(
@@ -344,36 +405,120 @@ class ProjectService:
 
     async def list_files(self, project_id: int, path: str = "/app") -> list[str]:
         project = await self.project_repo.get_by_id(project_id)
-        if not project or not project.docker_container_id or not self.docker:
+        if not project or not project.docker_container_id:
             return []
+
+        if project.server_id:
+            from repositories.server import ServerRepository
+            from services.vps_agent import VPSClient
+            server_repo = ServerRepository(self.session)
+            server = await server_repo.get_by_id(project.server_id)
+            if server:
+                client = VPSClient(
+                    base_url=f"http://{server.ip}:{server.port}",
+                    api_key=server.api_key or "",
+                )
+                try:
+                    result = await client.list_files(project_id, path)
+                    return result.get("files", [])
+                except Exception:
+                    return []
+
+        if not self.docker:
+            return []
+
         return await self.docker.list_files(project.docker_container_id, path)
 
     async def read_file(self, project_id: int, file_path: str) -> str:
         project = await self.project_repo.get_by_id(project_id)
-        if not project or not project.docker_container_id or not self.docker:
+        if not project or not project.docker_container_id:
             return ""
+
+        if project.server_id:
+            from repositories.server import ServerRepository
+            from services.vps_agent import VPSClient
+            server_repo = ServerRepository(self.session)
+            server = await server_repo.get_by_id(project.server_id)
+            if server:
+                client = VPSClient(
+                    base_url=f"http://{server.ip}:{server.port}",
+                    api_key=server.api_key or "",
+                )
+                try:
+                    result = await client.read_file(project_id, file_path)
+                    return result.get("content", "")
+                except Exception:
+                    return ""
+
+        if not self.docker:
+            return ""
+
         return await self.docker.read_file(project.docker_container_id, file_path)
 
     async def write_file(self, project_id: int, file_path: str, content: str) -> bool:
         project = await self.project_repo.get_by_id(project_id)
-        if not project or not project.docker_container_id or not self.docker:
+        if not project or not project.docker_container_id:
             return False
+
+        if project.server_id:
+            from repositories.server import ServerRepository
+            from services.vps_agent import VPSClient
+            server_repo = ServerRepository(self.session)
+            server = await server_repo.get_by_id(project.server_id)
+            if server:
+                client = VPSClient(
+                    base_url=f"http://{server.ip}:{server.port}",
+                    api_key=server.api_key or "",
+                )
+                try:
+                    result = await client.write_file(project_id, file_path, content)
+                    return result.get("status") == "ok"
+                except Exception:
+                    return False
+
+        if not self.docker:
+            return False
+
         return await self.docker.write_file(project.docker_container_id, file_path, content)
 
     async def delete_file(self, project_id: int, file_path: str) -> bool:
         project = await self.project_repo.get_by_id(project_id)
-        if not project or not project.docker_container_id or not self.docker:
+        if not project or not project.docker_container_id:
             return False
+
+        if project.server_id:
+            from repositories.server import ServerRepository
+            from services.vps_agent import VPSClient
+            server_repo = ServerRepository(self.session)
+            server = await server_repo.get_by_id(project.server_id)
+            if server:
+                client = VPSClient(
+                    base_url=f"http://{server.ip}:{server.port}",
+                    api_key=server.api_key or "",
+                )
+                try:
+                    result = await client.delete_file(project_id, file_path)
+                    return result.get("status") == "ok"
+                except Exception:
+                    return False
+
+        if not self.docker:
+            return False
+
         return await self.docker.delete_file(project.docker_container_id, file_path)
 
     async def create_dir(self, project_id: int, dir_path: str) -> bool:
         project = await self.project_repo.get_by_id(project_id)
-        if not project or not project.docker_container_id or not self.docker:
+        if not project or not project.docker_container_id:
+            return False
+        if not self.docker:
             return False
         return await self.docker.create_dir(project.docker_container_id, dir_path)
 
     async def clear_logs(self, project_id: int) -> bool:
         project = await self.project_repo.get_by_id(project_id)
-        if not project or not project.docker_container_id or not self.docker:
+        if not project or not project.docker_container_id:
+            return False
+        if not self.docker:
             return False
         return await self.docker.clear_logs(project.docker_container_id)

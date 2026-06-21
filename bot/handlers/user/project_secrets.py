@@ -113,3 +113,47 @@ async def secret_value_received(message: Message, state: FSMContext):
         f"{Emoji.CHECK} Секрет <b>{key}</b> сохранён.",
         reply_markup=get_back_keyboard(f"project_secrets_{project_id}"),
     )
+
+
+@router.callback_query(F.data.startswith("secret_del_"))
+async def secret_delete(callback: CallbackQuery, project_service, session):
+    parts = callback.data.split("_")
+    project_id = int(parts[2])
+    key = "_".join(parts[3:])
+
+    project = await project_service.get_project(project_id)
+    if project is None:
+        await callback.answer("Проект не найден", show_alert=True)
+        return
+
+    from repositories.project import ProjectVersionRepository
+    from services.project import ProjectService
+    from db.engine import async_session_factory
+
+    async with async_session_factory() as session:
+        version_repo = ProjectVersionRepository(session)
+        version = await version_repo.get_latest(project_id)
+
+        secrets = {}
+        if version and version.secrets:
+            try:
+                secrets = json.loads(version.secrets)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        if key in secrets:
+            del secrets[key]
+            project_svc = ProjectService(session)
+            project = await project_svc.get_project(project_id)
+            await project_svc.save_version(
+                project_id,
+                secrets=json.dumps(secrets),
+                entry_point=project.entry_point if project else "main.py",
+                python_version=project.python_version if project else "3.12",
+            )
+
+    await callback.answer(f"✅ Секрет {key} удалён", show_alert=True)
+    await callback.message.edit_text(
+        f"{Emoji.CHECK} Секрет <b>{key}</b> удалён.",
+        reply_markup=get_back_keyboard(f"project_secrets_{project_id}"),
+    )

@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+import logging
+import os
+import shutil
+import zipfile
+from pathlib import Path
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from bot.config import BASE_DIR
 from models.backup import Backup
 from repositories.backup import BackupRepository
 from repositories.project import ProjectRepository
+
+logger = logging.getLogger(__name__)
 
 
 class BackupService:
@@ -13,10 +22,32 @@ class BackupService:
         self.backup_repo = BackupRepository(session)
         self.project_repo = ProjectRepository(session)
 
+    def _get_backup_dir(self, project_id: int) -> Path:
+        backup_dir = BASE_DIR / "data" / "backups" / str(project_id)
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        return backup_dir
+
     async def create_backup(self, project_id: int, version_id: int | None = None, size: int = 0) -> Backup | None:
         project = await self.project_repo.get_by_id(project_id)
         if project is None:
             return None
+
+        project_dir = BASE_DIR / "data" / "projects" / str(project_id)
+        backup_dir = self._get_backup_dir(project_id)
+
+        if project_dir.exists():
+            backup_file = backup_dir / f"backup_{project_id}_{len(os.listdir(backup_dir))}.zip"
+            try:
+                with zipfile.ZipFile(backup_file, "w", zipfile.ZIP_DEFLATED) as zf:
+                    for root, dirs, files in os.walk(project_dir):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            arcname = os.path.relpath(file_path, project_dir)
+                            zf.write(file_path, arcname)
+                size = backup_file.stat().st_size
+            except Exception as e:
+                logger.error("Failed to create backup for project %d: %s", project_id, e)
+
         return await self.backup_repo.create(
             project_id=project_id,
             version_id=version_id,
@@ -29,8 +60,33 @@ class BackupService:
     async def delete_backup(self, backup_id: int) -> bool:
         return await self.backup_repo.delete(backup_id)
 
-    async def restore_backup(self, backup_id: int) -> bool:
+    async def restore_backup(self, backup_id: int) -> tuple[bool, str]:
         backup = await self.backup_repo.get_by_id(backup_id)
         if backup is None:
-            return False
-        return True
+            return False, "Бэкап не найден"
+
+        project = await self.project_repo.get_by_id(backup.project_id)
+        if project is None:
+            return False, "Проект не найден"
+
+        backup_dir = self._get_backup_dir(backup.project_id)
+        backup_files = list(backup_dir.glob("backup_*.zip"))
+
+        if not backup_files:
+            return False, "Файл бэкапа не найден"
+
+        latest_backup = max(backup_files, key=os.path.getctime)
+        project_dir = BASE_DIR / "data" / "projects" / str(backup.project_id)
+
+        try:
+            if project_dir.exists():
+                shutil.rmtree(project_dir)
+            project_dir.mkdir(parents=True, exist_ok=True)
+
+            with zipfile.ZipFile(latest_backup, "r") as zf:
+                zf.extractall(project_dir)
+
+            return True, "Бэкап восстановлен"
+        except Exception as e:
+            logger.error("Failed to restore backup %d: %s", backup_id, e)
+            return False, f"Ошибка восстановления: {e}"

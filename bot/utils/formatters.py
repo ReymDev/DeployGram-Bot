@@ -33,6 +33,7 @@ def format_status(status: str) -> str:
         "starting": f"{Emoji.LOADING} Запускается",
         "error": f"{Emoji.CROSS} Ошибка",
         "creating": f"{Emoji.LOADING} Создаётся",
+        "sleeping": f"{Emoji.CLOCK} Спит",
     }
     return statuses.get(status, status)
 

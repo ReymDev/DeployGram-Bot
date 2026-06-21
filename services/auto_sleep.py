@@ -33,8 +33,8 @@ class AutoSleepService:
         slept = 0
 
         for project in projects:
-            if project.updated_at < threshold:
-                if project.docker_container_id:
+            if project.updated_at and project.updated_at < threshold:
+                if project.docker_container_id and self.docker:
                     await self.docker.stop_container(project.docker_container_id)
                     await self.project_repo.update(project.id, status="sleeping")
                     slept += 1
@@ -50,3 +50,7 @@ class AutoSleepService:
             return False, "Проект не в спящем режиме"
         await self.project_repo.update(project_id, status="stopped")
         return True, "Проект готов к запуску"
+
+    async def update_settings(self, minutes: int) -> None:
+        settings.AUTO_SLEEP_MINUTES = minutes
+        logger.info("Auto-sleep updated to %d minutes", minutes)

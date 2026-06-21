@@ -101,8 +101,7 @@ async def project_restart(callback: CallbackQuery, project_service, db_user):
 
 @router.callback_query(F.data.startswith("project_delete_"))
 async def project_delete(callback: CallbackQuery, project_service, db_user):
-    parts = callback.data.split("_")
-    project_id = int(parts[2])
+    project_id = int(callback.data.replace("project_delete_", ""))
     project = await _check_owner(callback, project_service, db_user, project_id)
     if project is None:
         return
@@ -136,7 +135,7 @@ async def project_delete(callback: CallbackQuery, project_service, db_user):
 
 @router.callback_query(F.data.startswith("project_del_confirm_"))
 async def project_delete_confirm(callback: CallbackQuery, project_service, db_user):
-    project_id = int(callback.data.split("_")[-1])
+    project_id = int(callback.data.replace("project_del_confirm_", ""))
     project = await _check_owner(callback, project_service, db_user, project_id)
     if project is None:
         await callback.answer("Проект не найден", show_alert=True)

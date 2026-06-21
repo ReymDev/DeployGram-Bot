@@ -28,9 +28,10 @@ async def files_menu(callback: CallbackQuery, project_service, db_user):
 
 
 def _parse_file_callback(data: str, prefix: str) -> tuple[int, str]:
-    parts = data.split("_")
-    project_id = int(parts[2])
-    file_path = "_".join(parts[3:]) if len(parts) > 3 else "main.py"
+    remaining = data.replace(prefix + "_", "", 1)
+    parts = remaining.split("_", 1)
+    project_id = int(parts[0])
+    file_path = parts[1] if len(parts) > 1 else "main.py"
     return project_id, file_path
 
 

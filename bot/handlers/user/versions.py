@@ -84,6 +84,16 @@ async def version_restore(callback: CallbackQuery, project_service, db_user):
 
     success = await project_service.restore_version(project_id, version_id)
     if success:
-        await callback.answer("✅ Версия восстановлена", show_alert=True)
+        from aiogram.utils.keyboard import InlineKeyboardBuilder
+        from aiogram.types import InlineKeyboardButton
+        builder = InlineKeyboardBuilder()
+        builder.row(
+            InlineKeyboardButton(text="◁ Назад", callback_data=f"project_versions_{project_id}"),
+        )
+        await callback.message.edit_text(
+            f"{Emoji.CHECK} Версия восстановлена.\n\n"
+            f"Для применения изменений перезапустите проект.",
+            reply_markup=builder.as_markup(),
+        )
     else:
         await callback.answer("❌ Ошибка восстановления", show_alert=True)

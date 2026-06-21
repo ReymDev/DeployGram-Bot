@@ -36,10 +36,18 @@ async def promo_code_received(message: Message, state: FSMContext, db_user, sess
 
     await state.clear()
     if success:
-        if promo and promo.reward_type == "tariff":
+        if promo:
             from services.user import UserService
             user_svc = UserService(session)
-            await user_svc.set_tariff(db_user.id, "premium")
+
+            if promo.reward_type == "tariff":
+                await user_svc.set_tariff(db_user.id, "premium")
+            elif promo.reward_type == "balance":
+                try:
+                    amount = float(promo.reward_value)
+                    await user_svc.update_balance(db_user.id, amount)
+                except (ValueError, TypeError):
+                    pass
 
         await message.answer(
             f"{Emoji.PARTY} {msg}",

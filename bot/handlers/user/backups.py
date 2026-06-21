@@ -46,5 +46,21 @@ async def backup_create(callback: CallbackQuery, project_service, db_user, sessi
 
 
 @router.callback_query(F.data.startswith("backup_view_"))
-async def backup_view(callback: CallbackQuery, project_service, db_user):
-    await callback.answer("Функция восстановления в разработке", show_alert=True)
+async def backup_view(callback: CallbackQuery, project_service, db_user, session):
+    parts = callback.data.split("_")
+    project_id = int(parts[2])
+    backup_id = int(parts[3])
+
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer("Нет доступа", show_alert=True)
+        return
+
+    from services.backup import BackupService
+    backup_svc = BackupService(session)
+    success, msg = await backup_svc.restore_backup(backup_id)
+
+    if success:
+        await callback.answer(f"✅ {msg}", show_alert=True)
+    else:
+        await callback.answer(f"❌ {msg}", show_alert=True)
