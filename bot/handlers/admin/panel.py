@@ -15,7 +15,7 @@ from bot.keyboards.admin import (
     get_admin_settings_keyboard,
 )
 from bot.keyboards.common import get_back_keyboard
-from bot.utils.emojis import Emoji
+from bot.utils.emojis import Emoji, EmojiID
 from bot.states.project import BroadcastStates, AdminUserStates, AdminServerStates, AdminPromoStates
 from services.user import UserService
 
