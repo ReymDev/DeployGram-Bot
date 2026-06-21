@@ -16,7 +16,7 @@ class VPSAgent:
     def __init__(self, host: str = "0.0.0.0", port: int = 8080, api_key: str = "") -> None:
         self.host = host
         self.port = port
-        self.api_key = api_key or secrets.token_hex(32)
+        self.api_key = api_key
         self.app = web.Application()
         self._setup_routes()
 
@@ -37,6 +37,8 @@ class VPSAgent:
         self.app.router.add_post("/project/{id}/file/delete", self.delete_file)
 
     def _check_auth(self, request: web.Request) -> bool:
+        if not self.api_key:
+            return True
         auth = request.headers.get("Authorization", "")
         return auth == f"Bearer {self.api_key}"
 
