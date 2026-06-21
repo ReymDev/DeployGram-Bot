@@ -562,6 +562,36 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         return
 
     data = await state.get_data()
+
+    await message.answer(f"{Emoji.LOADING} Проверяю подключение к агенту...")
+
+    from services.vps_agent import VPSClient
+    client = VPSClient(
+        base_url=f"http://{data['server_ip']}:8080",
+        api_key=data.get("server_api_key", ""),
+    )
+
+    try:
+        health = await client.health()
+        if health.get("status") != "ok":
+            await message.answer(
+                f"{Emoji.CROSS} Агент ответил, но статус не OK: {health}",
+                reply_markup=get_back_keyboard("admin_panel"),
+            )
+            return
+    except Exception as e:
+        await message.answer(
+            f"{Emoji.CROSS} <b>Не удалось подключиться к агенту</b>\n\n"
+            f"IP: {data['server_ip']}:8080\n"
+            f"Ошибка: <code>{e}</code>\n\n"
+            f"Убедитесь что:\n"
+            f"1. Агент запущен на сервере\n"
+            f"2. Порт 8080 открыт в firewall\n"
+            f"3. IP адрес верный",
+            reply_markup=get_back_keyboard("admin_panel"),
+        )
+        return
+
     from repositories.server import ServerRepository
     server_repo = ServerRepository(session)
     await server_repo.create(
@@ -576,7 +606,8 @@ async def server_slots_received(message: Message, state: FSMContext, session):
 
     await state.clear()
     await message.answer(
-        f"{Emoji.CHECK} Сервер <b>{data['server_name']}</b> добавлен.",
+        f"{Emoji.CHECK} Сервер <b>{data['server_name']}</b> добавлен.\n"
+        f"Подключение: OK",
         reply_markup=get_back_keyboard("admin_panel"),
     )
 

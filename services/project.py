@@ -9,7 +9,7 @@ from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.config import settings
+from bot.config import settings, BASE_DIR
 from models.project import Project, ProjectVersion, ProjectStats
 from repositories.project import ProjectRepository, ProjectVersionRepository, ProjectStatsRepository
 from repositories.user import UserRepository
