@@ -533,6 +533,19 @@ async def server_ip_received(message: Message, state: FSMContext):
         return
 
     await state.update_data(server_ip=message.text.strip())
+    await message.answer(f"{Emoji.HOME} Введите API ключ агента (или - если без ключа):")
+    await state.set_state(AdminServerStates.waiting_api_key)
+
+
+@router.message(F.text, AdminServerStates.waiting_api_key)
+async def server_api_key_received(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        return
+
+    api_key = message.text.strip()
+    if api_key == "-":
+        api_key = ""
+    await state.update_data(server_api_key=api_key)
     await message.answer(f"{Emoji.HOME} Введите количество слотов:")
     await state.set_state(AdminServerStates.waiting_slots)
 
@@ -555,7 +568,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         name=data["server_name"],
         country=data["server_country"],
         ip=data["server_ip"],
-        api_key="",
+        api_key=data.get("server_api_key", ""),
         total_slots=slots,
         free_slots=slots,
         status="online",
