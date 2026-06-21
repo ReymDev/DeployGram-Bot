@@ -294,7 +294,7 @@ async def admin_server_view(callback: CallbackQuery, session):
     builder.row(
         InlineKeyboardButton(
             text="🗑 Удалить сервер",
-            callback_data=f"admin_srv_del_{server_id}",
+            callback_data=f"admin_sdel_{server_id}",
             style="danger",
             icon_custom_emoji_id=EmojiID.TRASH,
         ),
@@ -307,7 +307,7 @@ async def admin_server_view(callback: CallbackQuery, session):
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("admin_srv_del_"))
+@router.callback_query(F.data.startswith("admin_sdel_"))
 async def admin_server_delete(callback: CallbackQuery, session):
     if not is_admin(callback.from_user.id):
         await callback.answer("⛔", show_alert=True)
@@ -328,7 +328,7 @@ async def admin_server_delete(callback: CallbackQuery, session):
     builder.row(
         InlineKeyboardButton(
             text="✅ Да, удалить",
-            callback_data=f"admin_srv_del_ok_{server_id}",
+            callback_data=f"admin_sdelyes_{server_id}",
             style="danger",
         ),
         InlineKeyboardButton(
@@ -347,7 +347,7 @@ async def admin_server_delete(callback: CallbackQuery, session):
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("admin_srv_del_ok_"))
+@router.callback_query(F.data.startswith("admin_sdelyes_"))
 async def admin_server_delete_confirm(callback: CallbackQuery, session):
     if not is_admin(callback.from_user.id):
         await callback.answer("⛔", show_alert=True)
