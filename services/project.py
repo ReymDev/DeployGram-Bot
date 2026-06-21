@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import logging
+import os
 import zipfile
 from pathlib import Path
 
@@ -134,12 +135,19 @@ class ProjectService:
                 api_key=server.api_key or "",
             )
 
-            project_dir = str(self.get_project_dir(project_id))
-            import os
-            zip_path = os.path.join(project_dir, "project.zip")
-            if os.path.exists(zip_path):
-                with open(zip_path, "rb") as f:
-                    await client.upload_project(project_id, f.read())
+            import io
+            import zipfile
+            project_dir = self.get_project_dir(project_id)
+
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+                for root, dirs, files in os.walk(project_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_path, project_dir)
+                        zf.write(file_path, arcname)
+
+            await client.upload_project(project_id, zip_buffer.getvalue())
 
             result = await client.create_container({
                 "project_id": project_id,
