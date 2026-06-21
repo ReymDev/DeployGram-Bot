@@ -61,12 +61,12 @@ class VPSAgent:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
 
-        data = await request.json()
-        import docker
-        from services.docker_manager import DockerManager
-
-        dm = DockerManager()
         try:
+            data = await request.json()
+            import docker
+            from services.docker_manager import DockerManager
+
+            dm = DockerManager()
             container_id = await dm.create_container(
                 project_id=data["project_id"],
                 project_name=data["project_name"],
@@ -83,63 +83,75 @@ class VPSAgent:
     async def start_container(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
-
-        data = await request.json()
-        from services.docker_manager import DockerManager
-        dm = DockerManager()
-        success = await dm.start_container(data["container_id"])
-        return web.json_response({"success": success})
+        try:
+            data = await request.json()
+            from services.docker_manager import DockerManager
+            dm = DockerManager()
+            success = await dm.start_container(data["container_id"])
+            return web.json_response({"success": success})
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
     async def stop_container(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
-
-        data = await request.json()
-        from services.docker_manager import DockerManager
-        dm = DockerManager()
-        success = await dm.stop_container(data["container_id"])
-        return web.json_response({"success": success})
+        try:
+            data = await request.json()
+            from services.docker_manager import DockerManager
+            dm = DockerManager()
+            success = await dm.stop_container(data["container_id"])
+            return web.json_response({"success": success})
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
     async def remove_container(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
-
-        data = await request.json()
-        from services.docker_manager import DockerManager
-        dm = DockerManager()
-        success = await dm.remove_container(data["container_id"])
-        return web.json_response({"success": success})
+        try:
+            data = await request.json()
+            from services.docker_manager import DockerManager
+            dm = DockerManager()
+            success = await dm.remove_container(data["container_id"])
+            return web.json_response({"success": success})
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
     async def container_status(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
-
-        container_id = request.match_info["id"]
-        from services.docker_manager import DockerManager
-        dm = DockerManager()
-        status = await dm.get_container_status(container_id)
-        return web.json_response(status)
+        try:
+            container_id = request.match_info["id"]
+            from services.docker_manager import DockerManager
+            dm = DockerManager()
+            status = await dm.get_container_status(container_id)
+            return web.json_response(status)
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
     async def container_stats(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
-
-        container_id = request.match_info["id"]
-        from services.docker_manager import DockerManager
-        dm = DockerManager()
-        stats = await dm.get_container_stats(container_id)
-        return web.json_response(stats)
+        try:
+            container_id = request.match_info["id"]
+            from services.docker_manager import DockerManager
+            dm = DockerManager()
+            stats = await dm.get_container_stats(container_id)
+            return web.json_response(stats)
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
     async def container_logs(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
-
-        container_id = request.match_info["id"]
-        tail = int(request.query.get("tail", 100))
-        from services.docker_manager import DockerManager
-        dm = DockerManager()
-        logs = await dm.get_container_logs(container_id, tail)
-        return web.json_response({"logs": logs})
+        try:
+            container_id = request.match_info["id"]
+            tail = int(request.query.get("tail", 100))
+            from services.docker_manager import DockerManager
+            dm = DockerManager()
+            logs = await dm.get_container_logs(container_id, tail)
+            return web.json_response({"logs": logs})
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
     async def run(self) -> None:
         runner = web.AppRunner(self.app)
@@ -157,98 +169,108 @@ class VPSAgent:
     async def upload_project(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
+        try:
+            project_id = request.match_info["id"]
+            project_dir = self._get_project_dir(project_id)
 
-        project_id = request.match_info["id"]
-        project_dir = self._get_project_dir(project_id)
+            reader = await request.multipart()
+            while True:
+                part = await reader.next()
+                if part is None:
+                    break
+                if part.name == "file":
+                    filename = part.filename or "archive.zip"
+                    filepath = os.path.join(project_dir, filename)
+                    with open(filepath, "wb") as f:
+                        while True:
+                            chunk = await part.read_chunk()
+                            if not chunk:
+                                break
+                            f.write(chunk)
 
-        reader = await request.multipart()
-        while True:
-            part = await reader.next()
-            if part is None:
-                break
-            if part.name == "file":
-                filename = part.filename or "archive.zip"
-                filepath = os.path.join(project_dir, filename)
-                with open(filepath, "wb") as f:
-                    while True:
-                        chunk = await part.read_chunk()
-                        if not chunk:
-                            break
-                        f.write(chunk)
+                    import zipfile
+                    with zipfile.ZipFile(filepath, "r") as zf:
+                        zf.extractall(project_dir)
+                    os.remove(filepath)
 
-                import zipfile
-                with zipfile.ZipFile(filepath, "r") as zf:
-                    zf.extractall(project_dir)
-                os.remove(filepath)
-
-        return web.json_response({"status": "ok", "project_dir": project_dir})
+            return web.json_response({"status": "ok", "project_dir": project_dir})
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
     async def list_files(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
+        try:
+            project_id = request.match_info["id"]
+            project_dir = self._get_project_dir(project_id)
+            path = request.query.get("path", "/")
 
-        project_id = request.match_info["id"]
-        project_dir = self._get_project_dir(project_id)
-        path = request.query.get("path", "/")
+            full_path = os.path.join(project_dir, path.lstrip("/"))
+            if not os.path.exists(full_path):
+                return web.json_response({"files": []})
 
-        full_path = os.path.join(project_dir, path.lstrip("/"))
-        if not os.path.exists(full_path):
-            return web.json_response({"files": []})
-
-        files = []
-        for name in os.listdir(full_path):
-            files.append(name)
-        return web.json_response({"files": files})
+            files = []
+            for name in os.listdir(full_path):
+                files.append(name)
+            return web.json_response({"files": files})
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
     async def read_file(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
+        try:
+            project_id = request.match_info["id"]
+            project_dir = self._get_project_dir(project_id)
+            file_path = request.query.get("path", "")
 
-        project_id = request.match_info["id"]
-        project_dir = self._get_project_dir(project_id)
-        file_path = request.query.get("path", "")
+            full_path = os.path.join(project_dir, file_path.lstrip("/"))
+            if not os.path.exists(full_path):
+                return web.json_response({"error": "file not found"}, status=404)
 
-        full_path = os.path.join(project_dir, file_path.lstrip("/"))
-        if not os.path.exists(full_path):
-            return web.json_response({"error": "file not found"}, status=404)
-
-        with open(full_path, "r", errors="replace") as f:
-            content = f.read()
-        return web.json_response({"content": content})
+            with open(full_path, "r", errors="replace") as f:
+                content = f.read()
+            return web.json_response({"content": content})
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
     async def write_file(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
+        try:
+            project_id = request.match_info["id"]
+            project_dir = self._get_project_dir(project_id)
+            data = await request.json()
+            file_path = data.get("path", "")
+            content = data.get("content", "")
 
-        project_id = request.match_info["id"]
-        project_dir = self._get_project_dir(project_id)
-        data = await request.json()
-        file_path = data.get("path", "")
-        content = data.get("content", "")
-
-        full_path = os.path.join(project_dir, file_path.lstrip("/"))
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        with open(full_path, "w") as f:
-            f.write(content)
-        return web.json_response({"status": "ok"})
+            full_path = os.path.join(project_dir, file_path.lstrip("/"))
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            with open(full_path, "w") as f:
+                f.write(content)
+            return web.json_response({"status": "ok"})
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
     async def delete_file(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
             return web.json_response({"error": "unauthorized"}, status=401)
+        try:
+            project_id = request.match_info["id"]
+            project_dir = self._get_project_dir(project_id)
+            data = await request.json()
+            file_path = data.get("path", "")
 
-        project_id = request.match_info["id"]
-        project_dir = self._get_project_dir(project_id)
-        data = await request.json()
-        file_path = data.get("path", "")
-
-        full_path = os.path.join(project_dir, file_path.lstrip("/"))
-        if os.path.exists(full_path):
-            if os.path.isdir(full_path):
-                import shutil
-                shutil.rmtree(full_path)
-            else:
-                os.remove(full_path)
-        return web.json_response({"status": "ok"})
+            full_path = os.path.join(project_dir, file_path.lstrip("/"))
+            if os.path.exists(full_path):
+                if os.path.isdir(full_path):
+                    import shutil
+                    shutil.rmtree(full_path)
+                else:
+                    os.remove(full_path)
+            return web.json_response({"status": "ok"})
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=500)
 
 
 if __name__ == "__main__":
