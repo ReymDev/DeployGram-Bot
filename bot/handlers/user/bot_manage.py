@@ -173,10 +173,13 @@ async def bot_logs(callback: CallbackQuery, project_service, db_user):
         f"<code>{truncated}</code>"
     )
 
-    await callback.message.edit_text(
-        text,
-        reply_markup=get_logs_keyboard(project_id),
-    )
+    try:
+        await callback.message.edit_text(
+            text,
+            reply_markup=get_logs_keyboard(project_id),
+        )
+    except Exception:
+        pass
     await callback.answer()
 
 
