@@ -23,28 +23,36 @@ class Subscription(Base):
     payment_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
 
-FREE_FEATURES = [
-    "1 бот",
-    "общий пул слотов",
-    "до 256 RAM и 0.3 CPU",
-    "бот удаляется, если ты неактивен 5 дней",
-    "бэкапы раз в 24 часа",
-]
+def get_premium_prices() -> dict:
+    from bot.config import settings
+    return {
+        "1_week": {"days": 7, "price": settings.PREMIUM_PRICE_1W, "label": "1 неделя"},
+        "1_month": {"days": 30, "price": settings.PREMIUM_PRICE_1M, "label": "1 месяц"},
+        "3_months": {"days": 90, "price": settings.PREMIUM_PRICE_3M, "label": "3 месяца", "discount": "-10%"},
+        "6_months": {"days": 180, "price": settings.PREMIUM_PRICE_6M, "label": "6 месяцев", "discount": "-15%"},
+        "12_months": {"days": 365, "price": settings.PREMIUM_PRICE_12M, "label": "12 месяцев", "discount": "-20%"},
+    }
 
-PREMIUM_FEATURES = [
-    "от 2 до 5 ботов - выбираешь ты",
-    "отдельный пул слотов",
-    "1024 RAM и 1 CPU на всех твоих ботов",
-    "трекинг активности отключен",
-    "бэкапы каждый час",
-    "авторестарт при ошибках",
-    "предоставлен FFmpeg",
-]
 
-PREMIUM_PRICES = {
-    "1_week": {"days": 7, "price": 49, "label": "1 неделя"},
-    "1_month": {"days": 30, "price": 149, "label": "1 месяц"},
-    "3_months": {"days": 90, "price": 402, "label": "3 месяца", "discount": "-10%"},
-    "6_months": {"days": 180, "price": 759, "label": "6 месяцев", "discount": "-15%"},
-    "12_months": {"days": 365, "price": 1430, "label": "12 месяцев", "discount": "-20%"},
-}
+def get_free_features() -> list[str]:
+    from bot.config import settings
+    return [
+        f"{settings.FREE_TARIFF_PROJECTS} бот",
+        "общий пул слотов",
+        f"до {settings.FREE_TARIFF_RAM} RAM и {settings.FREE_TARIFF_CPU} CPU",
+        f"бот удаляется, если ты неактивен {settings.INACTIVE_DELETE_DAYS} дней",
+        f"бэкапы раз в {settings.BACKUP_INTERVAL_HOURS} часа",
+    ]
+
+
+def get_premium_features() -> list[str]:
+    from bot.config import settings
+    return [
+        f"от 2 до {settings.PREMIUM_TARIFF_PROJECTS} ботов - выбираешь ты",
+        "отдельный пул слотов",
+        f"{settings.PREMIUM_TARIFF_RAM} RAM и {settings.PREMIUM_TARIFF_CPU} CPU на всех твоих ботов",
+        "трекинг активности отключен",
+        "бэкапы каждый час",
+        "авторестарт при ошибках",
+        "предоставлен FFmpeg",
+    ]

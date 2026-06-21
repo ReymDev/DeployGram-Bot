@@ -6,9 +6,10 @@ from bot.utils.emojis import Emoji
 # ─── WELCOME ───
 
 def welcome_text(username: str) -> str:
+    from bot.config import settings
     return (
         f"{Emoji.SMILE} <b>Добро пожаловать!</b>\n\n"
-        f"Привет, это <b>DeployGram</b> - дом для твоих ботов!\n\n"
+        f"Привет, это <b>{settings.BOT_NAME}</b> - дом для твоих ботов!\n\n"
         f"Здесь ты можешь бесплатно захостить свой код или запустить "
         f"готовый пресет всего за пару кликов.\n\n"
         f"Начиная работу, ты принимаешь наши <a href=\"#\">условия</a> "
@@ -217,41 +218,34 @@ BOT_LIB_ADD_TEXT = (
 # ─── SUBSCRIPTION ───
 
 def subscription_text(is_premium: bool) -> str:
+    from models.subscription import get_free_features, get_premium_features
     if is_premium:
+        features = get_premium_features()
+        features_text = "\n".join(f"· {f}" for f in features)
         return (
             f"💳 <b>Управление подпиской</b>\n\n"
             f"Статус: {Emoji.CHECK} Premium\n\n"
-            f"<b>Premium</b>\n"
-            f"· от 2 до 5 ботов - выбираешь ты\n"
-            f"· отдельный пул слотов\n"
-            f"· 1024 RAM и 1 CPU на всех твоих ботов\n"
-            f"· трекинг активности отключен\n"
-            f"· бэкапы каждый час\n"
-            f"· авторестарт при ошибках\n"
-            f"· предоставлен FFmpeg"
+            f"<b>Premium</b>\n{features_text}"
         )
+    features = get_free_features()
+    features_text = "\n".join(f"· {f}" for f in features)
     return (
         f"💳 <b>Управление подпиской</b>\n\n"
         f"Статус: {Emoji.CHECK} Free\n\n"
-        f"<b>Free</b>\n"
-        f"· 1 бот\n"
-        f"· общий пул слотов\n"
-        f"· до 256 RAM и 0.3 CPU\n"
-        f"· бот удаляется, если ты неактивен 5 дней\n"
-        f"· бэкапы раз в 24 часа"
+        f"<b>Free</b>\n{features_text}"
     )
 
-SUBSCRIPTION_INFO_TEXT = (
-    f"💳 <b>Преимущества подписки</b>\n\n"
-    f"<b>{Emoji.NOTIF} Premium</b>\n"
-    f"· от 2 до 5 ботов - выбираешь ты\n"
-    f"· отдельный пул слотов\n"
-    f"· 1024 RAM и 1 CPU на всех твоих ботов\n"
-    f"· трекинг активности отключен\n"
-    f"· бэкапы каждый час\n"
-    f"· авторестарт при ошибках\n"
-    f"· предоставлен FFmpeg"
-)
+SUBSCRIPTION_INFO_TEXT = None  # Will be generated dynamically
+
+
+def subscription_info_text() -> str:
+    from models.subscription import get_premium_features
+    features = get_premium_features()
+    features_text = "\n".join(f"· {f}" for f in features)
+    return (
+        f"💳 <b>Преимущества подписки</b>\n\n"
+        f"<b>{Emoji.NOTIF} Premium</b>\n{features_text}"
+    )
 
 SUBSCRIPTION_BUY_TEXT = (
     f"💳 <b>Покупка/продление подписки</b>\n\n"

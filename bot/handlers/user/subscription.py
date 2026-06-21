@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from bot.keyboards.user import get_subscription_keyboard, get_buy_subscription_keyboard
 from bot.keyboards.common import get_back_keyboard
-from bot.utils.emojis import Emoji
 from bot.utils.media import edit_photo_or_text
-from models.subscription import FREE_FEATURES, PREMIUM_FEATURES, PREMIUM_PRICES
+from bot.texts import subscription_text, subscription_info_text
 
 router = Router()
 
@@ -17,15 +14,7 @@ router = Router()
 @router.callback_query(F.data == "subscription")
 async def subscription_menu(callback: CallbackQuery, db_user):
     is_premium = db_user.tariff == "premium"
-    status = f"{Emoji.CHECK} Premium" if is_premium else f"{Emoji.CHECK} Free"
-
-    text = (
-        f"💳 <b>Управление подпиской</b>\n\n"
-        f"Статус: {status}\n\n"
-        f"<b>Free</b>\n"
-    )
-    for f in FREE_FEATURES:
-        text += f"· {f}\n"
+    text = subscription_text(is_premium)
 
     await edit_photo_or_text(
         callback.message,
@@ -38,12 +27,7 @@ async def subscription_menu(callback: CallbackQuery, db_user):
 
 @router.callback_query(F.data == "subscription_info")
 async def subscription_info(callback: CallbackQuery):
-    text = (
-        f"💳 <b>Преимущества подписки</b>\n\n"
-        f"<b>{Emoji.NOTIF} Premium</b>\n"
-    )
-    for f in PREMIUM_FEATURES:
-        text += f"· {f}\n"
+    text = subscription_info_text()
 
     await edit_photo_or_text(
         callback.message,
@@ -71,9 +55,11 @@ async def subscription_buy(callback: CallbackQuery):
 
 
 @router.callback_query(F.data.startswith("buy_"))
-async def buy_selected(callback: CallbackQuery, db_user, session):
+async def buy_selected(callback: CallbackQuery, db_user):
+    from models.subscription import get_premium_prices
     plan_key = callback.data.replace("buy_", "")
-    plan = PREMIUM_PRICES.get(plan_key)
+    prices = get_premium_prices()
+    plan = prices.get(plan_key)
 
     if not plan:
         await callback.answer("Неизвестный план", show_alert=True)

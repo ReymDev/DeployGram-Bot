@@ -294,7 +294,7 @@ async def run_tests():
         r.fail("media_util_import", str(e))
 
     try:
-        from models.subscription import Subscription, FREE_FEATURES, PREMIUM_FEATURES, PREMIUM_PRICES
+        from models.subscription import Subscription, get_free_features, get_premium_features, get_premium_prices
         r.ok("subscription_model_import")
     except Exception as e:
         r.fail("subscription_model_import", str(e))

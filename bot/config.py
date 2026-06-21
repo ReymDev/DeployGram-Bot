@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     )
 
     BOT_TOKEN: str = ""
+    BOT_NAME: str = "DeployGram"
     ADMIN_IDS: List[int] = []
 
     @field_validator("ADMIN_IDS", mode="before")
@@ -50,6 +51,12 @@ class Settings(BaseSettings):
     AUTO_SLEEP_MINUTES: int = 0
     BACKUP_INTERVAL_HOURS: int = 24
     INACTIVE_DELETE_DAYS: int = 5
+
+    PREMIUM_PRICE_1W: int = 49
+    PREMIUM_PRICE_1M: int = 149
+    PREMIUM_PRICE_3M: int = 402
+    PREMIUM_PRICE_6M: int = 759
+    PREMIUM_PRICE_12M: int = 1430
 
     @property
     def is_sqlite(self) -> bool:

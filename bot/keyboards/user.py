@@ -186,25 +186,14 @@ def get_subscription_keyboard(is_premium: bool) -> InlineKeyboardMarkup:
 
 
 def get_buy_subscription_keyboard() -> InlineKeyboardMarkup:
+    from bot.config import settings
     builder = InlineKeyboardBuilder()
-    builder.row(
-        InlineKeyboardButton(text="1 неделя (49₽)", callback_data="buy_1_week"),
-    )
-    builder.row(
-        InlineKeyboardButton(text="1 месяц (149₽)", callback_data="buy_1_month"),
-    )
-    builder.row(
-        InlineKeyboardButton(text="-10% | 3 месяца (402₽)", callback_data="buy_3_months"),
-    )
-    builder.row(
-        InlineKeyboardButton(text="-15% | 6 месяцев (759₽)", callback_data="buy_6_months"),
-    )
-    builder.row(
-        InlineKeyboardButton(text="-20% | 12 месяцев (1430₽)", callback_data="buy_12_months"),
-    )
-    builder.row(
-        InlineKeyboardButton(text="Назад", callback_data="subscription"),
-    )
+    builder.row(InlineKeyboardButton(text=f"1 неделя ({settings.PREMIUM_PRICE_1W}₽)", callback_data="buy_1_week"))
+    builder.row(InlineKeyboardButton(text=f"1 месяц ({settings.PREMIUM_PRICE_1M}₽)", callback_data="buy_1_month"))
+    builder.row(InlineKeyboardButton(text=f"-10% | 3 месяца ({settings.PREMIUM_PRICE_3M}₽)", callback_data="buy_3_months"))
+    builder.row(InlineKeyboardButton(text=f"-15% | 6 месяцев ({settings.PREMIUM_PRICE_6M}₽)", callback_data="buy_6_months"))
+    builder.row(InlineKeyboardButton(text=f"-20% | 12 месяцев ({settings.PREMIUM_PRICE_12M}₽)", callback_data="buy_12_months"))
+    builder.row(InlineKeyboardButton(text="Назад", callback_data="subscription"))
     return builder.as_markup()
 
 
@@ -371,9 +360,6 @@ def get_delete_confirm_keyboard(bot_id: int) -> InlineKeyboardMarkup:
 def get_server_select_keyboard(servers: list, tariff: str = "free") -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
-    free_servers = [s for s in servers if s.free_slots > 0]
-    premium_servers = [s for s in servers if s.free_slots_premium > 0]
-
     builder.row(
         InlineKeyboardButton(
             text="[ Free-пул слотов ]",
@@ -388,7 +374,7 @@ def get_server_select_keyboard(servers: list, tariff: str = "free") -> InlineKey
         status_icon = "🟢" if free_slots > 0 else "🔴"
         builder.row(
             InlineKeyboardButton(
-                text=f"{status_icon} | {flag} Сервер #{s.id} ({free_slots}/{total})",
+                text=f"{status_icon} | {flag} {s.name} ({free_slots}/{total})",
                 callback_data=f"create_server_{s.id}",
             )
         )
