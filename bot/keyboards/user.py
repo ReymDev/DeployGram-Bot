@@ -370,11 +370,12 @@ def get_server_select_keyboard(servers: list, tariff: str = "free") -> InlineKey
     for s in servers:
         flag = get_flag(s.country)
         free_slots = s.free_slots if tariff == "free" else s.free_slots_premium
+        occupied = s.total_slots - free_slots
         total = s.total_slots
         status_icon = "🟢" if free_slots > 0 else "🔴"
         builder.row(
             InlineKeyboardButton(
-                text=f"{status_icon} | {flag} {s.name} ({free_slots}/{total})",
+                text=f"{status_icon} | {flag} {s.name} ({occupied}/{total})",
                 callback_data=f"create_server_{s.id}",
             )
         )
