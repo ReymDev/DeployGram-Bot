@@ -12,6 +12,8 @@ class VPSClient:
         self.api_key = api_key
 
     def _headers(self) -> dict[str, str]:
+        if not self.api_key:
+            return {}
         return {"Authorization": f"Bearer {self.api_key}"}
 
     async def health(self) -> dict:
