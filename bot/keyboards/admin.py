@@ -74,6 +74,13 @@ def get_admin_keyboard(users_count: int, projects_count: int, servers_count: int
             style="default",
         ),
     )
+    builder.row(
+        InlineKeyboardButton(
+            text="🖼 Фото экранов",
+            callback_data="admin_photos",
+            style="default",
+        ),
+    )
     return builder.as_markup()
 
 

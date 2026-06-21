@@ -7,6 +7,7 @@ from models.promo import PromoCode
 from models.referral import Referral
 from models.coowner import CoOwner
 from models.log import ProjectLog
+from models.subscription import Subscription
 
 __all__ = [
     "Base",
@@ -21,4 +22,5 @@ __all__ = [
     "Referral",
     "CoOwner",
     "ProjectLog",
+    "Subscription",
 ]
