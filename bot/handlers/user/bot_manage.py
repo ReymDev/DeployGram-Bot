@@ -127,11 +127,14 @@ async def bot_start(callback: CallbackQuery, project_service, db_user):
     success, msg = await project_service.start_project(project_id)
     project = await project_service.get_project(project_id)
     if project:
-        await callback.message.edit_text(
-            f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
-            reply_markup=get_bot_control_keyboard(project_id, project.status),
-        )
-    await callback.answer()
+        try:
+            await callback.message.edit_text(
+                f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
+                reply_markup=get_bot_control_keyboard(project_id, project.status),
+            )
+        except Exception:
+            pass
+    await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
 
 
 @router.callback_query(F.data.startswith("bot_stop_"))
@@ -144,11 +147,14 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user):
     success, msg = await project_service.stop_project(project_id)
     project = await project_service.get_project(project_id)
     if project:
-        await callback.message.edit_text(
-            f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
-            reply_markup=get_bot_control_keyboard(project_id, project.status),
-        )
-    await callback.answer()
+        try:
+            await callback.message.edit_text(
+                f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
+                reply_markup=get_bot_control_keyboard(project_id, project.status),
+            )
+        except Exception:
+            pass
+    await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
 
 
 @router.callback_query(F.data.startswith("bot_logs_"))
