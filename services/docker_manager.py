@@ -64,11 +64,19 @@ class DockerManager:
             if project_dir:
                 volumes[project_dir] = {"bind": "/app", "mode": "rw"}
 
+            container_name = f"deploygram_{project_id}_{project_name}"
+
+            try:
+                old = self.client.containers.get(container_name)
+                old.remove(force=True)
+            except (NotFound, APIError):
+                pass
+
             container = self.client.containers.run(
                 image=image,
                 command=["/bin/sh", "-c", f"pip install -r /app/requirements.txt 2>/dev/null; {cmd}"],
                 detach=True,
-                name=f"deploygram_{project_id}_{project_name}",
+                name=container_name,
                 working_dir=work_dir,
                 volumes=volumes,
                 environment=env_list,
