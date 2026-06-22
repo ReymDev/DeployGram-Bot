@@ -32,6 +32,11 @@ def _get_limits(tariff: str) -> dict[str, Any]:
         "storage_opt": {"size": f"{os.getenv('FREE_TARIFF_DISK', '100')}m"},
     }
 
+
+class DockerManager:
+    def __init__(self) -> None:
+        self.client = docker.from_env()
+
     async def create_container(
         self,
         project_id: int,
@@ -202,7 +207,6 @@ def _get_limits(tariff: str) -> dict[str, Any]:
         def _test() -> tuple[bool, str]:
             import tempfile
             import zipfile
-            import os
 
             with tempfile.TemporaryDirectory() as tmpdir:
                 with zipfile.ZipFile(project_files, "r") as zf:
@@ -294,7 +298,6 @@ def _get_limits(tariff: str) -> dict[str, Any]:
             try:
                 container = self.client.containers.get(container_id)
                 import tempfile
-                import os
                 with tempfile.NamedTemporaryFile(mode="w", suffix=".tmp", delete=False) as f:
                     f.write(content)
                     tmp_path = f.name
