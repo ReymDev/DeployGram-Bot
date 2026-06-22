@@ -93,23 +93,34 @@ class ProjectService:
 
     async def save_project_files(self, project_id: int, files_zip) -> bool:
         project_dir = self.get_project_dir(project_id)
+        logger.info("Saving project files for project %d to %s", project_id, project_dir)
         try:
             if isinstance(files_zip, bytes):
                 zip_data = files_zip
+                logger.info("files_zip is bytes, size: %d", len(zip_data))
             elif isinstance(files_zip, io.BytesIO):
                 zip_data = files_zip.read()
+                logger.info("files_zip is BytesIO, size: %d", len(zip_data))
             else:
                 zip_data = bytes(files_zip)
+                logger.info("files_zip converted to bytes, size: %d", len(zip_data))
+
+            if len(zip_data) == 0:
+                logger.error("ZIP data is empty for project %d!", project_id)
+                return False
 
             zip_path = project_dir / "project.zip"
             with open(zip_path, "wb") as f:
                 f.write(zip_data)
+            logger.info("Saved project.zip to %s", zip_path)
 
             with zipfile.ZipFile(io.BytesIO(zip_data), "r") as zf:
                 zf.extractall(project_dir)
+                file_list = zf.namelist()
+                logger.info("Extracted %d files for project %d: %s", len(file_list), project_id, file_list[:10])
             return True
         except Exception as e:
-            logger.error("Failed to save project files for %d: %s", project_id, e)
+            logger.error("Failed to save project files for %d: %s", project_id, e, exc_info=True)
             return False
 
     async def create_project(

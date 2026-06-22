@@ -245,6 +245,9 @@ async def show_confirmation(message, state: FSMContext, edit: bool = False):
 
 @router.callback_query(F.data == "create_confirm", ProjectCreateStates.confirming)
 async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, project_service, user_service, session):
+    import logging
+    logger = logging.getLogger(__name__)
+    
     data = await state.get_data()
 
     max_projects = await user_service.get_max_projects(db_user.tariff)
@@ -262,11 +265,21 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
         zip_file_id = data.get("zip_file_id")
         if zip_file_id:
             try:
+                logger.info("Downloading ZIP file: %s", zip_file_id)
                 file = await callback.bot.get_file(zip_file_id)
                 files_zip = await callback.bot.download_file(file.file_path)
+                # Сбрасываем курсор BytesIO в начало для последующего чтения
+                if hasattr(files_zip, 'seek'):
+                    files_zip.seek(0)
+                size = len(files_zip.getvalue()) if hasattr(files_zip, 'getvalue') else 0
+                logger.info("ZIP file downloaded successfully, size: %d bytes", size)
             except Exception as e:
+                logger.error("Failed to download ZIP file: %s", e)
                 await callback.answer(f"Ошибка загрузки файла: {e}", show_alert=True)
                 return
+    
+    logger.info("Creating project: name=%s, source_type=%s, server_id=%s, has_files=%s",
+                data.get("name"), source_type, data.get("server_id"), files_zip is not None)
 
     project = await project_service.create_project(
         user_id=db_user.id,
@@ -279,6 +292,8 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
         server_id=data.get("server_id"),
         files_zip=files_zip,
     )
+    
+    logger.info("Project created successfully: id=%d, name=%s", project.id, project.name)
 
     await state.clear()
 
