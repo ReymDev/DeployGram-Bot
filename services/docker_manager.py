@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+import shlex
 from typing import Any
 
 import docker
@@ -53,12 +54,32 @@ class DockerManager:
             image = PYTHON_IMAGES.get(python_version, PYTHON_IMAGES["3.12"])
             limits = _get_limits(tariff)
 
+            entry_point_norm = entry_point.replace("\\", "/")
+            entry_point_quoted = shlex.quote(entry_point_norm)
+            entry_dir = entry_point_norm.rsplit("/", 1)[0] if "/" in entry_point_norm else ""
+
             env_list = [f"{k}={v}" for k, v in (env_vars or {}).items()]
 
             if entry_type == "module":
-                cmd = f"python -m {entry_point}"
+                python_cmd = f"/tmp/venv/bin/python -m {entry_point_quoted}"
+                req_install = "if [ -f ./requirements.txt ]; then " \
+                    f"/tmp/venv/bin/pip install --no-cache-dir -r ./requirements.txt; fi"
             else:
-                cmd = f"python {entry_point}"
+                python_cmd = f"/tmp/venv/bin/python {entry_point_quoted}"
+                if entry_dir:
+                    req_install = (
+                        "if [ -f ./requirements.txt ]; then "
+                        "/tmp/venv/bin/pip install --no-cache-dir -r ./requirements.txt; "
+                        f"elif [ -f {shlex.quote(f'./{entry_dir}/requirements.txt')} ]; then "
+                        f"/tmp/venv/bin/pip install --no-cache-dir -r {shlex.quote(f'./{entry_dir}/requirements.txt')}; "
+                        "fi"
+                    )
+                else:
+                    req_install = (
+                        "if [ -f ./requirements.txt ]; then "
+                        "/tmp/venv/bin/pip install --no-cache-dir -r ./requirements.txt; "
+                        "fi"
+                    )
 
             volumes = {}
             if project_dir:
@@ -74,7 +95,11 @@ class DockerManager:
 
             container = self.client.containers.run(
                 image=image,
-                command=["/bin/sh", "-c", f"pip install -r /app/requirements.txt 2>/dev/null; {cmd}"],
+                command=[
+                    "/bin/sh",
+                    "-c",
+                    f"python -m venv /tmp/venv && {req_install} && exec {python_cmd}",
+                ],
                 detach=True,
                 name=container_name,
                 working_dir=work_dir,
@@ -220,19 +245,37 @@ class DockerManager:
                 with zipfile.ZipFile(project_files, "r") as zf:
                     zf.extractall(tmpdir)
 
-                requirements_path = os.path.join(tmpdir, "requirements.txt")
-                if not os.path.exists(requirements_path):
-                    with open(requirements_path, "w") as f:
-                        f.write("")
-
                 image = PYTHON_IMAGES.get(python_version, PYTHON_IMAGES["3.12"])
 
-                if entry_type == "module":
-                    cmd = f"python -m {entry_point}"
-                else:
-                    cmd = f"python {entry_point}"
+                entry_point_norm = entry_point.replace("\\", "/")
+                entry_point_quoted = shlex.quote(entry_point_norm)
+                entry_dir = entry_point_norm.rsplit("/", 1)[0] if "/" in entry_point_norm else ""
 
-                full_cmd = f"pip install -r /app/requirements.txt 2>&1; {cmd} 2>&1"
+                if entry_type == "module":
+                    python_cmd = f"/tmp/venv/bin/python -m {entry_point_quoted}"
+                    req_install = (
+                        "if [ -f ./requirements.txt ]; then "
+                        "/tmp/venv/bin/pip install --no-cache-dir -r ./requirements.txt; "
+                        "fi"
+                    )
+                else:
+                    python_cmd = f"/tmp/venv/bin/python {entry_point_quoted}"
+                    if entry_dir:
+                        req_install = (
+                            "if [ -f ./requirements.txt ]; then "
+                            "/tmp/venv/bin/pip install --no-cache-dir -r ./requirements.txt; "
+                            f"elif [ -f {shlex.quote(f'./{entry_dir}/requirements.txt')} ]; then "
+                            f"/tmp/venv/bin/pip install --no-cache-dir -r {shlex.quote(f'./{entry_dir}/requirements.txt')}; "
+                            "fi"
+                        )
+                    else:
+                        req_install = (
+                            "if [ -f ./requirements.txt ]; then "
+                            "/tmp/venv/bin/pip install --no-cache-dir -r ./requirements.txt; "
+                            "fi"
+                        )
+
+                full_cmd = f"python -m venv /tmp/venv && {req_install} && exec {python_cmd} 2>&1"
 
                 try:
                     container = self.client.containers.run(

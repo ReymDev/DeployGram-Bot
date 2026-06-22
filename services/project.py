@@ -40,6 +40,57 @@ class ProjectService:
         project_dir.mkdir(parents=True, exist_ok=True)
         return project_dir
 
+    def _get_single_top_dir(self, project_dir: Path) -> str | None:
+        dirs = [
+            p
+            for p in project_dir.iterdir()
+            if p.is_dir() and p.name not in {".venv", "__pycache__"}
+        ]
+        if len(dirs) == 1:
+            return dirs[0].name
+        return None
+
+    def _resolve_script_entry(self, project_dir: Path, entry_point: str) -> str | None:
+        entry_point_norm = entry_point.replace("\\", "/")
+        if (project_dir / entry_point_norm).is_file():
+            return entry_point_norm
+
+        top_dir = self._get_single_top_dir(project_dir)
+        if top_dir and (project_dir / top_dir / entry_point_norm).is_file():
+            return f"{top_dir}/{entry_point_norm}"
+
+        # Fallback: if user specified only basename (e.g. "main.py"),
+        # try to find it anywhere under the extracted project.
+        basename = Path(entry_point_norm).name
+        if basename == entry_point_norm and "/" not in entry_point_norm:
+            for root, _, files in os.walk(project_dir):
+                if basename in files:
+                    rel = os.path.relpath(os.path.join(root, basename), project_dir)
+                    return rel.replace("\\", "/")
+        return None
+
+    def _module_exists(self, project_dir: Path, module: str) -> bool:
+        module_path = module.replace(".", "/")
+        return (project_dir / f"{module_path}.py").is_file() or (
+            project_dir / module_path / "__init__.py"
+        ).is_file()
+
+    def _resolve_module_env(
+        self, project_dir: Path, entry_point: str, env_vars: dict[str, str]
+    ) -> bool:
+        """
+        Returns True when module is resolvable.
+        If code is nested in a single top-level directory, sets PYTHONPATH accordingly.
+        """
+        if self._module_exists(project_dir, entry_point):
+            return True
+
+        top_dir = self._get_single_top_dir(project_dir)
+        if top_dir and self._module_exists(project_dir / top_dir, entry_point):
+            env_vars.setdefault("PYTHONPATH", f"/app/{top_dir}")
+            return True
+        return False
+
     async def save_project_files(self, project_id: int, files_zip) -> bool:
         project_dir = self.get_project_dir(project_id)
         try:
@@ -126,6 +177,37 @@ class ProjectService:
             except (json.JSONDecodeError, TypeError):
                 pass
 
+        project_dir_path = self.get_project_dir(project_id)
+
+        # Resolve entry point against the extracted filesystem structure.
+        # This fixes common cases where the ZIP is wrapped into a single top-level folder.
+        resolved_entry_point: str | None = project.entry_point
+        if project.entry_type == "script":
+            resolved_entry_point = self._resolve_script_entry(project_dir_path, project.entry_point)
+            if resolved_entry_point is None:
+                candidates: list[str] = []
+                try:
+                    for p in project_dir_path.rglob("*.py"):
+                        candidates.append(p.relative_to(project_dir_path).as_posix())
+                        if len(candidates) >= 10:
+                            break
+                except Exception:
+                    pass
+                details = ", ".join(candidates) if candidates else "—"
+                return False, f"Точка входа {project.entry_point!r} не найдена в проекте. Доступные .py: {details}"
+        else:
+            if not self._resolve_module_env(project_dir_path, project.entry_point, env_vars):
+                candidates: list[str] = []
+                try:
+                    for p in project_dir_path.rglob("*.py"):
+                        candidates.append(p.relative_to(project_dir_path).as_posix())
+                        if len(candidates) >= 10:
+                            break
+                except Exception:
+                    pass
+                details = ", ".join(candidates) if candidates else "—"
+                return False, f"Модуль {project.entry_point!r} не найден в проекте. Доступные .py: {details}"
+
         if project.server_id:
             from repositories.server import ServerRepository
             from services.vps_agent import VPSClient
@@ -139,7 +221,7 @@ class ProjectService:
                 api_key=server.api_key or "",
             )
 
-            project_dir = self.get_project_dir(project_id)
+            project_dir = project_dir_path
             zip_path = project_dir / "project.zip"
 
             if zip_path.exists():
@@ -161,7 +243,7 @@ class ProjectService:
                 "project_id": project_id,
                 "project_name": project.name,
                 "python_version": project.python_version,
-                "entry_point": project.entry_point,
+                "entry_point": resolved_entry_point or project.entry_point,
                 "entry_type": project.entry_type,
                 "tariff": tariff,
                 "env_vars": env_vars,
@@ -178,12 +260,12 @@ class ProjectService:
                 return False, "Docker недоступен"
 
             try:
-                project_dir = str(self.get_project_dir(project_id))
+                project_dir = str(project_dir_path)
                 container_id = await self.docker.create_container(
                     project_id=project_id,
                     project_name=project.name,
                     python_version=project.python_version,
-                    entry_point=project.entry_point,
+                    entry_point=resolved_entry_point or project.entry_point,
                     entry_type=project.entry_type,
                     tariff=tariff,
                     env_vars=env_vars,
@@ -373,14 +455,13 @@ class ProjectService:
     async def auto_find_entry(self, files_zip: bytes) -> str | None:
         try:
             with zipfile.ZipFile(io.BytesIO(files_zip), "r") as zf:
-                names = zf.namelist()
+                names = [n for n in zf.namelist() if not n.endswith("/")]
+                # Prefer exact filename matches, but return the full relative path,
+                # so archives wrapped into a top-level directory work too.
                 for entry in ENTRY_FILES:
-                    if entry in names:
-                        return entry
-                for name in names:
-                    basename = Path(name).name
-                    if basename in ENTRY_FILES:
-                        return basename
+                    for name in names:
+                        if Path(name).name == entry:
+                            return name.replace("\\", "/")
         except zipfile.BadZipFile:
             pass
         return None
