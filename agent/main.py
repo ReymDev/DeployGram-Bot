@@ -66,15 +66,19 @@ class VPSAgent:
             import docker
             from services.docker_manager import DockerManager
 
+            project_id = data["project_id"]
+            project_dir = f"/data/projects/{project_id}"
+
             dm = DockerManager()
             container_id = await dm.create_container(
-                project_id=data["project_id"],
+                project_id=project_id,
                 project_name=data["project_name"],
                 python_version=data.get("python_version", "3.12"),
                 entry_point=data.get("entry_point", "main.py"),
                 entry_type=data.get("entry_type", "script"),
                 tariff=data.get("tariff", "free"),
                 env_vars=data.get("env_vars", {}),
+                project_dir=project_dir,
             )
             return web.json_response({"container_id": container_id})
         except Exception as e:
