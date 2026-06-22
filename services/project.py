@@ -50,6 +50,10 @@ class ProjectService:
             else:
                 zip_data = bytes(files_zip)
 
+            zip_path = project_dir / "project.zip"
+            with open(zip_path, "wb") as f:
+                f.write(zip_data)
+
             with zipfile.ZipFile(io.BytesIO(zip_data), "r") as zf:
                 zf.extractall(project_dir)
             return True
@@ -135,19 +139,23 @@ class ProjectService:
                 api_key=server.api_key or "",
             )
 
-            import io
-            import zipfile
             project_dir = self.get_project_dir(project_id)
+            zip_path = project_dir / "project.zip"
 
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-                for root, dirs, files in os.walk(project_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, project_dir)
-                        zf.write(file_path, arcname)
-
-            await client.upload_project(project_id, zip_buffer.getvalue())
+            if zip_path.exists():
+                with open(zip_path, "rb") as f:
+                    await client.upload_project(project_id, f.read())
+            else:
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+                    for root, dirs, files in os.walk(project_dir):
+                        for file in files:
+                            if file == "project.zip":
+                                continue
+                            file_path = os.path.join(root, file)
+                            arcname = os.path.relpath(file_path, project_dir)
+                            zf.write(file_path, arcname)
+                await client.upload_project(project_id, zip_buffer.getvalue())
 
             result = await client.create_container({
                 "project_id": project_id,
