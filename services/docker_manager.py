@@ -84,21 +84,32 @@ class DockerManager:
             volumes = {}
             if project_dir:
                 volumes[project_dir] = {"bind": "/app", "mode": "rw"}
+                logger.info(
+                    "Mounting volume: host=%s -> container=/app for project %s",
+                    project_dir, project_id
+                )
 
             container_name = f"deploygram_{project_id}_{project_name}"
 
             try:
                 old = self.client.containers.get(container_name)
                 old.remove(force=True)
+                logger.info("Removed old container: %s", container_name)
             except (NotFound, APIError):
                 pass
+
+            full_command = f"python -m venv /tmp/venv && {req_install} && exec {python_cmd}"
+            logger.info(
+                "Creating container %s: entry_point=%s, command=%s",
+                container_name, entry_point_norm, full_command
+            )
 
             container = self.client.containers.run(
                 image=image,
                 command=[
                     "/bin/sh",
                     "-c",
-                    f"python -m venv /tmp/venv && {req_install} && exec {python_cmd}",
+                    full_command,
                 ],
                 detach=True,
                 name=container_name,
@@ -117,6 +128,7 @@ class DockerManager:
                 },
                 restart_policy={"Name": "on-failure", "MaximumRetryCount": 3},
             )
+            logger.info("Container created successfully: %s", container.id)
             return container.id
 
         return await asyncio.to_thread(_create)

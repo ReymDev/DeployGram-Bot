@@ -67,7 +67,16 @@ class VPSAgent:
             from services.docker_manager import DockerManager
 
             project_id = data["project_id"]
-            project_dir = f"/data/projects/{project_id}"
+            # Используем _get_project_dir для получения правильного пути
+            project_dir = self._get_project_dir(str(project_id))
+            
+            logger.info(
+                "Creating container for project %s: entry_point=%s, entry_type=%s, project_dir=%s",
+                project_id,
+                data.get("entry_point", "main.py"),
+                data.get("entry_type", "script"),
+                project_dir
+            )
 
             dm = DockerManager()
             container_id = await dm.create_container(
@@ -80,8 +89,10 @@ class VPSAgent:
                 env_vars=data.get("env_vars", {}),
                 project_dir=project_dir,
             )
+            logger.info("Container created successfully: %s", container_id)
             return web.json_response({"container_id": container_id})
         except Exception as e:
+            logger.error("Failed to create container for project %s: %s", project_id, e)
             return web.json_response({"error": str(e)}, status=500)
 
     async def start_container(self, request: web.Request) -> web.Response:
@@ -176,6 +187,7 @@ class VPSAgent:
         try:
             project_id = request.match_info["id"]
             project_dir = self._get_project_dir(project_id)
+            logger.info("Uploading project %s to %s", project_id, project_dir)
 
             reader = await request.multipart()
             while True:
@@ -197,8 +209,17 @@ class VPSAgent:
                         zf.extractall(project_dir)
                     os.remove(filepath)
 
-            return web.json_response({"status": "ok", "project_dir": project_dir})
+            # Логируем структуру файлов для диагностики
+            files_list = []
+            for root, dirs, files in os.walk(project_dir):
+                for file in files:
+                    rel_path = os.path.relpath(os.path.join(root, file), project_dir)
+                    files_list.append(rel_path)
+            logger.info("Extracted files for project %s: %s", project_id, files_list[:20])
+
+            return web.json_response({"status": "ok", "project_dir": project_dir, "files": files_list[:20]})
         except Exception as e:
+            logger.error("Failed to upload project %s: %s", project_id, e)
             return web.json_response({"error": str(e)}, status=500)
 
     async def list_files(self, request: web.Request) -> web.Response:
