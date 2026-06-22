@@ -10,7 +10,7 @@ services:
       - redis
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - bot_data:/app/data
+      - /var/lib/deploygram/data:/app/data
     networks:
       - deploygram
 
@@ -23,7 +23,7 @@ services:
       - ../.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - agent_data:/app/data
+      - /var/lib/deploygram/data:/app/data
     ports:
       - "8080:8080"
     networks:
