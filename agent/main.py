@@ -166,7 +166,7 @@ class VPSAgent:
         await asyncio.Event().wait()
 
     def _get_project_dir(self, project_id: str) -> str:
-        project_dir = f"/data/projects/{project_id}"
+        project_dir = f"/app/data/projects/{project_id}"
         os.makedirs(project_dir, exist_ok=True)
         return project_dir
 
