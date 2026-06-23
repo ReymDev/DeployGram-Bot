@@ -177,9 +177,19 @@ class VPSAgent:
         await asyncio.Event().wait()
 
     def _get_project_dir(self, project_id: str) -> str:
-        project_dir = f"/app/data/projects/{project_id}"
-        os.makedirs(project_dir, exist_ok=True)
-        return project_dir
+        """
+        Возвращает путь к директории проекта.
+        ВАЖНО: Возвращает путь на ХОСТЕ для монтирования в Docker,
+        но создаёт директорию по внутреннему пути контейнера.
+        """
+        # Внутренний путь контейнера для создания директории
+        internal_path = f"/app/data/projects/{project_id}"
+        os.makedirs(internal_path, exist_ok=True)
+        
+        # Путь на хосте для монтирования в проектные контейнеры
+        # Bind mount: /var/lib/deploygram/data:/app/data
+        host_path = f"/var/lib/deploygram/data/projects/{project_id}"
+        return host_path
 
     async def upload_project(self, request: web.Request) -> web.Response:
         if not self._check_auth(request):
