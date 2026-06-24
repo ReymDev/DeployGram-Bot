@@ -1,0 +1,66 @@
+═══════════════════════════════════════════════════════════════
+⚡ БЫСТРЫЙ СТАРТ DeployGram
+═══════════════════════════════════════════════════════════════
+
+🔴 СЕЙЧАС У ТЕБЯ ПРОБЛЕМА - КОНТЕЙНЕРЫ БЕЗ PROJECT NAME!
+Нужно исправить:
+
+# 1. ОСТАНОВИ ВСЁ НЕПРАВИЛЬНОЕ:
+cd ~/DeployGram-Bot/docker && docker compose down
+cd ~/DeployGram-locate/docker && docker compose down
+
+# 2. ЗАПУСТИ ПРАВИЛЬНО:
+
+cd ~/DeployGram-Bot/docker
+docker compose -p mainbot up -d
+
+cd ~/DeployGram-locate/docker
+docker compose -p locate up -d
+
+# 3. ПРОВЕРЬ:
+docker ps --format "table {{.Names}}\t{{.Ports}}"
+
+ДОЛЖНО БЫТЬ:
+  mainbot-bot-1     
+  mainbot-agent-1   0.0.0.0:8080->8080/tcp
+  mainbot-redis-1   0.0.0.0:6379->6379/tcp
+  locate-agent-1    0.0.0.0:8081->8080/tcp
+
+═══════════════════════════════════════════════════════════════
+📝 ШПАРГАЛКА - КОПИРУЙ И ВСТАВЛЯЙ
+═══════════════════════════════════════════════════════════════
+
+# Остановить главный бот:
+cd ~/DeployGram-Bot/docker && docker compose -p mainbot down
+
+# Запустить главный бот:
+cd ~/DeployGram-Bot/docker && docker compose -p mainbot up -d
+
+# Остановить locate:
+cd ~/DeployGram-locate/docker && docker compose -p locate down
+
+# Запустить locate:
+cd ~/DeployGram-locate/docker && docker compose -p locate up -d
+
+# Проверить статус:
+docker ps --filter "label=com.docker.compose.project"
+
+# Логи бота:
+docker logs mainbot-bot-1 -f
+
+# Логи главного агента:
+docker logs mainbot-agent-1 -f
+
+# Логи locate агента:
+docker logs locate-agent-1 -f
+
+# Health check:
+curl http://localhost:8080/health
+curl http://localhost:8081/health
+
+# ПОЛНЫЙ РЕСТАРТ:
+cd ~/DeployGram-Bot/docker && docker compose -p mainbot down && docker compose -p mainbot up -d && cd ~/DeployGram-locate/docker && docker compose -p locate down && docker compose -p locate up -d
+
+═══════════════════════════════════════════════════════════════
+⚠️ ЗАПОМНИ: ВСЕГДА используй -p mainbot или -p locate !
+═══════════════════════════════════════════════════════════════

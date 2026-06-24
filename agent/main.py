@@ -186,6 +186,13 @@ class VPSAgent:
         internal_path = f"/app/data/projects/{project_id}"
         os.makedirs(internal_path, exist_ok=True)
         
+        # Устанавливаем владельца 1000:1000 для проектных контейнеров
+        try:
+            import subprocess
+            subprocess.run(["chown", "-R", "1000:1000", internal_path], check=False)
+        except Exception as e:
+            logger.warning("Failed to chown project directory: %s", e)
+        
         # Путь на хосте для монтирования в проектные контейнеры
         # Bind mount: /var/lib/deploygram/data:/app/data
         host_path = f"/var/lib/deploygram/data/projects/{project_id}"
