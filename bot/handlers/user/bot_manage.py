@@ -49,15 +49,26 @@ class BotCreateStates(StatesGroup):
     waiting_module = State()
 
 
-async def _check_owner(callback: CallbackQuery, project_service, db_user, project_id: int):
+async def _check_owner(callback: CallbackQuery, project_service, db_user, project_id: int, session=None):
+    """Check if user has access (owner or coowner)."""
     project = await project_service.get_project(project_id)
     if project is None:
         await callback.answer("Бот не найден", show_alert=True)
         return None
-    if project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
-        return None
-    return project
+    
+    # Owner always has access
+    if project.user_id == db_user.id:
+        return project
+    
+    # Check coowner access if session provided
+    if session is not None:
+        from bot.utils.access import check_project_access
+        has_access = await check_project_access(project, db_user, session)
+        if has_access:
+            return project
+    
+    await callback.answer("Нет доступа", show_alert=True)
+    return None
 
 
 @router.callback_query(F.data.startswith("bots_page_"))
@@ -75,9 +86,9 @@ async def bots_page(callback: CallbackQuery, db_user, project_service):
 
 
 @router.callback_query(F.data.startswith("bot_view_"))
-async def bot_view(callback: CallbackQuery, project_service, db_user):
+async def bot_view(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("bot_view_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    project = await _check_owner(callback, project_service, db_user, project_id, session)
     if project is None:
         return
 
@@ -118,9 +129,9 @@ async def bot_view(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("bot_start_"))
-async def bot_start(callback: CallbackQuery, project_service, db_user):
+async def bot_start(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("bot_start_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    project = await _check_owner(callback, project_service, db_user, project_id, session)
     if project is None:
         return
 
@@ -138,9 +149,9 @@ async def bot_start(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("bot_stop_"))
-async def bot_stop(callback: CallbackQuery, project_service, db_user):
+async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("bot_stop_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    project = await _check_owner(callback, project_service, db_user, project_id, session)
     if project is None:
         return
 
@@ -158,9 +169,9 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("bot_logs_"))
-async def bot_logs(callback: CallbackQuery, project_service, db_user):
+async def bot_logs(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("bot_logs_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    project = await _check_owner(callback, project_service, db_user, project_id, session)
     if project is None:
         return
 
