@@ -29,6 +29,32 @@ class MonitoringService:
         if project is None or not project.docker_container_id:
             return None
 
+        # VPS project - use VPS Agent API
+        if project.server_id:
+            from repositories.server import ServerRepository
+            from services.vps_agent import VPSClient
+            
+            server_repo = ServerRepository(self.session)
+            server = await server_repo.get_by_id(project.server_id)
+            
+            if server:
+                client = VPSClient(
+                    base_url=f"http://{server.ip}:{server.port}",
+                    api_key=server.api_key or "",
+                )
+                try:
+                    stats = await client.get_stats(project.docker_container_id)
+                    return await self.stats_repo.create(
+                        project_id=project_id,
+                        cpu_percent=stats.get("cpu_percent", 0),
+                        ram_mb=stats.get("ram_mb", 0),
+                        disk_mb=stats.get("disk_mb", 0),
+                    )
+                except Exception as e:
+                    logger.error("Failed to collect stats from VPS for project %d: %s", project_id, e)
+                    return None
+
+        # Local project - use local docker
         if not self.docker:
             return None
 
