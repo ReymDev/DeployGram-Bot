@@ -107,6 +107,9 @@ async def admin_users(callback: CallbackQuery, session):
 
 @router.callback_query(F.data.startswith("admin_users_page_"))
 async def admin_users_page(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     page = int(callback.data.split("_")[-1])
     user_svc = UserService(session)
     users = await user_svc.get_all_users()
@@ -120,6 +123,9 @@ async def admin_users_page(callback: CallbackQuery, session):
 
 @router.callback_query(F.data.startswith("admin_user_view_"))
 async def admin_user_view(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     user_id = int(callback.data.split("_")[-1])
     user_svc = UserService(session)
     user = await user_svc.get_user_by_id(user_id)
@@ -148,6 +154,9 @@ async def admin_user_view(callback: CallbackQuery, session):
 
 @router.callback_query(F.data.startswith("admin_user_ban_"))
 async def admin_user_ban(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     user_id = int(callback.data.split("_")[-1])
     user_svc = UserService(session)
     await user_svc.ban_user(user_id)
@@ -164,6 +173,9 @@ async def admin_user_ban(callback: CallbackQuery, session):
 
 @router.callback_query(F.data.startswith("admin_user_unban_"))
 async def admin_user_unban(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     user_id = int(callback.data.split("_")[-1])
     user_svc = UserService(session)
     await user_svc.unban_user(user_id)
@@ -180,6 +192,9 @@ async def admin_user_unban(callback: CallbackQuery, session):
 
 @router.callback_query(F.data.startswith("admin_user_tariff_"))
 async def admin_user_tariff(callback: CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     user_id = int(callback.data.split("_")[-1])
     await state.update_data(admin_tariff_user_id=user_id)
     await callback.message.edit_text(
@@ -205,6 +220,9 @@ def get_admin_user_tariff_keyboard(user_id: int):
 
 @router.callback_query(F.data.startswith("admin_set_tariff_"))
 async def admin_set_tariff(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     parts = callback.data.split("_")
     user_id = int(parts[3])
     tariff = parts[4]
@@ -252,6 +270,9 @@ async def admin_server_add(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("admin_user_balance_"))
 async def admin_user_balance(callback: CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     user_id = int(callback.data.replace("admin_user_balance_", ""))
     await state.update_data(admin_balance_user_id=user_id)
     await callback.message.edit_text(
@@ -496,6 +517,9 @@ async def admin_promos(callback: CallbackQuery, session):
 
 @router.callback_query(F.data == "admin_promo_create")
 async def admin_promo_create(callback: CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     await callback.message.edit_text(
         texts.ADMIN_PROMO_ENTER_CODE,
     )
@@ -507,6 +531,9 @@ async def admin_promo_create(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "admin_referrals")
 async def admin_referrals(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     await callback.answer(texts.ADMIN_REFERRAL_WIP, show_alert=True)
 
 
@@ -514,6 +541,9 @@ async def admin_referrals(callback: CallbackQuery):
 
 @router.callback_query(F.data == "admin_broadcast")
 async def admin_broadcast(callback: CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     await callback.message.edit_text(
         texts.ADMIN_BROADCAST_ENTER_MESSAGE,
         reply_markup=get_back_keyboard("admin_panel"),
@@ -526,6 +556,9 @@ async def admin_broadcast(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "admin_settings")
 async def admin_settings(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     from bot.config import settings as cfg
     await callback.message.edit_text(
         f"{Emoji.SETTINGS} <b>Настройки</b>",
@@ -536,6 +569,9 @@ async def admin_settings(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("admin_set_sleep_"))
 async def admin_set_sleep(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔", show_alert=True)
+        return
     minutes = int(callback.data.replace("admin_sleep_", ""))
 
     from bot.config import settings as cfg

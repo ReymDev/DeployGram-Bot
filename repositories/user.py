@@ -40,9 +40,9 @@ class UserRepository(BaseRepository[User]):
         await self.session.flush()
         return user
 
-    async def get_active_users(self) -> list[User]:
+    async def get_active_users(self, limit: int = 1000) -> list[User]:
         result = await self.session.execute(
-            select(User).where(User.status == "active", User.is_banned == False)
+            select(User).where(User.status == "active", User.is_banned == False).limit(limit)
         )
         return list(result.scalars().all())
 

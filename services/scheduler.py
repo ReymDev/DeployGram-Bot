@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,7 +31,7 @@ class SchedulerService:
             service = ProjectService(session)
             projects = await service.project_repo.get_running_projects()
             for project in projects:
-                threshold = datetime.utcnow() - timedelta(minutes=settings.AUTO_SLEEP_MINUTES)
+                threshold = datetime.now(timezone.utc) - timedelta(minutes=settings.AUTO_SLEEP_MINUTES)
                 if project.updated_at and project.updated_at < threshold:
                     if project.docker_container_id and service.docker:
                         await service.docker.stop_container(project.docker_container_id)
@@ -41,11 +41,11 @@ class SchedulerService:
     async def cleanup_inactive_projects(self) -> None:
         async with async_session_factory() as session:
             service = ProjectService(session)
-            projects = await service.project_repo.get_all()
+            projects = await service.project_repo.get_all(limit=None)
             for project in projects:
                 if project.user and project.user.tariff == "free":
                     if project.updated_at:
-                        days_inactive = (datetime.utcnow() - project.updated_at).days
+                        days_inactive = (datetime.now(timezone.utc) - project.updated_at).days
                         if days_inactive >= settings.INACTIVE_DELETE_DAYS:
                             logger.info("Deleting inactive project %d (inactive %d days)", project.id, days_inactive)
                             await service.delete_project(project.id)

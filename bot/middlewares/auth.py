@@ -36,6 +36,12 @@ class AuthMiddleware(BaseMiddleware):
                 username=telegram_user.username,
                 full_name=telegram_user.full_name,
             )
+            if user.is_banned:
+                if isinstance(event, Message):
+                    await event.answer("Аккаунт заблокирован")
+                elif isinstance(event, CallbackQuery):
+                    await event.answer("Аккаунт заблокирован", show_alert=True)
+                return
             data["db_user"] = user
             data["user_service"] = user_service
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import settings
@@ -56,10 +57,14 @@ class UserService:
         return await self.user_repo.update(user_id, tariff=tariff)
 
     async def update_balance(self, user_id: int, amount: float) -> User | None:
-        user = await self.user_repo.get_by_id(user_id)
-        if user is None:
-            return None
-        return await self.user_repo.update(user_id, balance=user.balance + amount)
+        from sqlalchemy import literal_column
+        await self.session.execute(
+            update(User)
+            .where(User.id == user_id)
+            .values(balance=User.balance + amount)
+        )
+        await self.session.flush()
+        return await self.user_repo.get_by_id(user_id)
 
     async def get_settings(self, user_id: int):
         return await self.settings_repo.get_by_user_id(user_id)

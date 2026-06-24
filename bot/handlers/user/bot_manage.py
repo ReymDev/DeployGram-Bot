@@ -335,6 +335,10 @@ async def set_python(callback: CallbackQuery, project_service, db_user):
     project_id = int(parts[0])
     version = parts[1]
 
+    if version not in ("3.10", "3.11", "3.12"):
+        await callback.answer("Неверная версия Python", show_alert=True)
+        return
+
     project = await _check_owner(callback, project_service, db_user, project_id)
     if project is None:
         return
@@ -563,8 +567,12 @@ class CoOwnerStates(StatesGroup):
 
 
 @router.callback_query(F.data.startswith("coowner_add_"))
-async def coowner_add(callback: CallbackQuery, state: FSMContext):
+async def coowner_add(callback: CallbackQuery, project_service, db_user, state: FSMContext):
     project_id = int(callback.data.replace("coowner_add_", ""))
+    project = await _check_owner(callback, project_service, db_user, project_id)
+    if project is None:
+        return
+
     await state.update_data(coowner_project_id=project_id)
 
     await callback.message.edit_text(
@@ -620,8 +628,17 @@ async def coowner_del(callback: CallbackQuery, project_service, db_user, session
     project_id = int(parts[0])
     coowner_id = int(parts[1])
 
+    project = await _check_owner(callback, project_service, db_user, project_id, session)
+    if project is None:
+        return
+
     from repositories.coowner import CoOwnerRepository
     coowner_repo = CoOwnerRepository(session)
+    coowner = await coowner_repo.get_by_id(coowner_id)
+    if coowner is None or coowner.project_id != project_id:
+        await callback.answer("Not found", show_alert=True)
+        return
+
     await coowner_repo.delete(coowner_id)
 
     await callback.answer("✅ Совладелец удалён", show_alert=True)

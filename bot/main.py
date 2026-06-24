@@ -74,6 +74,9 @@ async def main() -> None:
 
     logger.info("ADMIN_IDS parsed as: %s", settings.ADMIN_IDS)
 
+    if settings.SECRET_KEY in ("change-me", "change-me-to-a-random-string", ""):
+        raise ValueError("SECRET_KEY must be changed from default value")
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

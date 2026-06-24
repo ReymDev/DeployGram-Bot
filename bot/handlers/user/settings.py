@@ -84,6 +84,10 @@ async def ps_python_set(callback: CallbackQuery, project_service, db_user):
     project_id = int(parts[3])
     version = parts[4]
 
+    if version not in ("3.10", "3.11", "3.12"):
+        await callback.answer("Неверная версия Python", show_alert=True)
+        return
+
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
         await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)

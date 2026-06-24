@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.promo import PromoCode
@@ -11,7 +12,7 @@ from repositories.promo import PromoRepository
 class PromoService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
-        self.promo_repo = PromoRepository(session)
+        self.promo_repo = PromoRepository(self.session)
 
     async def create_promo(
         self,
@@ -37,11 +38,20 @@ class PromoService:
             return False, "Промокод не найден", None
         if promo.activated_count >= promo.max_activations:
             return False, "Промокод уже использован максимальное количество раз", None
-        if promo.expires_at and promo.expires_at < datetime.utcnow():
+        if promo.expires_at and promo.expires_at < datetime.now(timezone.utc):
             return False, "Промокод истёк", None
-        await self.promo_repo.update(
-            promo.id, activated_count=promo.activated_count + 1
+
+        result = await self.session.execute(
+            update(PromoCode)
+            .where(PromoCode.id == promo.id, PromoCode.activated_count < promo.max_activations)
+            .values(activated_count=PromoCode.activated_count + 1)
         )
+        await self.session.flush()
+
+        if result.rowcount == 0:
+            return False, "Промокод уже использован", None
+
+        promo = await self.promo_repo.get_by_id(promo.id)
         return True, f"Промокод активирован! Награда: {promo.reward_type} = {promo.reward_value}", promo
 
     async def get_promos(self) -> list[PromoCode]:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.base import Base
@@ -24,7 +24,7 @@ class User(Base):
     tariff: Mapped[str] = mapped_column(String(50), default="free", nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="active", nullable=False)
     referral_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    balance: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    balance: Mapped[float] = mapped_column(Numeric(10, 2), default=0.0, nullable=False)
     is_banned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     settings: Mapped[Optional[UserSettings]] = relationship(

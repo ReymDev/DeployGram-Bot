@@ -19,10 +19,11 @@ class BaseRepository(Generic[ModelT]):
         result = await self.session.execute(select(self.model).where(self.model.id == id))
         return result.scalar_one_or_none()
 
-    async def get_all(self, limit: int = 100, offset: int = 0) -> Sequence[ModelT]:
-        result = await self.session.execute(
-            select(self.model).limit(limit).offset(offset)
-        )
+    async def get_all(self, limit: int | None = 100, offset: int = 0) -> Sequence[ModelT]:
+        stmt = select(self.model).offset(offset)
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        result = await self.session.execute(stmt)
         return result.scalars().all()
 
     async def create(self, **kwargs: Any) -> ModelT:

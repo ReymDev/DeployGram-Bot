@@ -293,6 +293,10 @@ class DockerManager:
 
             with tempfile.TemporaryDirectory() as tmpdir:
                 with zipfile.ZipFile(project_files, "r") as zf:
+                    for member in zf.infolist():
+                        target = os.path.realpath(os.path.join(tmpdir, member.filename))
+                        if not target.startswith(os.path.realpath(tmpdir)):
+                            return False, "zip slip detected"
                     zf.extractall(tmpdir)
 
                 image = PYTHON_IMAGES.get(python_version, PYTHON_IMAGES["3.12"])
@@ -370,7 +374,7 @@ class DockerManager:
         def _list() -> list[str]:
             try:
                 container = self.client.containers.get(container_id)
-                exit_code, output = container.exec_run(f"ls -1 {path}")
+                exit_code, output = container.exec_run(["ls", "-1", path])
                 if exit_code != 0:
                     return []
                 return output.decode("utf-8", errors="replace").strip().split("\n")
@@ -384,7 +388,7 @@ class DockerManager:
         def _read() -> str:
             try:
                 container = self.client.containers.get(container_id)
-                exit_code, output = container.exec_run(f"cat {file_path}")
+                exit_code, output = container.exec_run(["cat", file_path])
                 if exit_code != 0:
                     return ""
                 return output.decode("utf-8", errors="replace")
@@ -398,14 +402,16 @@ class DockerManager:
         def _write() -> bool:
             try:
                 container = self.client.containers.get(container_id)
-                import tempfile
-                with tempfile.NamedTemporaryFile(mode="w", suffix=".tmp", delete=False) as f:
-                    f.write(content)
-                    tmp_path = f.name
-                try:
-                    container.put_archive(os.path.dirname(file_path), open(tmp_path, "rb"))
-                finally:
-                    os.unlink(tmp_path)
+                import tarfile
+                import io as _io
+                tar_buffer = _io.BytesIO()
+                with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
+                    data = content.encode("utf-8")
+                    info = tarfile.TarInfo(name=os.path.basename(file_path))
+                    info.size = len(data)
+                    tar.addfile(info, _io.BytesIO(data))
+                tar_buffer.seek(0)
+                container.put_archive(os.path.dirname(file_path), tar_buffer)
                 return True
             except (NotFound, APIError) as e:
                 logger.error("Failed to write file %s: %s", file_path, e)
@@ -417,7 +423,7 @@ class DockerManager:
         def _delete() -> bool:
             try:
                 container = self.client.containers.get(container_id)
-                exit_code, _ = container.exec_run(f"rm -f {file_path}")
+                exit_code, _ = container.exec_run(["rm", "-f", file_path])
                 return exit_code == 0
             except (NotFound, APIError) as e:
                 logger.error("Failed to delete file %s: %s", file_path, e)
@@ -429,7 +435,7 @@ class DockerManager:
         def _mkdir() -> bool:
             try:
                 container = self.client.containers.get(container_id)
-                exit_code, _ = container.exec_run(f"mkdir -p {dir_path}")
+                exit_code, _ = container.exec_run(["mkdir", "-p", dir_path])
                 return exit_code == 0
             except (NotFound, APIError) as e:
                 logger.error("Failed to create dir %s: %s", dir_path, e)
@@ -441,8 +447,7 @@ class DockerManager:
         def _clear() -> bool:
             try:
                 container = self.client.containers.get(container_id)
-                container.stop()
-                container.remove(force=True)
+                container.restart()
                 return True
             except (NotFound, APIError) as e:
                 logger.error("Failed to clear logs for %s: %s", container_id, e)

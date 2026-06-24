@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import io
 import json
@@ -94,34 +95,37 @@ class ProjectService:
     async def save_project_files(self, project_id: int, files_zip) -> bool:
         project_dir = self.get_project_dir(project_id)
         logger.info("Saving project files for project %d to %s", project_id, project_dir)
-        try:
-            if isinstance(files_zip, bytes):
-                zip_data = files_zip
-                logger.info("files_zip is bytes, size: %d", len(zip_data))
-            elif isinstance(files_zip, io.BytesIO):
-                zip_data = files_zip.read()
-                logger.info("files_zip is BytesIO, size: %d", len(zip_data))
-            else:
-                zip_data = bytes(files_zip)
-                logger.info("files_zip converted to bytes, size: %d", len(zip_data))
 
-            if len(zip_data) == 0:
-                logger.error("ZIP data is empty for project %d!", project_id)
+        def _save() -> bool:
+            try:
+                if isinstance(files_zip, bytes):
+                    zip_data = files_zip
+                elif isinstance(files_zip, io.BytesIO):
+                    zip_data = files_zip.read()
+                else:
+                    zip_data = bytes(files_zip)
+
+                if len(zip_data) == 0:
+                    logger.error("ZIP data is empty for project %d!", project_id)
+                    return False
+
+                zip_path = project_dir / "project.zip"
+                with open(zip_path, "wb") as f:
+                    f.write(zip_data)
+
+                with zipfile.ZipFile(io.BytesIO(zip_data), "r") as zf:
+                    for member in zf.infolist():
+                        target = (project_dir / member.filename).resolve()
+                        if not str(target).startswith(str(project_dir.resolve())):
+                            logger.warning("Zip slip detected: %s", member.filename)
+                            return False
+                    zf.extractall(project_dir)
+                return True
+            except Exception as e:
+                logger.error("Failed to save project files for %d: %s", project_id, e, exc_info=True)
                 return False
 
-            zip_path = project_dir / "project.zip"
-            with open(zip_path, "wb") as f:
-                f.write(zip_data)
-            logger.info("Saved project.zip to %s", zip_path)
-
-            with zipfile.ZipFile(io.BytesIO(zip_data), "r") as zf:
-                zf.extractall(project_dir)
-                file_list = zf.namelist()
-                logger.info("Extracted %d files for project %d: %s", len(file_list), project_id, file_list[:10])
-            return True
-        except Exception as e:
-            logger.error("Failed to save project files for %d: %s", project_id, e, exc_info=True)
-            return False
+        return await asyncio.to_thread(_save)
 
     async def create_project(
         self,
@@ -236,19 +240,25 @@ class ProjectService:
             zip_path = project_dir / "project.zip"
 
             if zip_path.exists():
-                with open(zip_path, "rb") as f:
-                    await client.upload_project(project_id, f.read())
+                def _read_zip():
+                    with open(zip_path, "rb") as f:
+                        return f.read()
+                zip_data = await asyncio.to_thread(_read_zip)
+                await client.upload_project(project_id, zip_data)
             else:
-                zip_buffer = io.BytesIO()
-                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-                    for root, dirs, files in os.walk(project_dir):
-                        for file in files:
-                            if file == "project.zip":
-                                continue
-                            file_path = os.path.join(root, file)
-                            arcname = os.path.relpath(file_path, project_dir)
-                            zf.write(file_path, arcname)
-                await client.upload_project(project_id, zip_buffer.getvalue())
+                def _create_zip():
+                    zip_buffer = io.BytesIO()
+                    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+                        for root, dirs, files in os.walk(project_dir):
+                            for file in files:
+                                if file == "project.zip":
+                                    continue
+                                file_path = os.path.join(root, file)
+                                arcname = os.path.relpath(file_path, project_dir)
+                                zf.write(file_path, arcname)
+                    return zip_buffer.getvalue()
+                zip_data = await asyncio.to_thread(_create_zip)
+                await client.upload_project(project_id, zip_data)
 
             result = await client.create_container({
                 "project_id": project_id,

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import shutil
+import uuid
 import zipfile
 from pathlib import Path
 
@@ -36,17 +38,22 @@ class BackupService:
         backup_dir = self._get_backup_dir(project_id)
 
         if project_dir.exists():
-            backup_file = backup_dir / f"backup_{project_id}_{len(os.listdir(backup_dir))}.zip"
-            try:
-                with zipfile.ZipFile(backup_file, "w", zipfile.ZIP_DEFLATED) as zf:
-                    for root, dirs, files in os.walk(project_dir):
-                        for file in files:
-                            file_path = os.path.join(root, file)
-                            arcname = os.path.relpath(file_path, project_dir)
-                            zf.write(file_path, arcname)
-                size = backup_file.stat().st_size
-            except Exception as e:
-                logger.error("Failed to create backup for project %d: %s", project_id, e)
+            backup_file = backup_dir / f"backup_{project_id}_{uuid.uuid4().hex[:8]}.zip"
+
+            def _create():
+                try:
+                    with zipfile.ZipFile(backup_file, "w", zipfile.ZIP_DEFLATED) as zf:
+                        for root, dirs, files in os.walk(project_dir):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                arcname = os.path.relpath(file_path, project_dir)
+                                zf.write(file_path, arcname)
+                    return backup_file.stat().st_size
+                except Exception as e:
+                    logger.error("Failed to create backup for project %d: %s", project_id, e)
+                    return 0
+
+            size = await asyncio.to_thread(_create)
 
         return await self.backup_repo.create(
             project_id=project_id,
@@ -75,18 +82,32 @@ class BackupService:
         if not backup_files:
             return False, "Файл бэкапа не найден"
 
-        latest_backup = max(backup_files, key=os.path.getctime)
+        backup_time = backup.created_at.timestamp() if backup.created_at else 0
+        matched_backup = min(backup_files, key=lambda f: abs(os.path.getctime(f) - backup_time))
+
         project_dir = BASE_DIR / "data" / "projects" / str(backup.project_id)
+        tmp_dir = project_dir.parent / f"restore_tmp_{backup.project_id}"
 
         try:
+            if tmp_dir.exists():
+                shutil.rmtree(tmp_dir)
+            tmp_dir.mkdir(parents=True, exist_ok=True)
+
+            with zipfile.ZipFile(matched_backup, "r") as zf:
+                for member in zf.infolist():
+                    target = (tmp_dir / member.filename).resolve()
+                    if not str(target).startswith(str(tmp_dir.resolve())):
+                        logger.warning("Zip slip in backup: %s", member.filename)
+                        return False, "Бэкап повреждён"
+                zf.extractall(tmp_dir)
+
             if project_dir.exists():
                 shutil.rmtree(project_dir)
-            project_dir.mkdir(parents=True, exist_ok=True)
-
-            with zipfile.ZipFile(latest_backup, "r") as zf:
-                zf.extractall(project_dir)
+            tmp_dir.rename(project_dir)
 
             return True, "Бэкап восстановлен"
         except Exception as e:
             logger.error("Failed to restore backup %d: %s", backup_id, e)
-            return False, f"Ошибка восстановления: {e}"
+            if tmp_dir.exists():
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+            return False, "Ошибка восстановления"
