@@ -178,8 +178,11 @@ async def bot_logs(callback: CallbackQuery, project_service, db_user):
             text,
             reply_markup=get_logs_keyboard(project_id),
         )
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.error(f"Failed to show logs for project {project_id}: {e}")
+        await callback.answer(f"Ошибка получения логов: {str(e)[:100]}", show_alert=True)
+        return
     await callback.answer()
 
 

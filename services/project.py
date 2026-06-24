@@ -397,8 +397,11 @@ class ProjectService:
                 try:
                     result = await client.get_logs(project.docker_container_id, tail)
                     return result.get("logs", "")
-                except Exception:
-                    return "Ошибка получения логов"
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Failed to get logs from VPS for project {project_id}: {e}")
+                    return f"Ошибка получения логов: {str(e)}"
 
         if not self.docker:
             return "Docker недоступен"
