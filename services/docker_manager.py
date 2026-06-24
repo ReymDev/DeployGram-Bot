@@ -234,8 +234,46 @@ class DockerManager:
         def _logs() -> str:
             try:
                 container = self.client.containers.get(container_id)
-                logs = container.logs(tail=tail, timestamps=False)
-                return logs.decode("utf-8", errors="replace")
+                # Получаем время запуска контейнера
+                container.reload()
+                started_at = container.attrs.get("State", {}).get("StartedAt")
+                
+                # Получаем логи с момента запуска
+                if started_at:
+                    logs = container.logs(since=started_at, timestamps=False)
+                else:
+                    logs = container.logs(tail=tail, timestamps=False)
+                
+                decoded_logs = logs.decode("utf-8", errors="replace")
+                
+                # Фильтруем логи: убираем установку зависимостей
+                lines = decoded_logs.split("\n")
+                filtered_lines = []
+                skip_pip = False
+                
+                for line in lines:
+                    # Начало установки pip
+                    if "Collecting" in line or "Downloading" in line or "Installing collected packages" in line:
+                        skip_pip = True
+                        continue
+                    # Конец установки pip
+                    if skip_pip and ("Successfully installed" in line or line.startswith("[")):
+                        skip_pip = False
+                        if "Successfully installed" in line:
+                            continue
+                    # Пропускаем строки установки
+                    if skip_pip:
+                        continue
+                    # Пропускаем pip notice
+                    if "[notice]" in line.lower() and "pip" in line.lower():
+                        continue
+                    # Пропускаем "Requirement already satisfied"
+                    if "Requirement already satisfied" in line:
+                        continue
+                    
+                    filtered_lines.append(line)
+                
+                return "\n".join(filtered_lines).strip()
             except (NotFound, APIError) as e:
                 logger.error("Failed to get logs for %s: %s", container_id, e)
                 return ""
