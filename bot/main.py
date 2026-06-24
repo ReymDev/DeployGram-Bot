@@ -17,6 +17,7 @@ from bot.middlewares.rate_limit import RateLimitMiddleware
 from bot.handlers.user.start import router as start_router
 from bot.handlers.user.bot_create import router as create_router
 from bot.handlers.user.bot_manage import router as manage_router
+from bot.handlers.user.project_files import router as files_router
 from bot.handlers.user.subscription import router as subscription_router
 from bot.handlers.user.backups import router as backups_router
 from bot.handlers.user.extras import router as extras_router
@@ -56,6 +57,7 @@ def setup_dispatcher() -> Dispatcher:
     dp.include_router(start_router)
     dp.include_router(create_router)
     dp.include_router(manage_router)
+    dp.include_router(files_router)
     dp.include_router(subscription_router)
     dp.include_router(backups_router)
     dp.include_router(extras_router)

@@ -449,3 +449,34 @@ class DockerManager:
                 return False
 
         return await asyncio.to_thread(_clear)
+
+    async def get_installed_packages(self, container_id: str) -> list[str]:
+        """Get list of installed Python packages from container."""
+        def _get_packages() -> list[str]:
+            try:
+                container = self.client.containers.get(container_id)
+                # Выполняем pip list --format=freeze в venv
+                exit_code, output = container.exec_run(
+                    "/tmp/venv/bin/pip list --format=freeze",
+                    user="1000:1000"
+                )
+                if exit_code != 0:
+                    logger.warning("pip list failed with code %s", exit_code)
+                    return []
+                
+                decoded = output.decode("utf-8", errors="replace").strip()
+                packages = []
+                for line in decoded.split("\n"):
+                    if not line or line.startswith("#"):
+                        continue
+                    # Формат: package==version
+                    pkg_name = line.split("==")[0].split(">=")[0].split("<=")[0].strip()
+                    if pkg_name:
+                        packages.append(pkg_name)
+                
+                return packages
+            except (NotFound, APIError) as e:
+                logger.error("Failed to get installed packages: %s", e)
+                return []
+
+        return await asyncio.to_thread(_get_packages)

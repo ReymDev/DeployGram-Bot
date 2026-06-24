@@ -118,12 +118,7 @@ def get_bot_settings_keyboard(bot_id: int) -> InlineKeyboardMarkup:
         InlineKeyboardButton(text="📄 Точка входа", callback_data=f"bot_entry_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="🔒 Секреты (ENV)", callback_data=f"bot_secrets_{bot_id}"),
-        InlineKeyboardButton(text="📜 Версии", callback_data=f"bot_versions_{bot_id}"),
-    )
-    builder.row(
         InlineKeyboardButton(text="👥 Совладельцы", callback_data=f"bot_coowners_{bot_id}"),
-        InlineKeyboardButton(text="🖋 Редактор", callback_data=f"bot_editor_{bot_id}"),
     )
     builder.row(
         InlineKeyboardButton(text="📊 Графики", callback_data=f"bot_graphs_{bot_id}"),
@@ -275,8 +270,9 @@ def get_file_manager_keyboard(
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
-    if current_path != "/":
-        parent = "/".join(current_path.strip("/").split("/")[:-1]) or "/"
+    # Кнопка "Назад" если не в корне
+    if current_path != "/app" and current_path != "/":
+        parent = "/".join(current_path.rstrip("/").split("/")[:-1]) or "/app"
         builder.row(
             InlineKeyboardButton(
                 text="⬆ ..",
@@ -284,16 +280,37 @@ def get_file_manager_keyboard(
             )
         )
 
-    for f in files:
-        is_dir = "/" in f or f.endswith("/")
+    # Показываем папки и файлы
+    for f in files[:20]:  # Ограничение 20 файлов
+        is_dir = "/" in f or f.endswith("/") or "." not in f  # Простая эвристика
         icon = "📁" if is_dir else "📄"
-        callback = f"file_nav_{bot_id}_{current_path}/{f}" if is_dir else f"file_view_{bot_id}_{current_path}/{f}"
-        builder.row(
-            InlineKeyboardButton(
-                text=f"{icon} {f}",
-                callback_data=callback,
-            ),
-        )
+        
+        if is_dir:
+            # Для папок - переход внутрь
+            callback = f"file_nav_{bot_id}_{current_path.rstrip('/')}/{f.rstrip('/')}"
+            builder.row(
+                InlineKeyboardButton(
+                    text=f"{icon} {f}",
+                    callback_data=callback,
+                )
+            )
+        else:
+            # Для файлов - кнопки скачать и удалить
+            file_path = f"{current_path.rstrip('/')}/{f}"
+            builder.row(
+                InlineKeyboardButton(
+                    text=f"{icon} {f}",
+                    callback_data=f"file_view_{bot_id}_{file_path}",
+                ),
+                InlineKeyboardButton(
+                    text="⬇️",
+                    callback_data=f"file_download_{bot_id}_{file_path}",
+                ),
+                InlineKeyboardButton(
+                    text="🗑",
+                    callback_data=f"file_delete_{bot_id}_{file_path}",
+                ),
+            )
 
     builder.row(
         InlineKeyboardButton(text="Назад", callback_data=f"bot_settings_{bot_id}"),

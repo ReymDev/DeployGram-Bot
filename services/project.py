@@ -640,3 +640,18 @@ class ProjectService:
         if not self.docker:
             return False
         return await self.docker.clear_logs(project.docker_container_id)
+
+    async def get_installed_packages(self, project_id: int) -> list[str]:
+        """Get list of installed Python packages from project container."""
+        project = await self.project_repo.get_by_id(project_id)
+        if not project or not project.docker_container_id:
+            return []
+
+        # TODO: VPS support for get_installed_packages
+        # if project.server_id:
+        #     Add VPS Agent API endpoint for pip list
+
+        if not self.docker:
+            return []
+
+        return await self.docker.get_installed_packages(project.docker_container_id)

@@ -8,12 +8,33 @@ from bot.utils.emojis import Emoji
 router = Router()
 
 
-@router.callback_query(F.data.startswith("project_files_"))
-async def files_menu(callback: CallbackQuery, project_service, db_user):
-    project_id = int(callback.data.split("_")[-1])
+async def _check_file_access(callback: CallbackQuery, project_service, db_user, project_id: int, session=None):
+    """Check if user has access to project files (owner or coowner)."""
     project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
+    if project is None:
         await callback.answer("Проект не найден", show_alert=True)
+        return None
+    
+    # Owner always has access
+    if project.user_id == db_user.id:
+        return project
+    
+    # Check coowner access if session provided
+    if session is not None:
+        from bot.utils.access import check_project_access
+        has_access = await check_project_access(project, db_user, session)
+        if has_access:
+            return project
+    
+    await callback.answer("Нет доступа", show_alert=True)
+    return None
+
+
+@router.callback_query(F.data.startswith("project_files_"))
+async def files_menu(callback: CallbackQuery, project_service, db_user, session):
+    project_id = int(callback.data.split("_")[-1])
+    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    if project is None:
         return
 
     from bot.keyboards.user import get_file_manager_keyboard
@@ -36,12 +57,10 @@ def _parse_file_callback(data: str, prefix: str) -> tuple[int, str]:
 
 
 @router.callback_query(F.data.startswith("file_view_"))
-async def file_view(callback: CallbackQuery, project_service, db_user):
+async def file_view(callback: CallbackQuery, project_service, db_user, session):
     project_id, file_path = _parse_file_callback(callback.data, "file_view")
-
-    project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
+    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    if project is None:
         return
 
     from bot.keyboards.user import get_file_action_keyboard
@@ -53,12 +72,10 @@ async def file_view(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("file_nav_"))
-async def file_nav(callback: CallbackQuery, project_service, db_user):
+async def file_nav(callback: CallbackQuery, project_service, db_user, session):
     project_id, path = _parse_file_callback(callback.data, "file_nav")
-
-    project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
+    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    if project is None:
         return
 
     from bot.keyboards.user import get_file_manager_keyboard
@@ -72,12 +89,10 @@ async def file_nav(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("file_delete_"))
-async def file_delete(callback: CallbackQuery, project_service, db_user):
+async def file_delete(callback: CallbackQuery, project_service, db_user, session):
     project_id, file_path = _parse_file_callback(callback.data, "file_delete")
-
-    project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
+    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    if project is None:
         return
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -91,7 +106,7 @@ async def file_delete(callback: CallbackQuery, project_service, db_user):
         ),
         InlineKeyboardButton(
             text="❌ Нет",
-            callback_data=f"project_files_{project_id}",
+            callback_data=f"bot_files_{project_id}",
         ),
     )
 
@@ -103,12 +118,10 @@ async def file_delete(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("file_delete_confirm_"))
-async def file_delete_confirm(callback: CallbackQuery, project_service, db_user):
+async def file_delete_confirm(callback: CallbackQuery, project_service, db_user, session):
     project_id, file_path = _parse_file_callback(callback.data, "file_delete_confirm")
-
-    project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
+    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    if project is None:
         return
 
     success = await project_service.delete_file(project_id, file_path)
@@ -126,12 +139,10 @@ async def file_delete_confirm(callback: CallbackQuery, project_service, db_user)
 
 
 @router.callback_query(F.data.startswith("file_download_"))
-async def file_download(callback: CallbackQuery, project_service, db_user):
+async def file_download(callback: CallbackQuery, project_service, db_user, session):
     project_id, file_path = _parse_file_callback(callback.data, "file_download")
-
-    project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
+    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    if project is None:
         return
 
     content = await project_service.read_file(project_id, file_path)
@@ -139,18 +150,14 @@ async def file_download(callback: CallbackQuery, project_service, db_user):
         await callback.answer("Файл не найден или пуст", show_alert=True)
         return
 
-    from aiogram.types import FSInputFile
-    import tempfile
+    from aiogram.types import BufferedInputFile
     import os
-    with tempfile.NamedTemporaryFile(mode="w", suffix=os.path.splitext(file_path)[1], delete=False, encoding="utf-8") as f:
-        f.write(content)
-        tmp_path = f.name
+    file_bytes = content.encode("utf-8")
+    filename = os.path.basename(file_path)
+    file = BufferedInputFile(file_bytes, filename=filename)
 
-    try:
-        await callback.message.answer_document(
-            FSInputFile(tmp_path),
-            caption=f"{Emoji.FILE} {file_path}",
-        )
-    finally:
-        os.unlink(tmp_path)
+    await callback.message.answer_document(
+        file,
+        caption=f"{Emoji.FILE} {file_path}",
+    )
     await callback.answer()
