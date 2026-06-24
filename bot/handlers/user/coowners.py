@@ -6,6 +6,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from bot.utils.emojis import Emoji, EmojiID
+from bot.keyboards.common import get_back_keyboard
+from bot import texts
 
 router = Router()
 
@@ -19,7 +21,7 @@ async def coowners_menu(callback: CallbackQuery, project_service, db_user, sessi
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
-        await callback.answer("Проект не найден", show_alert=True)
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
 
     from repositories.coowner import CoOwnerRepository
@@ -28,10 +30,7 @@ async def coowners_menu(callback: CallbackQuery, project_service, db_user, sessi
 
     from bot.keyboards.user import get_coowners_keyboard
     await callback.message.edit_text(
-        f"{Emoji.PEOPLE} <b>Совладельцы: {project.name}</b>\n\n"
-        f"Роли:\n"
-        f"  <b>Owner</b> — полный доступ\n"
-        f"  <b>Developer</b> — запуск, остановка, логи, файлы",
+        texts.bot_coowners_text(project.name),
         reply_markup=get_coowners_keyboard(project_id, coowners),
     )
     await callback.answer()
@@ -42,7 +41,7 @@ async def coowner_add(callback: CallbackQuery, state: FSMContext, db_user):
     project_id = int(callback.data.split("_")[-1])
     await state.update_data(coowner_project_id=project_id)
     await callback.message.edit_text(
-        f"{Emoji.PROFILE} Отправьте Telegram ID пользователя для добавления:",
+        texts.COOWNER_ENTER_ID,
     )
     await state.set_state(CoOwnerStates.waiting_id)
     await callback.answer()
@@ -56,19 +55,19 @@ async def coowner_remove(callback: CallbackQuery, project_service, db_user, sess
 
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     from repositories.coowner import CoOwnerRepository
     coowner_repo = CoOwnerRepository(session)
     await coowner_repo.delete(coowner_id)
 
-    await callback.answer("Совладелец удалён", show_alert=True)
+    await callback.answer(texts.COOWNER_REMOVED, show_alert=True)
 
     coowners = await coowner_repo.get_by_project_id(project_id)
     from bot.keyboards.user import get_coowners_keyboard
     await callback.message.edit_text(
-        f"{Emoji.PEOPLE} <b>Совладельцы: {project.name}</b>",
+        texts.bot_coowners_text(project.name),
         reply_markup=get_coowners_keyboard(project_id, coowners),
     )
 
@@ -81,11 +80,11 @@ async def coowner_id_received(message: Message, state: FSMContext, session, db_u
     try:
         target_telegram_id = int(message.text.strip())
     except ValueError:
-        await message.answer("❌ Введите числовой Telegram ID")
+        await message.answer(texts.COOWNER_INVALID_ID)
         return
 
     if target_telegram_id == db_user.telegram_id:
-        await message.answer("❌ Нельзя добавить самого себя")
+        await message.answer(texts.COOWNER_SELF_ADD)
         return
 
     from repositories.user import UserRepository
@@ -93,16 +92,14 @@ async def coowner_id_received(message: Message, state: FSMContext, session, db_u
     target_user = await user_repo.get_by_telegram_id(target_telegram_id)
 
     if target_user is None:
-        await message.answer(
-            "❌ Пользователь не найден. Он должен хотя бы раз запустить бота."
-        )
+        await message.answer(texts.COOWNER_USER_NOT_FOUND)
         return
 
     from repositories.coowner import CoOwnerRepository
     coowner_repo = CoOwnerRepository(session)
     existing = await coowner_repo.get_by_user_and_project(target_user.id, project_id)
     if existing:
-        await message.answer("❌ Этот пользователь уже совладелец")
+        await message.answer(texts.COOWNER_ALREADY_EXISTS)
         return
 
     await coowner_repo.create(
@@ -113,6 +110,6 @@ async def coowner_id_received(message: Message, state: FSMContext, session, db_u
 
     await state.clear()
     await message.answer(
-        f"{Emoji.CHECK} Пользователь <b>{target_user.username or target_telegram_id}</b> добавлен как совладелец.",
+        texts.coowner_added_text(target_user.username or str(target_telegram_id)),
         reply_markup=get_back_keyboard(f"project_coowners_{project_id}"),
     )

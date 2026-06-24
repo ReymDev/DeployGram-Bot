@@ -5,6 +5,7 @@ from aiogram.types import CallbackQuery
 
 from bot.keyboards.common import get_back_keyboard
 from bot.utils.emojis import Emoji, EmojiID
+from bot import texts
 
 router = Router()
 
@@ -14,21 +15,21 @@ async def project_monitor(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
-        await callback.answer("Проект не найден", show_alert=True)
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
 
     monitoring = await project_service.get_monitoring(project_id)
 
     from bot.utils.formatters import format_status, format_uptime
     status_text = format_status(monitoring.get('status', 'unknown'))
-    text = (
-        f"{Emoji.GRAPH_STATS} <b>Мониторинг: {project.name}</b>\n\n"
-        f"Статус: {status_text}\n"
-        f"CPU: <b>{monitoring.get('cpu', 0):.1f}%</b>\n"
-        f"RAM: <b>{monitoring.get('ram', 0):.1f} MB</b>\n"
-        f"Disk: <b>{monitoring.get('disk', 0):.1f} MB</b>\n"
-        f"Uptime: <b>{monitoring.get('uptime', '—')}</b>\n"
-        f"Рестартов: <b>{monitoring.get('restarts', 0)}</b>"
+    text = texts.project_monitor_text(
+        project.name,
+        status_text,
+        monitoring.get('cpu', 0),
+        monitoring.get('ram', 0),
+        monitoring.get('disk', 0),
+        monitoring.get('uptime', '—'),
+        monitoring.get('restarts', 0)
     )
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -67,7 +68,7 @@ async def project_graphs(callback: CallbackQuery, project_service, db_user, sess
 
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     from services.monitoring import MonitoringService
@@ -75,7 +76,7 @@ async def project_graphs(callback: CallbackQuery, project_service, db_user, sess
     stats = await monitoring.get_stats_history(project_id, hours)
 
     if not stats:
-        await callback.answer("Нет данных за этот период", show_alert=True)
+        await callback.answer(texts.ERROR_NO_STATS_DATA, show_alert=True)
         return
 
     avg_cpu = sum(s.cpu_percent for s in stats) / len(stats)
@@ -83,16 +84,7 @@ async def project_graphs(callback: CallbackQuery, project_service, db_user, sess
     avg_ram = sum(s.ram_mb for s in stats) / len(stats)
     max_ram = max(s.ram_mb for s in stats)
 
-    text = (
-        f"{Emoji.GRAPH_UP} <b>Графики за {hours}ч</b>\n\n"
-        f"{Emoji.GRAPH_STATS} CPU:\n"
-        f"  Среднее: {avg_cpu:.1f}%\n"
-        f"  Максимум: {max_cpu:.1f}%\n\n"
-        f"{Emoji.GRAPH_UP} RAM:\n"
-        f"  Среднее: {avg_ram:.1f} MB\n"
-        f"  Максимум: {max_ram:.1f} MB\n\n"
-        f"{Emoji.INFO} Точек данных: {len(stats)}"
-    )
+    text = texts.project_graphs_text(hours, avg_cpu, max_cpu, avg_ram, max_ram, len(stats))
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton

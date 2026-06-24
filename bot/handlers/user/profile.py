@@ -8,6 +8,7 @@ from bot.keyboards.user import get_settings_keyboard
 from bot.keyboards.common import get_back_keyboard
 from bot.utils.text import profile_text
 from bot.utils.emojis import Emoji
+from bot import texts
 
 router = Router()
 
@@ -43,7 +44,7 @@ async def profile(callback: CallbackQuery, db_user, user_service, session):
 async def settings_page(callback: CallbackQuery, user_service, db_user):
     s = await user_service.get_settings(db_user.id)
     if s is None:
-        await callback.answer("Настройки не найдены", show_alert=True)
+        await callback.answer(texts.SETTINGS_NOT_FOUND, show_alert=True)
         return
 
     keyboard = get_settings_keyboard(
@@ -58,7 +59,7 @@ async def settings_page(callback: CallbackQuery, user_service, db_user):
     )
 
     await callback.message.edit_text(
-        f"{Emoji.NOTIF} <b>Настройки уведомлений</b>",
+        texts.notification_settings_text(),
         reply_markup=keyboard,
     )
     await callback.answer()
@@ -73,11 +74,11 @@ async def toggle_notification(callback: CallbackQuery, user_service, db_user):
         "notify_backup_created", "notify_update_done",
     ]
     if setting not in valid_settings:
-        await callback.answer("Неизвестная настройка", show_alert=True)
+        await callback.answer(texts.SETTINGS_UNKNOWN, show_alert=True)
         return
 
     await user_service.toggle_setting(db_user.id, setting)
-    await callback.answer("Настройка изменена")
+    await callback.answer(texts.SETTINGS_CHANGED)
 
     s = await user_service.get_settings(db_user.id)
     if s:

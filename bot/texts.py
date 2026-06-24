@@ -575,6 +575,220 @@ BTN_RESTORE_BACKUP = "🔄 Восстановить"
 BTN_DELETE_BACKUP = "🗑 Удалить бэкап"
 
 
+# ─── PROJECT MONITOR ───
+
+def project_monitor_text(name: str, status_text: str, cpu: float, ram: float, disk: float, uptime: str, restarts: int) -> str:
+    return (
+        f"{Emoji.GRAPH_STATS} <b>Мониторинг: {name}</b>\n\n"
+        f"Статус: {status_text}\n"
+        f"CPU: <b>{cpu:.1f}%</b>\n"
+        f"RAM: <b>{ram:.1f} MB</b>\n"
+        f"Disk: <b>{disk:.1f} MB</b>\n"
+        f"Uptime: <b>{uptime}</b>\n"
+        f"Рестартов: <b>{restarts}</b>"
+    )
+
+def project_graphs_text(hours: int, avg_cpu: float, max_cpu: float, avg_ram: float, max_ram: float, data_points: int) -> str:
+    return (
+        f"{Emoji.GRAPH_UP} <b>Графики за {hours}ч</b>\n\n"
+        f"{Emoji.GRAPH_STATS} CPU:\n"
+        f"  Среднее: {avg_cpu:.1f}%\n"
+        f"  Максимум: {max_cpu:.1f}%\n\n"
+        f"{Emoji.GRAPH_UP} RAM:\n"
+        f"  Среднее: {avg_ram:.1f} MB\n"
+        f"  Максимум: {max_ram:.1f} MB\n\n"
+        f"{Emoji.INFO} Точек данных: {data_points}"
+    )
+
+ERROR_NO_STATS_DATA = "Нет данных за этот период"
+
+
+# ─── PROJECT SETTINGS ───
+
+def project_settings_text(name: str, python_version: str, entry_point: str, entry_type: str) -> str:
+    return (
+        f"{Emoji.SETTINGS} <b>Настройки: {name}</b>\n\n"
+        f"Python: {python_version}\n"
+        f"Entry: <code>{entry_point}</code>\n"
+        f"Тип: {entry_type}"
+    )
+
+PROJECT_PYTHON_SELECT_TEXT = f"{Emoji.SETTINGS} Выберите версию Python:"
+PROJECT_ENTRY_INPUT_TEXT = f"{Emoji.PENCIL} Введите новую точку входа (например: main.py или mypackage.module):"
+PROJECT_SETTINGS_USE_CARD = "Используйте настройки из карточки проекта"
+
+
+# ─── PROJECT LOGS ───
+
+def project_logs_menu_text(name: str) -> str:
+    return f"{Emoji.FILE} <b>Логи: {name}</b>"
+
+def project_logs_view_text(logs: str) -> str:
+    return f"<b>📋 Последние логи:</b>\n\n<code>{logs}</code>"
+
+def project_logs_file_caption(name: str) -> str:
+    return f"📋 Логи проекта {name}"
+
+PROJECT_LOGS_CLEARED = "Логи очищены"
+PROJECT_LOGS_CLEAR_ERROR = "Ошибка очистки логов"
+
+
+# ─── PROJECT MANAGE ───
+
+def project_delete_confirm_text(name: str) -> str:
+    return (
+        f"{Emoji.TRASH} <b>Удаление проекта</b>\n\n"
+        f"Вы уверены что хотите удалить <b>{name}</b>?\n"
+        f"Это действие необратимо."
+    )
+
+PROJECT_DELETED_TEXT = f"{Emoji.CHECK} Проект удалён."
+PROJECT_DELETE_ERROR = "Ошибка удаления"
+
+
+# ─── PROFILE & SETTINGS ───
+
+SETTINGS_NOT_FOUND = "Настройки не найдены"
+SETTINGS_UNKNOWN = "Неизвестная настройка"
+SETTINGS_CHANGED = "Настройка изменена"
+
+def notification_settings_text() -> str:
+    return f"{Emoji.NOTIF} <b>Настройки уведомлений</b>"
+
+
+# ─── LOCATIONS ───
+
+LOCATIONS_NO_SERVERS = f"{Emoji.HOME} <b>Серверы</b>\n\nНет доступных серверов."
+LOCATIONS_SERVERS_TEXT = f"{Emoji.HOME} <b>Доступные серверы</b>"
+LOCATION_NOT_FOUND = "Сервер не найден"
+
+
+# ─── SUBSCRIPTION ───
+
+SUBSCRIPTION_PLAN_UNKNOWN = "Неизвестный план"
+
+def subscription_buy_confirm_text(plan_label: str, price: int) -> str:
+    return (
+        f"💳 <b>Покупка подписки</b>\n\n"
+        f"Ты выбрал: <b>Premium {plan_label}</b>\n"
+        f"Цена: <b>{price}₽</b>\n\n"
+        f"Для оплаты свяжитесь с администратором."
+    )
+
+
+# ─── COOWNERS ───
+
+COOWNER_ENTER_ID = f"{Emoji.PROFILE} Отправьте Telegram ID пользователя для добавления:"
+COOWNER_REMOVED = "Совладелец удалён"
+COOWNER_INVALID_ID = "❌ Введите числовой Telegram ID"
+COOWNER_SELF_ADD = "❌ Нельзя добавить самого себя"
+COOWNER_USER_NOT_FOUND = "❌ Пользователь не найден. Он должен хотя бы раз запустить бота."
+COOWNER_ALREADY_EXISTS = "❌ Этот пользователь уже совладелец"
+
+def coowner_added_text(username: str) -> str:
+    return f"{Emoji.CHECK} Пользователь <b>{username}</b> добавлен как совладелец."
+
+
+# ─── BOT CREATE ───
+
+BOT_CREATE_INVALID_ZIP = "❌ Отправьте ZIP архив (.zip файл)."
+BOT_CREATE_INVALID_URL = "❌ Невалидный URL. Используйте формат:\n<code>https://github.com/user/repo</code>"
+BOT_CREATE_REPO_NOT_FOUND = "❌ Репозиторий не найден или приватный."
+BOT_CREATE_ARCHIVE_NOT_FOUND = "Архив не найден"
+BOT_CREATE_NO_SERVERS = "Нет доступных серверов"
+BOT_CREATE_INVALID_NAME = "❌ Имя: буквы, цифры, _ и - (1-50 символов)."
+BOT_CREATE_LIMIT_REACHED = lambda limit: f"Достигнут лимит ботов ({limit})"
+BOT_CREATE_DOWNLOAD_ERROR = lambda e: f"Ошибка загрузки: {e}"
+
+BOT_CREATE_NAME_TEXT = "📝 <b>Название бота</b>\n\nВведи название (1-50 символов, буквы, цифры, _ -):"
+BOT_CREATE_ENTRY_MANUAL_TEXT = (
+    "📄 <b>Выбор точки входа</b>\n\n"
+    "Отправь имя файла вручную.\n"
+    "Пример: <code>main.py</code>"
+)
+BOT_CREATE_ENTRY_MODULE_TEXT = (
+    "📄 <b>Выбор точки входа</b>\n\n"
+    "Режим: Модульный запуск / python -m\n\n"
+    "Отправь имя модуля.\n"
+    "Примеры: <code>app.pkg.main</code>"
+)
+def bot_create_entry_confirm_text(entry: str) -> str:
+    return (
+        f"📄 <b>{entry}</b>\n\n"
+        f"Подтверди выбор точки входа, ты сможешь изменить ее позже."
+    )
+
+def bot_create_confirm_text(name: str, python: str, entry: str) -> str:
+    return (
+        f"{Emoji.CHECK} <b>Подтверждение</b>\n\n"
+        f"📝 Название: <b>{name}</b>\n"
+        f"🐍 Python: {python}\n"
+        f"📄 Вход: <code>{entry}</code>\n\n"
+        f"Создать бота?"
+    )
+
+BOT_CREATE_SUCCESS_TEXT = (
+    f"🤖 <b>Твой бот готов к работе!</b>\n\n"
+    f"Твой бот запущен!\n\n"
+    f"Вернись в меню, чтобы управлять им."
+)
+
+
+# ─── ADMIN ───
+
+ADMIN_NO_ACCESS = "⛔ Нет доступа"
+ADMIN_USER_NOT_FOUND = "Пользователь не найден"
+ADMIN_SERVER_NOT_FOUND = "Сервер не найден"
+ADMIN_SERVER_DELETED = "Сервер удалён"
+ADMIN_REFERRAL_WIP = "Настройка реферальной системы в разработке"
+
+ADMIN_USER_BANNED = "🚫 Пользователь забанен"
+ADMIN_USER_UNBANNED = "✅ Пользователь разбанен"
+ADMIN_TARIFF_CHANGED = lambda tariff: f"✅ Тариф изменён на {tariff}"
+ADMIN_BALANCE_INPUT_ERROR = "❌ Введите число:"
+ADMIN_PROMO_TYPE_ERROR = "❌ Допустимые типы: tariff, projects, balance"
+
+def admin_user_status_text(username: str, status: str) -> str:
+    return f"{Emoji.PROFILE} <b>{username}</b> — {status}"
+
+def admin_user_tariff_text(username: str, tariff: str) -> str:
+    return f"{Emoji.PROFILE} <b>{username}</b> — Тариф: {tariff}"
+
+def admin_balance_result_text(amount: float, balance: float) -> str:
+    return (
+        f"{Emoji.CHECK} Баланс изменён на {amount:.2f}\n"
+        f"Новый баланс: {balance:.2f}"
+    )
+
+def admin_server_delete_confirm_text(name: str) -> str:
+    return f"{Emoji.TRASH} Удалить сервер <b>{name}</b>?"
+
+ADMIN_SERVER_ENTER_NAME = f"{Emoji.HOME} Введите название сервера:"
+ADMIN_SERVER_ENTER_COUNTRY = f"{Emoji.HOME} Введите страну сервера:"
+ADMIN_SERVER_ENTER_IP = f"{Emoji.HOME} Введите IP адрес сервера:"
+ADMIN_SERVER_ENTER_API_KEY = f"{Emoji.HOME} Введите API ключ агента (или - если без ключа):"
+ADMIN_SERVER_ENTER_SLOTS = f"{Emoji.HOME} Введите количество слотов:"
+ADMIN_SERVER_CHECKING = f"{Emoji.LOADING} <b>Проверяю подключение к агенту...</b>"
+
+ADMIN_PROMO_ENTER_CODE = f"{Emoji.GIFT} Введите код промокода:"
+ADMIN_PROMO_ENTER_TYPE = f"{Emoji.GIFT} Введите тип награды (tariff/projects/balance):"
+ADMIN_PROMO_ENTER_VALUE = f"{Emoji.GIFT} Введите значение награды:"
+ADMIN_PROMO_ENTER_MAX = f"{Emoji.GIFT} Введите макс. количество активаций:"
+
+ADMIN_BROADCAST_ENTER_MESSAGE = f"{Emoji.SPEAKER} Отправьте сообщение для рассылки:"
+
+def admin_broadcast_done_text(sent: int, failed: int) -> str:
+    return (
+        f"{Emoji.CHECK} Рассылка завершена.\n\n"
+        f"✅ Отправлено: {sent}\n"
+        f"❌ Ошибок: {failed}"
+    )
+
+ADMIN_SLEEP_CHANGED = lambda minutes: f"✅ Автосон: {minutes} минут"
+ADMIN_TARIFF_SELECT_TEXT = f"{Emoji.SETTINGS} Выберите тариф для пользователя:"
+ADMIN_BALANCE_INPUT_TEXT = f"{Emoji.COIN} Введите сумму баланса (положительное = пополнение, отрицательное = списание):"
+
+
 # ─── SUCCESS ───
 
 SUCCESS_BOT_STARTED = f"{Emoji.CHECK} Проект запущен"

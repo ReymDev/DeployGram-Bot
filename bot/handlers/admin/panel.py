@@ -18,6 +18,7 @@ from bot.keyboards.common import get_back_keyboard
 from bot.utils.emojis import Emoji, EmojiID
 from bot.states.project import BroadcastStates, AdminUserStates, AdminServerStates, AdminPromoStates
 from services.user import UserService
+from bot import texts
 
 router = Router()
 
@@ -29,7 +30,7 @@ def is_admin(user_id: int) -> bool:
 @router.message(Command("admin"))
 async def cmd_admin(message: Message, session):
     if not is_admin(message.from_user.id):
-        await message.answer("⛔ Нет доступа")
+        await message.answer(texts.ADMIN_NO_ACCESS)
         return
 
     from services.user import UserService
@@ -47,7 +48,7 @@ async def cmd_admin(message: Message, session):
     servers_count = await server_repo.count()
 
     await message.answer(
-        admin_panel_text(users_count, projects_count, servers_count),
+        texts.admin_panel_text(users_count, projects_count, servers_count),
         reply_markup=get_admin_keyboard(users_count, projects_count, servers_count),
     )
 
@@ -64,7 +65,7 @@ def admin_panel_text(users, projects, servers):
 @router.callback_query(F.data == "admin_panel")
 async def admin_panel(callback: CallbackQuery, session):
     if not is_admin(callback.from_user.id):
-        await callback.answer("⛔ Нет доступа", show_alert=True)
+        await callback.answer(texts.ADMIN_NO_ACCESS, show_alert=True)
         return
 
     from services.user import UserService
@@ -80,7 +81,7 @@ async def admin_panel(callback: CallbackQuery, session):
     servers_count = await server_repo.count()
 
     await callback.message.edit_text(
-        admin_panel_text(users_count, projects_count, servers_count),
+        texts.admin_panel_text(users_count, projects_count, servers_count),
         reply_markup=get_admin_keyboard(users_count, projects_count, servers_count),
     )
     await callback.answer()
@@ -124,19 +125,18 @@ async def admin_user_view(callback: CallbackQuery, session):
     user = await user_svc.get_user_by_id(user_id)
 
     if user is None:
-        await callback.answer("Пользователь не найден", show_alert=True)
+        await callback.answer(texts.ADMIN_USER_NOT_FOUND, show_alert=True)
         return
 
-    text = (
-        f"{Emoji.PROFILE} <b>Пользователь</b>\n\n"
-        f"ID: <code>{user.telegram_id}</code>\n"
-        f"Username: @{user.username or '—'}\n"
-        f"Имя: {user.full_name or '—'}\n"
-        f"Тариф: <b>{user.tariff}</b>\n"
-        f"Баланс: <b>{user.balance:.2f}</b>\n"
-        f"Статус: {'🚫 Забанен' if user.is_banned else '✅ Активен'}\n"
-        f"Проектов: {len(user.projects)}\n"
-        f"Регистрация: {user.registered_at.strftime('%d.%m.%Y %H:%M')}"
+    text = texts.admin_user_view_text(
+        user.telegram_id,
+        user.username,
+        user.full_name,
+        user.tariff,
+        user.balance,
+        user.is_banned,
+        len(user.projects),
+        user.registered_at.strftime('%d.%m.%Y %H:%M')
     )
 
     await callback.message.edit_text(
@@ -151,13 +151,13 @@ async def admin_user_ban(callback: CallbackQuery, session):
     user_id = int(callback.data.split("_")[-1])
     user_svc = UserService(session)
     await user_svc.ban_user(user_id)
-    await callback.answer("🚫 Пользователь забанен", show_alert=True)
+    await callback.answer(texts.ADMIN_USER_BANNED, show_alert=True)
 
     user = await user_svc.get_user_by_id(user_id)
     if user:
         from bot.keyboards.admin import get_admin_user_detail_keyboard
         await callback.message.edit_text(
-            f"{Emoji.PROFILE} <b>{user.username or user.telegram_id}</b> — 🚫 Забанен",
+            texts.admin_user_status_text(user.username or str(user.telegram_id), "🚫 Забанен"),
             reply_markup=get_admin_user_detail_keyboard(user_id, True),
         )
 
@@ -167,13 +167,13 @@ async def admin_user_unban(callback: CallbackQuery, session):
     user_id = int(callback.data.split("_")[-1])
     user_svc = UserService(session)
     await user_svc.unban_user(user_id)
-    await callback.answer("✅ Пользователь разбанен", show_alert=True)
+    await callback.answer(texts.ADMIN_USER_UNBANNED, show_alert=True)
 
     user = await user_svc.get_user_by_id(user_id)
     if user:
         from bot.keyboards.admin import get_admin_user_detail_keyboard
         await callback.message.edit_text(
-            f"{Emoji.PROFILE} <b>{user.username or user.telegram_id}</b> — ✅ Активен",
+            texts.admin_user_status_text(user.username or str(user.telegram_id), "✅ Активен"),
             reply_markup=get_admin_user_detail_keyboard(user_id, False),
         )
 
@@ -183,7 +183,7 @@ async def admin_user_tariff(callback: CallbackQuery, state: FSMContext):
     user_id = int(callback.data.split("_")[-1])
     await state.update_data(admin_tariff_user_id=user_id)
     await callback.message.edit_text(
-        f"{Emoji.SETTINGS} Выберите тариф для пользователя:",
+        texts.ADMIN_TARIFF_SELECT_TEXT,
         reply_markup=get_admin_user_tariff_keyboard(user_id),
     )
     await callback.answer()
@@ -211,13 +211,13 @@ async def admin_set_tariff(callback: CallbackQuery, session):
 
     user_svc = UserService(session)
     await user_svc.set_tariff(user_id, tariff)
-    await callback.answer(f"✅ Тариф изменён на {tariff}", show_alert=True)
+    await callback.answer(texts.ADMIN_TARIFF_CHANGED(tariff), show_alert=True)
 
     user = await user_svc.get_user_by_id(user_id)
     if user:
         from bot.keyboards.admin import get_admin_user_detail_keyboard
         await callback.message.edit_text(
-            f"{Emoji.PROFILE} <b>{user.username or user.telegram_id}</b> — Тариф: {tariff}",
+            texts.admin_user_tariff_text(user.username or str(user.telegram_id), tariff),
             reply_markup=get_admin_user_detail_keyboard(user_id, user.is_banned),
         )
 
@@ -244,7 +244,7 @@ async def admin_locations(callback: CallbackQuery, session):
 @router.callback_query(F.data == "admin_server_add")
 async def admin_server_add(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
-        f"{Emoji.HOME} Введите название сервера:",
+        texts.ADMIN_SERVER_ENTER_NAME,
     )
     await state.set_state(AdminServerStates.waiting_name)
     await callback.answer()
@@ -255,7 +255,7 @@ async def admin_user_balance(callback: CallbackQuery, state: FSMContext):
     user_id = int(callback.data.replace("admin_user_balance_", ""))
     await state.update_data(admin_balance_user_id=user_id)
     await callback.message.edit_text(
-        f"{Emoji.COIN} Введите сумму баланса (положительное = пополнение, отрицательное = списание):",
+        texts.ADMIN_BALANCE_INPUT_TEXT,
     )
     await state.set_state(AdminUserStates.waiting_balance)
     await callback.answer()
@@ -269,7 +269,7 @@ async def admin_balance_input(message: Message, state: FSMContext, session):
     try:
         amount = float(message.text.strip())
     except ValueError:
-        await message.answer("❌ Введите число:")
+        await message.answer(texts.ADMIN_BALANCE_INPUT_ERROR)
         return
 
     data = await state.get_data()
@@ -281,8 +281,7 @@ async def admin_balance_input(message: Message, state: FSMContext, session):
     user = await user_svc.get_user_by_id(user_id)
     await state.clear()
     await message.answer(
-        f"{Emoji.CHECK} Баланс изменён на {amount:.2f}\n"
-        f"Новый баланс: {user.balance:.2f}" if user else "Пользователь не найден",
+        texts.admin_balance_result_text(amount, user.balance) if user else texts.ADMIN_USER_NOT_FOUND,
         reply_markup=get_back_keyboard("admin_panel"),
     )
 
@@ -290,7 +289,7 @@ async def admin_balance_input(message: Message, state: FSMContext, session):
 @router.callback_query(F.data == "admin_subscriptions")
 async def admin_subscriptions(callback: CallbackQuery, session):
     if not is_admin(callback.from_user.id):
-        await callback.answer("⛔", show_alert=True)
+        await callback.answer(texts.ADMIN_NO_ACCESS, show_alert=True)
         return
 
     user_svc = UserService(session)
@@ -299,12 +298,7 @@ async def admin_subscriptions(callback: CallbackQuery, session):
     premium_count = sum(1 for u in users if u.tariff == "premium")
     free_count = sum(1 for u in users if u.tariff == "free")
 
-    text = (
-        f"💎 <b>Подписки</b>\n\n"
-        f"🆓 Free: {free_count}\n"
-        f"💎 Premium: {premium_count}\n"
-        f"Всего: {len(users)}"
-    )
+    text = texts.admin_subscriptions_text(free_count, premium_count, len(users))
 
     await callback.message.edit_text(text, reply_markup=get_back_keyboard("admin_panel"))
     await callback.answer()
@@ -313,17 +307,14 @@ async def admin_subscriptions(callback: CallbackQuery, session):
 @router.callback_query(F.data == "admin_referrals")
 async def admin_referrals(callback: CallbackQuery, session):
     if not is_admin(callback.from_user.id):
-        await callback.answer("⛔", show_alert=True)
+        await callback.answer(texts.ADMIN_NO_ACCESS, show_alert=True)
         return
 
     from repositories.referral import ReferralRepository
     ref_repo = ReferralRepository(session)
     referrals = await ref_repo.get_all()
 
-    text = (
-        f"🔗 <b>Рефералы</b>\n\n"
-        f"Всего рефералов: {len(referrals)}"
-    )
+    text = texts.admin_referrals_text(len(referrals))
 
     await callback.message.edit_text(text, reply_markup=get_back_keyboard("admin_panel"))
     await callback.answer()
@@ -346,20 +337,22 @@ async def admin_server_view(callback: CallbackQuery, session):
     server = await server_repo.get_by_id(server_id)
 
     if server is None:
-        await callback.answer("Сервер не найден", show_alert=True)
+        await callback.answer(texts.ADMIN_SERVER_NOT_FOUND, show_alert=True)
         return
 
-    text = (
-        f"{Emoji.HOME} <b>{server.name}</b>\n\n"
-        f"🌍 Страна: {server.country}\n"
-        f"📡 IP: {server.ip}:{server.port}\n"
-        f"🔑 API Key: {'Есть' if server.api_key else 'Нет'}\n"
-        f"💻 Слоты: {server.free_slots}/{server.total_slots}\n"
-        f"⭐ Рейтинг: {server.rating:.1f}\n"
-        f"📡 Пинг: {server.ping}ms\n"
-        f"📊 CPU: {server.load_cpu:.1f}%\n"
-        f"🧠 RAM: {server.load_ram:.1f}%\n"
-        f"Статус: {'🟢 Онлайн' if server.status == 'online' else '🔴 Оффлайн'}"
+    text = texts.admin_server_view_text(
+        server.name,
+        server.country,
+        server.ip,
+        server.port,
+        bool(server.api_key),
+        server.free_slots,
+        server.total_slots,
+        server.rating,
+        server.ping,
+        server.load_cpu,
+        server.load_ram,
+        server.status
     )
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -393,7 +386,7 @@ async def admin_server_delete(callback: CallbackQuery, session):
     server = await server_repo.get_by_id(server_id)
 
     if server is None:
-        await callback.answer("Сервер не найден", show_alert=True)
+        await callback.answer(texts.ADMIN_SERVER_NOT_FOUND, show_alert=True)
         return
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -413,7 +406,7 @@ async def admin_server_delete(callback: CallbackQuery, session):
 
     try:
         await callback.message.edit_text(
-            f"{Emoji.TRASH} Удалить сервер <b>{server.name}</b>?",
+            texts.admin_server_delete_confirm_text(server.name),
             reply_markup=builder.as_markup(),
         )
     except Exception:
@@ -432,12 +425,12 @@ async def admin_server_delete_confirm(callback: CallbackQuery, session):
     server_repo = ServerRepository(session)
     await server_repo.delete(server_id)
 
-    await callback.answer("Сервер удалён", show_alert=True)
+    await callback.answer(texts.ADMIN_SERVER_DELETED, show_alert=True)
 
     servers = await server_repo.get_all()
     try:
         await callback.message.edit_text(
-            f"{Emoji.HOME} <b>Серверы</b> ({len(servers)})",
+            texts.admin_servers_text(len(servers)),
             reply_markup=get_admin_servers_keyboard(servers),
         )
     except Exception:
@@ -504,7 +497,7 @@ async def admin_promos(callback: CallbackQuery, session):
 @router.callback_query(F.data == "admin_promo_create")
 async def admin_promo_create(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
-        f"{Emoji.GIFT} Введите код промокода:",
+        texts.ADMIN_PROMO_ENTER_CODE,
     )
     await state.set_state(AdminPromoStates.waiting_code)
     await callback.answer()
@@ -514,7 +507,7 @@ async def admin_promo_create(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "admin_referrals")
 async def admin_referrals(callback: CallbackQuery):
-    await callback.answer("Настройка реферальной системы в разработке", show_alert=True)
+    await callback.answer(texts.ADMIN_REFERRAL_WIP, show_alert=True)
 
 
 # ─── BROADCAST ───
@@ -522,7 +515,7 @@ async def admin_referrals(callback: CallbackQuery):
 @router.callback_query(F.data == "admin_broadcast")
 async def admin_broadcast(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
-        f"{Emoji.SPEAKER} Отправьте сообщение для рассылки:",
+        texts.ADMIN_BROADCAST_ENTER_MESSAGE,
         reply_markup=get_back_keyboard("admin_panel"),
     )
     await state.set_state(BroadcastStates.waiting_for_message)
@@ -541,14 +534,14 @@ async def admin_settings(callback: CallbackQuery):
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("admin_sleep_"))
+@router.callback_query(F.data.startswith("admin_set_sleep_"))
 async def admin_set_sleep(callback: CallbackQuery):
     minutes = int(callback.data.replace("admin_sleep_", ""))
 
     from bot.config import settings as cfg
     cfg.AUTO_SLEEP_MINUTES = minutes
 
-    await callback.answer(f"✅ Автосон: {minutes} минут", show_alert=True)
+    await callback.answer(texts.ADMIN_SLEEP_CHANGED(minutes), show_alert=True)
 
     from bot.keyboards.admin import get_admin_settings_keyboard
     await callback.message.edit_reply_markup(reply_markup=get_admin_settings_keyboard(minutes))
@@ -576,9 +569,7 @@ async def broadcast_receive(message: Message, state: FSMContext, session, bot):
 
     await state.clear()
     await message.answer(
-        f"{Emoji.CHECK} Рассылка завершена.\n\n"
-        f"✅ Отправлено: {sent}\n"
-        f"❌ Ошибок: {failed}",
+        texts.admin_broadcast_done_text(sent, failed),
         reply_markup=get_back_keyboard("admin_panel"),
     )
 
@@ -591,7 +582,7 @@ async def server_name_received(message: Message, state: FSMContext):
         return
 
     await state.update_data(server_name=message.text.strip())
-    await message.answer(f"{Emoji.HOME} Введите страну сервера:")
+    await message.answer(texts.ADMIN_SERVER_ENTER_COUNTRY)
     await state.set_state(AdminServerStates.waiting_country)
 
 
@@ -601,7 +592,7 @@ async def server_country_received(message: Message, state: FSMContext):
         return
 
     await state.update_data(server_country=message.text.strip())
-    await message.answer(f"{Emoji.HOME} Введите IP адрес сервера:")
+    await message.answer(texts.ADMIN_SERVER_ENTER_IP)
     await state.set_state(AdminServerStates.waiting_ip)
 
 
@@ -611,7 +602,7 @@ async def server_ip_received(message: Message, state: FSMContext):
         return
 
     await state.update_data(server_ip=message.text.strip())
-    await message.answer(f"{Emoji.HOME} Введите API ключ агента (или - если без ключа):")
+    await message.answer(texts.ADMIN_SERVER_ENTER_API_KEY)
     await state.set_state(AdminServerStates.waiting_api_key)
 
 
@@ -624,7 +615,7 @@ async def server_api_key_received(message: Message, state: FSMContext):
     if api_key == "-":
         api_key = ""
     await state.update_data(server_api_key=api_key)
-    await message.answer(f"{Emoji.HOME} Введите количество слотов:")
+    await message.answer(texts.ADMIN_SERVER_ENTER_SLOTS)
     await state.set_state(AdminServerStates.waiting_slots)
 
 
@@ -648,7 +639,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
     log_lines.append(f"🔌 <b>Подключение к {server_name} ({server_ip}:8080)</b>\n")
 
     status_msg = await message.answer(
-        f"{Emoji.LOADING} <b>Проверяю подключение к агенту...</b>\n\n"
+        texts.ADMIN_SERVER_CHECKING + "\n\n"
         f"📋 Логи подключения:\n"
         + "\n".join(log_lines),
     )
@@ -845,7 +836,7 @@ async def promo_code_input(message: Message, state: FSMContext):
         return
 
     await state.update_data(promo_code=message.text.strip())
-    await message.answer(f"{Emoji.GIFT} Введите тип награды (tariff/projects/balance):")
+    await message.answer(texts.ADMIN_PROMO_ENTER_TYPE)
     await state.set_state(AdminPromoStates.waiting_reward_type)
 
 
@@ -856,11 +847,11 @@ async def promo_reward_type_input(message: Message, state: FSMContext):
 
     reward_type = message.text.strip().lower()
     if reward_type not in ("tariff", "projects", "balance"):
-        await message.answer("❌ Допустимые типы: tariff, projects, balance")
+        await message.answer(texts.ADMIN_PROMO_TYPE_ERROR)
         return
 
     await state.update_data(promo_reward_type=reward_type)
-    await message.answer(f"{Emoji.GIFT} Введите значение награды:")
+    await message.answer(texts.ADMIN_PROMO_ENTER_VALUE)
     await state.set_state(AdminPromoStates.waiting_reward_value)
 
 
@@ -870,7 +861,7 @@ async def promo_reward_value_input(message: Message, state: FSMContext):
         return
 
     await state.update_data(promo_reward_value=message.text.strip())
-    await message.answer(f"{Emoji.GIFT} Введите макс. количество активаций:")
+    await message.answer(texts.ADMIN_PROMO_ENTER_MAX)
     await state.set_state(AdminPromoStates.waiting_max_activations)
 
 

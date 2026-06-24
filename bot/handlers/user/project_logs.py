@@ -7,6 +7,7 @@ from aiogram.enums import ParseMode
 from bot.keyboards.user import get_logs_keyboard
 from bot.utils.emojis import Emoji
 from bot.utils.formatters import truncate_text
+from bot import texts
 
 router = Router()
 
@@ -16,11 +17,11 @@ async def project_logs_menu(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
-        await callback.answer("Проект не найден", show_alert=True)
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
 
     await callback.message.edit_text(
-        f"{Emoji.FILE} <b>Логи: {project.name}</b>",
+        texts.project_logs_menu_text(project.name),
         reply_markup=get_logs_keyboard(project_id),
     )
     await callback.answer()
@@ -31,7 +32,7 @@ async def logs_view(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     logs = await project_service.get_logs(project_id, tail=100)
@@ -40,7 +41,7 @@ async def logs_view(callback: CallbackQuery, project_service, db_user):
     escaped_logs = escape(truncated)
 
     await callback.message.edit_text(
-        f"<b>📋 Последние логи:</b>\n\n<code>{escaped_logs}</code>",
+        texts.project_logs_view_text(escaped_logs),
         reply_markup=get_logs_keyboard(project_id),
         parse_mode=ParseMode.HTML,
     )
@@ -52,7 +53,7 @@ async def logs_download(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     logs = await project_service.get_logs(project_id, tail=1000)
@@ -61,7 +62,7 @@ async def logs_download(callback: CallbackQuery, project_service, db_user):
     log_bytes = logs.encode("utf-8")
     file = BufferedInputFile(log_bytes, filename=f"{project.name}_logs.txt")
 
-    await callback.message.answer_document(file, caption=f"📋 Логи проекта {project.name}")
+    await callback.message.answer_document(file, caption=texts.project_logs_file_caption(project.name))
     await callback.answer()
 
 
@@ -70,11 +71,11 @@ async def logs_clear(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
-        await callback.answer("Нет доступа", show_alert=True)
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     success = await project_service.clear_logs(project_id)
     if success:
-        await callback.answer("Логи очищены", show_alert=True)
+        await callback.answer(texts.PROJECT_LOGS_CLEARED, show_alert=True)
     else:
-        await callback.answer("Ошибка очистки логов", show_alert=True)
+        await callback.answer(texts.PROJECT_LOGS_CLEAR_ERROR, show_alert=True)

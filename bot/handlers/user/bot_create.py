@@ -20,6 +20,7 @@ from bot.keyboards.common import get_back_keyboard
 from bot.utils.emojis import Emoji
 from bot.utils.media import edit_photo_or_text
 from services.github import GitHubService
+from bot import texts
 
 router = Router()
 
@@ -108,11 +109,7 @@ def _get_entry_keyboard(tmpdir: str, current_path: str, project_id: int = 0) -> 
 async def add_bot_start(callback: CallbackQuery, state: FSMContext):
     await state.set_state(CreateStates.waiting_source)
 
-    text = (
-        f"📥 <b>{STEP_TEXT}</b>\n\n"
-        f"Ты можешь загрузить свой код или попробовать пресеты - "
-        f"готовых ботов от других пользователей."
-    )
+    text = texts.ADD_BOT_SOURCE_TEXT
 
     await edit_photo_or_text(
         callback.message,
@@ -127,11 +124,7 @@ async def add_bot_start(callback: CallbackQuery, state: FSMContext):
 async def source_zip(callback: CallbackQuery, state: FSMContext):
     await state.update_data(source_type="zip")
 
-    text = (
-        f"📥 <b>{STEP_ENTRY}</b>\n\n"
-        f"Отправь .zip архив с файлами, положи requirements.txt в корень, "
-        f"если хочешь, чтобы я установил зависимости сразу."
-    )
+    text = texts.ADD_BOT_ZIP_TEXT
 
     await edit_photo_or_text(
         callback.message,
@@ -146,7 +139,7 @@ async def source_zip(callback: CallbackQuery, state: FSMContext):
 @router.message(F.document, CreateStates.waiting_zip)
 async def zip_received(message: Message, state: FSMContext):
     if not message.document or not message.document.file_name.endswith(".zip"):
-        await message.answer("❌ Отправьте ZIP архив (.zip файл).")
+        await message.answer(texts.BOT_CREATE_INVALID_ZIP)
         return
 
     file = await message.bot.get_file(message.document.file_id)
@@ -160,11 +153,7 @@ async def zip_received(message: Message, state: FSMContext):
         tmpdir=tmpdir,
     )
 
-    text = (
-        f"🐍 <b>{STEP_PYTHON}</b>\n"
-        f"<i>Для Legacy-проектов с aiogram 2.x подойдет 3.10</i>\n\n"
-        f"На какой версии будет запущен твой код?"
-    )
+    text = texts.ADD_BOT_PYTHON_TEXT
 
     await message.answer(text, reply_markup=get_python_version_keyboard())
     await state.set_state(CreateStates.waiting_python)
@@ -174,11 +163,7 @@ async def zip_received(message: Message, state: FSMContext):
 async def source_github(callback: CallbackQuery, state: FSMContext):
     await state.update_data(source_type="github")
 
-    text = (
-        f"🔗 <b>{STEP_ENTRY}</b>\n\n"
-        f"Для первого деплоя с GitHub нажми \"Подключить GitHub\".\n\n"
-        f"Выбери репозиторий из списка ниже:"
-    )
+    text = texts.ADD_BOT_GITHUB_TEXT
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton
@@ -212,26 +197,19 @@ async def github_url_received(message: Message, state: FSMContext):
     url = message.text.strip()
     parsed = GitHubService.parse_github_url(url)
     if parsed is None:
-        await message.answer(
-            "❌ Невалидный URL. Используйте формат:\n"
-            "<code>https://github.com/user/repo</code>",
-        )
+        await message.answer(texts.BOT_CREATE_INVALID_URL)
         return
 
     owner, repo = parsed
     gh = GitHubService()
     info = await gh.get_repo_info(owner, repo)
     if info is None:
-        await message.answer("❌ Репозиторий не найден или приватный.")
+        await message.answer(texts.BOT_CREATE_REPO_NOT_FOUND)
         return
 
     await state.update_data(source_url=url, source_owner=owner, source_repo=repo)
 
-    text = (
-        f"🐍 <b>{STEP_PYTHON}</b>\n"
-        f"<i>Для Legacy-проектов с aiogram 2.x подойдет 3.10</i>\n\n"
-        f"На какой версии будет запущен твой код?"
-    )
+    text = texts.ADD_BOT_PYTHON_TEXT
 
     await message.answer(text, reply_markup=get_python_version_keyboard())
     await state.set_state(CreateStates.waiting_python)
@@ -246,21 +224,12 @@ async def python_selected(callback: CallbackQuery, state: FSMContext):
     tmpdir = data.get("tmpdir")
 
     if tmpdir and os.path.exists(tmpdir):
-        text = (
-            f"📄 <b>{STEP_ENTRY}</b>\n"
-            f"<i>Режим: Скриптовый запуск / python <code>file.py</code></i>\n\n"
-            f"Выбери файл, который ты обычно запускаешь:"
-        )
+        text = texts.add_bot_entry_script_text()
         kb = _get_entry_keyboard(tmpdir, "/")
         await edit_photo_or_text(callback.message, text, "entry_point_script", reply_markup=kb)
         await state.set_state(CreateStates.waiting_entry)
     else:
-        text = (
-            f"📄 <b>{STEP_ENTRY}</b>\n\n"
-            f"Выбери режим запуска:\n"
-            f"• <b>Скрипт</b> - для <code>python file.py</code>\n"
-            f"• <b>Модуль</b> - для <code>python -m package.module</code>"
-        )
+        text = texts.ADD_BOT_ENTRY_TEXT
         from bot.keyboards.user import get_entry_mode_keyboard
         await edit_photo_or_text(callback.message, text, "entry_point", reply_markup=get_entry_mode_keyboard())
         await state.set_state(CreateStates.waiting_entry)
@@ -275,14 +244,10 @@ async def create_nav(callback: CallbackQuery, state: FSMContext):
     tmpdir = data.get("tmpdir")
 
     if not tmpdir or not os.path.exists(tmpdir):
-        await callback.answer("Архив не найден", show_alert=True)
+        await callback.answer(texts.BOT_CREATE_ARCHIVE_NOT_FOUND, show_alert=True)
         return
 
-    text = (
-        f"📄 <b>{STEP_ENTRY}</b>\n"
-        f"<i>Режим: Скриптовый запуск / python <code>file.py</code></i>\n\n"
-        f"Выбери файл, который ты обычно запускаешь:"
-    )
+    text = texts.add_bot_entry_script_text()
     kb = _get_entry_keyboard(tmpdir, f"/{path.lstrip('/')}")
     try:
         await callback.message.edit_text(text, reply_markup=kb)
@@ -296,11 +261,7 @@ async def create_select_file(callback: CallbackQuery, state: FSMContext):
     entry = callback.data.replace("create_select_", "")
     await state.update_data(entry_point=entry, entry_type="script")
 
-    text = (
-        f"📄 <b>{STEP_ENTRY}</b>\n\n"
-        f"📄 <code>{entry}</code>\n\n"
-        f"Подтверди выбор точки входа, ты сможешь изменить ее позже."
-    )
+    text = texts.bot_create_entry_confirm_text(entry)
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton
@@ -319,9 +280,7 @@ async def create_select_file(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "create_manual_entry", CreateStates.waiting_entry)
 async def create_manual_entry(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
-        "📄 <b>Выбор точки входа</b>\n\n"
-        "Отправь имя файла вручную.\n"
-        "Пример: <code>main.py</code>",
+        texts.BOT_CREATE_ENTRY_MANUAL_TEXT,
         reply_markup=get_back_keyboard("create_back"),
     )
     await callback.answer()
@@ -332,11 +291,7 @@ async def create_entry_manual(message: Message, state: FSMContext):
     entry = message.text.strip() or "main.py"
     await state.update_data(entry_point=entry, entry_type="script")
 
-    text = (
-        f"📄 <b>{STEP_ENTRY}</b>\n\n"
-        f"📄 <code>{entry}</code>\n\n"
-        f"Подтверди выбор точки входа."
-    )
+    text = texts.bot_create_entry_confirm_text(entry)
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton
@@ -357,18 +312,12 @@ async def entry_script(callback: CallbackQuery, state: FSMContext):
     tmpdir = data.get("tmpdir")
 
     if tmpdir and os.path.exists(tmpdir):
-        text = (
-            f"📄 <b>{STEP_ENTRY}</b>\n"
-            f"<i>Режим: Скриптовый запуск / python <code>file.py</code></i>\n\n"
-            f"Выбери файл:"
-        )
+        text = texts.add_bot_entry_script_text()
         kb = _get_entry_keyboard(tmpdir, "/")
         await callback.message.edit_text(text, reply_markup=kb)
     else:
         await callback.message.edit_text(
-            "📄 <b>Выбор точки входа</b>\n\n"
-            "Отправь имя файла.\n"
-            "Пример: <code>main.py</code>",
+            texts.BOT_CREATE_ENTRY_MANUAL_TEXT,
             reply_markup=get_back_keyboard("create_back"),
         )
     await callback.answer()
@@ -379,10 +328,7 @@ async def entry_module(callback: CallbackQuery, state: FSMContext):
     await state.update_data(entry_type="module")
 
     await callback.message.edit_text(
-        "📄 <b>Выбор точки входа</b>\n\n"
-        "Режим: Модульный запуск / python -m\n\n"
-        "Отправь имя модуля.\n"
-        "Примеры: <code>app.pkg.main</code>",
+        texts.BOT_CREATE_ENTRY_MODULE_TEXT,
         reply_markup=get_back_keyboard("create_back"),
     )
     await callback.answer()
@@ -401,7 +347,7 @@ async def create_confirmed_entry(callback: CallbackQuery, state: FSMContext):
         servers = await server_repo.get_online_servers()
 
     if not servers:
-        await callback.answer("Нет доступных серверов", show_alert=True)
+        await callback.answer(texts.BOT_CREATE_NO_SERVERS, show_alert=True)
         return
 
     text = (
@@ -426,8 +372,7 @@ async def server_selected(callback: CallbackQuery, state: FSMContext):
     await state.update_data(server_id=server_id)
 
     await callback.message.edit_text(
-        "📝 <b>Название бота</b>\n\n"
-        "Введи название (1-50 символов, буквы, цифры, _ -):",
+        texts.BOT_CREATE_NAME_TEXT,
         reply_markup=get_back_keyboard("create_back"),
     )
     await state.set_state(CreateStates.waiting_name)
@@ -438,19 +383,13 @@ async def server_selected(callback: CallbackQuery, state: FSMContext):
 async def name_received(message: Message, state: FSMContext):
     name = message.text.strip()
     if not re.match(r"^[a-zA-Z0-9_-]{1,50}$", name):
-        await message.answer("❌ Имя: буквы, цифры, _ и - (1-50 символов).")
+        await message.answer(texts.BOT_CREATE_INVALID_NAME)
         return
 
     await state.update_data(name=name)
     data = await state.get_data()
 
-    text = (
-        f"{Emoji.CHECK} <b>Подтверждение</b>\n\n"
-        f"📝 Название: <b>{name}</b>\n"
-        f"🐍 Python: {data.get('python_version', '3.12')}\n"
-        f"📄 Вход: <code>{data.get('entry_point', 'main.py')}</code>\n\n"
-        f"Создать бота?"
-    )
+    text = texts.bot_create_confirm_text(name, data.get('python_version', '3.12'), data.get('entry_point', 'main.py'))
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton
@@ -471,7 +410,7 @@ async def create_final(callback: CallbackQuery, state: FSMContext, db_user, proj
     max_projects = await user_service.get_max_projects(db_user.tariff)
     current_count = await project_service.count_user_projects(db_user.id)
     if current_count >= max_projects:
-        await callback.answer(f"Достигнут лимит ботов ({max_projects})", show_alert=True)
+        await callback.answer(texts.BOT_CREATE_LIMIT_REACHED(max_projects), show_alert=True)
         return
 
     files_zip = None
@@ -483,7 +422,7 @@ async def create_final(callback: CallbackQuery, state: FSMContext, db_user, proj
                 file = await callback.bot.get_file(zip_file_id)
                 files_zip = await callback.bot.download_file(file.file_path)
             except Exception as e:
-                await callback.answer(f"Ошибка загрузки: {e}", show_alert=True)
+                await callback.answer(texts.BOT_CREATE_DOWNLOAD_ERROR(e), show_alert=True)
                 return
 
     project = await project_service.create_project(
@@ -505,11 +444,7 @@ async def create_final(callback: CallbackQuery, state: FSMContext, db_user, proj
 
     await state.clear()
 
-    text = (
-        f"🤖 <b>Твой бот готов к работе!</b>\n\n"
-        f"Твой бот запущен!\n\n"
-        f"Вернись в меню, чтобы управлять им."
-    )
+    text = texts.BOT_CREATE_SUCCESS_TEXT
 
     from bot.keyboards.user import get_bot_control_keyboard
     await edit_photo_or_text(

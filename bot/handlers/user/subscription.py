@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery
 from bot.keyboards.user import get_subscription_keyboard, get_buy_subscription_keyboard
 from bot.keyboards.common import get_back_keyboard
 from bot.utils.media import edit_photo_or_text
-from bot.texts import subscription_text, subscription_info_text
+from bot import texts
 
 router = Router()
 
@@ -14,7 +14,7 @@ router = Router()
 @router.callback_query(F.data == "subscription")
 async def subscription_menu(callback: CallbackQuery, db_user):
     is_premium = db_user.tariff == "premium"
-    text = subscription_text(is_premium)
+    text = texts.subscription_text(is_premium)
 
     await edit_photo_or_text(
         callback.message,
@@ -27,7 +27,7 @@ async def subscription_menu(callback: CallbackQuery, db_user):
 
 @router.callback_query(F.data == "subscription_info")
 async def subscription_info(callback: CallbackQuery):
-    text = subscription_info_text()
+    text = texts.subscription_info_text()
 
     await edit_photo_or_text(
         callback.message,
@@ -40,10 +40,7 @@ async def subscription_info(callback: CallbackQuery):
 
 @router.callback_query(F.data == "subscription_buy")
 async def subscription_buy(callback: CallbackQuery):
-    text = (
-        f"💳 <b>Покупка/продление подписки</b>\n\n"
-        f"На какой срок ты хочешь приобрести подписку?"
-    )
+    text = texts.SUBSCRIPTION_BUY_TEXT
 
     await edit_photo_or_text(
         callback.message,
@@ -62,15 +59,10 @@ async def buy_selected(callback: CallbackQuery, db_user):
     plan = prices.get(plan_key)
 
     if not plan:
-        await callback.answer("Неизвестный план", show_alert=True)
+        await callback.answer(texts.SUBSCRIPTION_PLAN_UNKNOWN, show_alert=True)
         return
 
-    text = (
-        f"💳 <b>Покупка подписки</b>\n\n"
-        f"Ты выбрал: <b>Premium {plan['label']}</b>\n"
-        f"Цена: <b>{plan['price']}₽</b>\n\n"
-        f"Для оплаты свяжитесь с администратором."
-    )
+    text = texts.subscription_buy_confirm_text(plan['label'], plan['price'])
 
     await callback.message.edit_text(
         text,

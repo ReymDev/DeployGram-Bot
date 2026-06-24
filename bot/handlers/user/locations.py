@@ -4,6 +4,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from bot.utils.emojis import Emoji, EmojiID
+from bot import texts
 
 router = Router()
 
@@ -17,7 +18,7 @@ async def locations_menu(callback: CallbackQuery, session):
 
     if not servers:
         await callback.message.edit_text(
-            f"{Emoji.HOME} <b>Серверы</b>\n\nНет доступных серверов.",
+            texts.LOCATIONS_NO_SERVERS,
         )
         await callback.answer()
         return
@@ -42,7 +43,7 @@ async def locations_menu(callback: CallbackQuery, session):
     )
 
     await callback.message.edit_text(
-        f"{Emoji.HOME} <b>Доступные серверы</b>",
+        texts.LOCATIONS_SERVERS_TEXT,
         reply_markup=builder.as_markup(),
     )
     await callback.answer()
@@ -57,7 +58,7 @@ async def location_view(callback: CallbackQuery, session):
     server = await server_repo.get_by_id(server_id)
 
     if server is None:
-        await callback.answer("Сервер не найден", show_alert=True)
+        await callback.answer(texts.LOCATION_NOT_FOUND, show_alert=True)
         return
 
     from bot.utils.text import server_card

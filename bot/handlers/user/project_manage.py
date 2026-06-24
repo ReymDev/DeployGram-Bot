@@ -6,6 +6,7 @@ from aiogram.types import CallbackQuery
 from bot.keyboards.user import get_project_manage_keyboard, get_project_list_keyboard
 from bot.utils.text import project_card
 from bot.utils.emojis import Emoji
+from bot import texts
 
 router = Router()
 
@@ -13,10 +14,10 @@ router = Router()
 async def _check_owner(callback: CallbackQuery, project_service, db_user, project_id: int):
     project = await project_service.get_project(project_id)
     if project is None:
-        await callback.answer("Проект не найден", show_alert=True)
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return None
     if project.user_id != db_user.id:
-        await callback.answer("Нет доступа к этому проекту", show_alert=True)
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return None
     return project
 
@@ -123,9 +124,7 @@ async def project_delete(callback: CallbackQuery, project_service, db_user):
 
     try:
         await callback.message.edit_text(
-            f"{Emoji.TRASH} <b>Удаление проекта</b>\n\n"
-            f"Вы уверены что хотите удалить <b>{project.name}</b>?\n"
-            f"Это действие необратимо.",
+            texts.project_delete_confirm_text(project.name),
             reply_markup=builder.as_markup(),
         )
     except Exception:
@@ -138,7 +137,7 @@ async def project_delete_confirm(callback: CallbackQuery, project_service, db_us
     project_id = int(callback.data.replace("project_del_confirm_", ""))
     project = await _check_owner(callback, project_service, db_user, project_id)
     if project is None:
-        await callback.answer("Проект не найден", show_alert=True)
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
 
     try:
@@ -151,11 +150,11 @@ async def project_delete_confirm(callback: CallbackQuery, project_service, db_us
         projects = await project_service.get_user_projects(db_user.id)
         try:
             await callback.message.edit_text(
-                f"{Emoji.CHECK} Проект удалён.",
+                texts.PROJECT_DELETED_TEXT,
                 reply_markup=get_project_list_keyboard(projects),
             )
         except Exception:
             pass
     else:
-        await callback.answer("Ошибка удаления", show_alert=True)
+        await callback.answer(texts.PROJECT_DELETE_ERROR, show_alert=True)
     await callback.answer()
