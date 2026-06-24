@@ -8,39 +8,40 @@ from bot.utils.emojis import Emoji
 def welcome_text(username: str) -> str:
     from bot.config import settings
     return (
-        f"{Emoji.SMILE} <b>Добро пожаловать в {settings.BOT_NAME}</b>\n\n"
-        f"Управляйте инфраструктурой своих ботов из одного окна.\n\n"
-        f"Разверните собственный исходный код или активируйте "
-        f"готовый шаблон конфигурации всего в несколько кликов.\n\n"
-        f"Продолжая работу, вы соглашаетесь с нашими <a href=\"#\">условиями использования</a> "
-        f"и <a href=\"#\">политикой конфиденциальности</a>."
+        f"{Emoji.SMILE} <b>Платформа облачного хостинга {settings.BOT_NAME}</b>\n\n"
+        f"Добро пожаловать. Здесь вы можете развертывать, масштабировать и "
+        f"мониторить свои сетевые приложения в изолированных контейнерах.\n\n"
+        f"Загрузите собственный проект или воспользуйтесь готовой "
+        f"архитектурной конфигурацией из каталога решений.\n\n"
+        f"Инициализируя сессию, вы автоматически принимаете положения нашего "
+        f"<a href=\"#\">Пользовательского соглашения</a> и <a href=\"#\">Политики конфиденциальности</a>."
     )
 
 CONTROL_PANEL_TEXT = (
-    f"📋 <b>Панель управления</b>\n\n"
-    f"Выберите нужный проект из списка ниже, чтобы перейти к его настройкам и мониторингу."
+    f"📋 <b>Обзор инфраструктуры</b>\n\n"
+    f"Ниже представлен список ваших активных ресурсов. Выберите проект для кастомизации и просмотра метрик."
 )
 
 
 # ─── ADD BOT: SOURCE ───
 
 ADD_BOT_SOURCE_TEXT = (
-    f"📥 <b>Шаг 1 из 4: Источник деплоя</b>\n\n"
-    f"Выберите способ загрузки проекта: вы можете развернуть собственный код "
-    f"или использовать готовые пресеты от нашего комьюнити."
+    f"📥 <b>Этап 1/4: Инициализация репозитория</b>\n\n"
+    f"Укажите метод импорта исходного кода. Доступно развертывание приватных "
+    f"архивов, а также быстрая сборка на базе публичных шаблонов."
 )
 
 ADD_BOT_ZIP_TEXT = (
-    f"📥 <b>Шаг 3 из 4: Загрузка исходного кода</b>\n\n"
-    f"Отправьте проект в формате .zip архива. "
-    f"Если в корне находится файл <code>requirements.txt</code>, мы автоматически "
-    f"установим все зависимости. Вы также сможете сделать это позже в панели управления."
+    f"📥 <b>Этап 3/4: Пакетный импорт данных</b>\n\n"
+    f"Пожалуйста, отправьте исходный код в архиве формата .zip. "
+    f"При наличии файла описания зависимостей (<code>requirements.txt</code>) в корневой "
+    f"директории система выполнит автоматический билд окружения."
 )
 
 ADD_BOT_GITHUB_TEXT = (
-    f"🔗 <b>Шаг 3 из 4: Синхронизация с GitHub</b>\n\n"
-    f"Для первой публикации нажмите кнопку «Подключить GitHub».\n"
-    f"Вы можете предоставить доступ ко всем репозиториям или выбрать только определенные.\n\n"
+    f"🔗 <b>Этап 3/4: Синхронизация с VCS</b>\n\n"
+    f"Для предоставления прав на чтение репозиториев выполните авторизацию по кнопке ниже. "
+    f"Вы можете ограничить область видимости конкретными ветками.\n\n"
     f"Выберите проект для деплоя:"
 )
 
@@ -48,81 +49,81 @@ ADD_BOT_GITHUB_TEXT = (
 # ─── ADD BOT: PYTHON VERSION ───
 
 ADD_BOT_PYTHON_TEXT = (
-    f"🐍 <b>Шаг 2 из 4: Окружение Runtime</b>\n"
-    f"<i>Рекомендуется 3.10 для устаревших проектов (например, aiogram 2.x)</i>\n\n"
-    f"Укажите версию интерпретатора Python для изоляции вашего кода:"
+    f"🐍 <b>Этап 2/4: Спецификация Runtime-среды</b>\n"
+    f"<i>Релиз 3.10 зарезервирован для обратной совместимости с legacy-архитектурой</i>\n\n"
+    f"Выберите целевую версию интерпретатора для компиляции контейнера:"
 )
 
 
 # ─── ADD BOT: ENTRY POINT ───
 
 ADD_BOT_ENTRY_TEXT = (
-    f"📄 <b>Шаг 4 из 4: Конфигурация запуска</b>\n\n"
-    f"Выберите режим инициализации процесса:\n"
-    f"• <b>Скрипт</b> — прямой запуск через <code>python file.py</code>\n"
-    f"• <b>Модуль</b> — запуск пакета через <code>python -m package.module</code>"
+    f"📄 <b>Этап 4/4: Точка входа в процесс</b>\n\n"
+    f"Укажите системный метод вызова приложения:\n"
+    f"• <b>Прямой запуск</b> — выполнение файла через <code>python file.py</code>\n"
+    f"• <b>Модульный вызов</b> — инициализация через пакетный менеджер <code>python -m</code>"
 )
 
 def add_bot_entry_script_text(filter: str = "*.py") -> str:
     return (
-        f"📄 <b>Шаг 4 из 4: Выбор исполняемого файла</b>\n"
-        f"<i>Контекст: Скрипт / python <code>file.py</code></i>\n"
-        f"<i>Фильтр директории: {filter}</i>\n\n"
-        f"Укажите главный файл, который должен выполняться при старте контейнера:"
+        f"📄 <b>Этап 4/4: Исполняемый файл</b>\n"
+        f"<i>Контекст: Script execution / python <code>file.py</code></i>\n"
+        f"<i>Маска поиска: {filter}</i>\n\n"
+        f"Укажите главный скрипт, который будет назначен триггером запуска приложения:"
     )
 
 ADD_BOT_ENTRY_MODULE_TEXT = (
-    "📄 <b>Конфигурация запуска</b>\n\n"
-    "Контекст: Модуль / python -m\n\n"
-    "Введите путь к модулю вручную.\n"
-    "Пример корректного ввода: <code>app.pkg.main</code>"
+    "📄 <b>Конфигурация вызова</b>\n\n"
+    "Контекст: Module invocation / python -m\n\n"
+    "Передайте валидное пространство имен модуля.\n"
+    "Шаблон ввода: <code>app.pkg.main</code>"
 )
 
 ADD_BOT_ENTRY_MANUAL_TEXT = (
-    "📄 <b>Конфигурация запуска</b>\n\n"
-    "Введите имя файла инициализации вручную.\n"
-    "Пример корректного ввода: <code>main.py</code>"
+    "📄 <b>Конфигурация вызова</b>\n\n"
+    "Введите точное имя исполняемого файла вместе с расширением.\n"
+    "Пример: <code>main.py</code>"
 )
 
 def add_bot_entry_confirm_text(entry: str) -> str:
     return (
-        f"📄 <b>Шаг 4 из 4: Проверка конфигурации</b>\n\n"
-        f"Точка входа: <code>{entry}</code>\n\n"
-        f"Подтвердите значение. Вы сможете переопределить его в любой момент."
+        f"📄 <b>Этап 4/4: Проверка деплоя</b>\n\n"
+        f"Назначенный триггер: <code>{entry}</code>\n\n"
+        f"Утвердите выбранный параметр. Изменение структуры доступно в настройках рантайма."
     )
 
 
 # ─── ADD BOT: SERVER SELECTION ───
 
 ADD_BOT_SERVER_TEXT = (
-    f"🖥 <b>Выбор локации</b>\n\n"
-    f"Укажите целевой сервер для развертывания инфраструктуры:"
+    f"🖥 <b>Распределение мощностей</b>\n\n"
+    f"Выберите доступный кластер для аллокации ресурсов вашего приложения:"
 )
 
-ADD_BOT_SERVER_POOL_TEXT = "[ Свободный пул слотов ]"
+ADD_BOT_SERVER_POOL_TEXT = "[ Общие вычислительные ресурсы ]"
 
 
 # ─── ADD BOT: CONFIRM ───
 
 def add_bot_confirm_text(name: str, python_version: str, entry_point: str) -> str:
     return (
-        f"{Emoji.CHECK} <b>Проверка параметров конфигурации</b>\n\n"
-        f"📝 Имя инстанса: <b>{name}</b>\n"
+        f"{Emoji.CHECK} <b>Финальная спецификация сборки</b>\n\n"
+        f"📝 Идентификатор: <b>{name}</b>\n"
         f"🐍 Окружение: Python {python_version}\n"
-        f"📄 Инициализация: <code>{entry_point}</code>\n\n"
-        f"Инициализировать создание проекта?"
+        f"📄 Вызов процесса: <code>{entry_point}</code>\n\n"
+        f"Запустить процедуру оркестрации и создания контейнера?"
     )
 
-ADD_BOT_NAME_TEXT = "📝 Укажите имя проекта (от 1 до 50 символов: буквы, цифры, знаки _ и -):"
+ADD_BOT_NAME_TEXT = "📝 Задайте уникальный системный ID проекта (до 50 символов: a-z, 0-9, символы дефиса и подчеркивания):"
 
 
 # ─── ADD BOT: SUCCESS ───
 
 ADD_BOT_SUCCESS_TEXT = (
-    f"🤖 <b>Окружение успешно развернуто!</b>\n\n"
-    f"Ваш проект успешно инициализирован и запущен на сервере.\n\n"
-    f"Перейдите в панель управления, чтобы получить доступ к менеджеру файлов, "
-    f"инструментам сборки зависимостей, логам в реальном времени и управлению питанием."
+    f"🤖 <b>Контейнер успешно развернут</b>\n\n"
+    f"Процесс инициализирован, виртуальное окружение переведено в рабочий статус.\n\n"
+    f"В карточке управления инстансом вам доступны инструменты прямого чтения логов, "
+    f"конфигуратор дерева файлов, сборщик внешних пакетов и метрики нагрузки."
 )
 
 
@@ -130,41 +131,41 @@ ADD_BOT_SUCCESS_TEXT = (
 
 def bot_control_text(name: str, server_text: str, status_text: str, uptime: str, cpu: float, ram: float) -> str:
     return (
-        f"📋 <b>Управление проектом</b>\n\n"
-        f"ID: <b>{name}</b>\n"
-        f"Нода: {server_text}\n\n"
-        f"Статус: {status_text} · Аптайм: {uptime}\n"
-        f"Нагрузка: CPU {cpu:.2f}% · RAM {ram:.2f}%"
+        f"📋 <b>Консоль инстанса: {name}</b>\n\n"
+        f"Хост-сервер: {server_text}\n"
+        f"Текущая фаза: {status_text}\n\n"
+        f"Времени в сети: {uptime}\n"
+        f"Телеметрия: CPU {cpu:.2f}% | RAM {ram:.2f}%"
     )
 
 
 # ─── BOT SETTINGS ───
 
 BOT_SETTINGS_TEXT = (
-    f"⚙ <b>Параметры и конфигурация</b>\n\n"
-    f"Выберите системный раздел для изменения настроек инстанса:"
+    f"⚙ <b>Параметры среды выполнения</b>\n\n"
+    f"Выберите категорию системных настроек для изменения конфигурации текущего инстанса:"
 )
 
-BOT_RENAME_TEXT = "✏ <b>Переименование инстанса</b>\n\nВведите новое идентификационное имя проекта:"
+BOT_RENAME_TEXT = "✏ <b>Корректировка метаданных</b>\n\nУкажите новое идентификационное имя для проекта:"
 
 BOT_DELETE_TEXT = (
-    f"🗑 <b>Уничтожение инстанса</b>\n\n"
-    f"Подтвердите безвозвратное удаление проекта. Все связанные файлы "
-    f"и конфигурации будут стерты без возможности восстановления."
+    f"🗑 <b>Удаление ресурсов</b>\n\n"
+    f"Внимание: данное действие полностью уничтожит выделенный контейнер. "
+    f"Данные из локального хранилища будут удалены безвозвратно."
 )
 
 def bot_deleted_text(name: str) -> str:
     return (
-        f"🗑 <b>Проект удален</b>\n\n"
-        f"Инстанс <b>{name}</b> и все его ресурсы успешно стерты из системы."
+        f"🗑 <b>Проект деинсталлирован</b>\n\n"
+        f"Инфраструктура инстанса <b>{name}</b> успешно ликвидирована, слоты памяти освобождены."
     )
 
 
 # ─── BOT PYTHON VERSION ───
 
 BOT_PYTHON_TEXT = (
-    f"🐍 <b>Изменение Runtime-окружения</b>\n\n"
-    f"Обратите внимание: после смены версии Python проект будет автоматически перезапущен."
+    f"🐍 <b>Смена версии интерпретатора</b>\n\n"
+    f"После сохранения изменений проект выполнит автоматическую перезагрузку для применения нового рантайма."
 )
 
 
@@ -172,52 +173,52 @@ BOT_PYTHON_TEXT = (
 
 def bot_entry_text(entry_type: str, entry_point: str) -> str:
     return (
-        f"📄 <b>Конфигурация точки входа</b>\n\n"
-        f"Выберите формат исполнения кода:\n"
-        f"• <b>Скрипт</b> — для прямой команды <code>python file.py</code>\n"
-        f"• <b>Модуль</b> — для инициализации пакета <code>python -m package.module</code>\n\n"
-        f"Текущий режим: <b>{entry_type}</b>\n"
-        f"Текущее значение: <code>{entry_point}</code>"
+        f"📄 <b>Корневой вектор выполнения</b>\n\n"
+        f"Доступные архитектурные режимы:\n"
+        f"• <b>Скрипт</b> — вызов одиночного файла (<code>python file.py</code>)\n"
+        f"• <b>Модуль</b> — запуск изолированного пакета (<code>python -m</code>)\n\n"
+        f"Активный режим: <b>{entry_type}</b>\n"
+        f"Текущий путь: <code>{entry_point}</code>"
     )
 
 BOT_ENTRY_MODULE_TEXT = (
-    "📄 <b>Изменение конфигурации</b>\n\n"
-    "Режим: Модульный запуск / python -m\n\n"
-    "Отправьте имя целевого модуля текстом.\n"
-    "Пример: <code>app.pkg.main</code>"
+    "📄 <b>Смена точки запуска</b>\n\n"
+    "Выбран режим пакетного импорта (-m).\n\n"
+    "Передайте имя целевого пакета.\n"
+    "Пример структуры: <code>app.pkg.main</code>"
 )
 
-BOT_ENTRY_SELECT_FILE_TEXT = "Пожалуйста, выберите исполняемый файл через файловый менеджер ниже"
+BOT_ENTRY_SELECT_FILE_TEXT = "Пожалуйста, определите исполняемый файл, используя интерактивный менеджер директорий."
 
 
 # ─── BOT COOWNERS ───
 
 def bot_coowners_text(name: str) -> str:
     return (
-        f"👥 <b>Доступы к проекту: {name}</b>\n\n"
-        f"Иерархия привилегий:\n"
-        f"  <b>Owner</b> — полный административный доступ и управление лимитами.\n"
-        f"  <b>Developer</b> — управление процессами, чтение логов и конфигурация файлов."
+        f"👥 <b>Управление уровнями доступа: {name}</b>\n\n"
+        f"Градация ролей в системе:\n"
+        f"  <b>Owner</b> — абсолютные административные права, управление квотами и балансом.\n"
+        f"  <b>Developer</b> — контроль жизненного цикла процессов, работа с логами и файловой системой."
     )
 
-BOT_COOWNER_ADD_TEXT = "👤 Введите Telegram ID пользователя, которому хотите делегировать доступ:"
-BOT_COOWNER_ADD_ROLE_TEXT = "👤 Укажите уровень прав (роль) для нового участника команды:"
+BOT_COOWNER_ADD_TEXT = "👤 Введите уникальный Telegram ID пользователя для делегирования полномочий:"
+BOT_COOWNER_ADD_ROLE_TEXT = "👤 Определите системную роль для добавляемого специалиста:"
 
 def bot_coowner_added_text(user_id: int, role: str) -> str:
-    return f"{Emoji.CHECK} Пользователю {user_id} предоставлен доступ с ролью {role}"
+    return f"{Emoji.CHECK} Идентификатору {user_id} успешно присвоен статус {role}."
 
 def bot_coowner_deleted_text(user_id: int) -> str:
-    return f"{Emoji.CHECK} Права доступа для пользователя {user_id} успешно аннулированы"
+    return f"{Emoji.CHECK} Права доступа для пользователя {user_id} полностью отозваны."
 
-BOT_COOWNER_NOT_FOUND_TEXT = "Указанный пользователь не зарегистрирован в системе"
-BOT_COOWNER_ALREADY_EXISTS_TEXT = "Этот пользователь уже имеет доступ к данному проекту"
+BOT_COOWNER_NOT_FOUND_TEXT = "Заданный идентификатор отсутствует в реестре пользователей платформы."
+BOT_COOWNER_ALREADY_EXISTS_TEXT = "Данный пользователь уже включен в список соавторов этого проекта."
 
 
 # ─── BOT LOGS ───
 
 def bot_logs_text(name: str, logs: str) -> str:
     return (
-        f"📋 TTY-Вывод <b>{name}</b> (последние 3500 символов):\n\n"
+        f"📋 <b>Журнал системных событий {name}</b> (срез последних 3500 симв.):\n\n"
         f"<code>{logs}</code>"
     )
 
@@ -225,32 +226,32 @@ def bot_logs_text(name: str, logs: str) -> str:
 # ─── BOT FILES ───
 
 BOT_FILES_TEXT = (
-    f"📁 <b>Файловая система</b>\n\n"
-    f"Управляйте структурой директорий: выбирайте файлы для загрузки или удаления.\n"
-    f"Чтобы импортировать новый файл в текущую папку, просто отправьте его в диалог."
+    f"📁 <b>Дерево файловой системы</b>\n\n"
+    f"Вы можете скачивать, просматривать или удалять внутренние компоненты проекта.\n"
+    f"Для синхронизации и добавления новых объектов просто перетащите их в этот чат."
 )
 
 def bot_files_path_text(path: str) -> str:
-    return f"📁 <b>Директория: {path}</b>"
+    return f"📁 <b>Рабочая область: {path}</b>"
 
-BOT_FILE_DELETE_CONFIRM_TEXT = lambda file_path: f"🗑 Подтверждаете удаление объекта <b>{file_path}</b>?"
-BOT_FILE_DELETED_TEXT = "Файл успешно удален"
-BOT_FILE_DELETE_ERROR_TEXT = "Не удалось удалить файл. Проверьте права доступа."
-BOT_FILE_NOT_FOUND_TEXT = "Указанный объект отсутствует или не содержит данных"
+BOT_FILE_DELETE_CONFIRM_TEXT = lambda file_path: f"🗑 Вы действительно хотите окончательно удалить объект <b>{file_path}</b>?"
+BOT_FILE_DELETED_TEXT = "Файл успешно удален из хранилища инстанса."
+BOT_FILE_DELETE_ERROR_TEXT = "Не удалось выполнить операцию удаления. Объект заблокирован процессом."
+BOT_FILE_NOT_FOUND_TEXT = "Запрошенный путь пуст или не существует в данной директории."
 
 
 # ─── BOT LIBRARIES ───
 
 BOT_LIBS_TEXT = (
-    f"📦 <b>Пакетный менеджер (Pip)</b>\n\n"
-    f"Список установленных зависимостей окружения. Вы можете добавить новые "
-    f"библиотеки или удалить неиспользуемые компоненты."
+    f"📦 <b>Менеджер внешних зависимостей (PyPI)</b>\n\n"
+    f"Инструмент управления изолированными библиотеками вашего контейнера. "
+    f"Здесь вы можете инсталлировать новые расширения или удалять текущие пакеты."
 )
 
 BOT_LIB_ADD_TEXT = (
-    "📦 <b>Установка пакетов</b>\n\n"
-    "Введите точное наименование библиотеки из PyPI.\n"
-    "Примеры: <code>aiogram</code>, <code>requests>=2.0</code>"
+    "📦 <b>Сборка новых библиотек</b>\n\n"
+    "Укажите точное наименование пакета из репозитория PyPI.\n"
+    "Допускается указание версий: <code>aiogram</code>, <code>requests>=2.0</code>"
 )
 
 
@@ -262,16 +263,16 @@ def subscription_text(is_premium: bool) -> str:
         features = get_premium_features()
         features_text = "\n".join(f"· {f}" for f in features)
         return (
-            f"💳 <b>Статус подписки</b>\n\n"
-            f"Текущий план: {Emoji.CHECK} Premium\n\n"
-            f"<b>Доступные премиум-ресурсы:</b>\n{features_text}"
+            f"💳 <b>Аналитика тарифного плана</b>\n\n"
+            f"Текущий статус: {Emoji.CHECK} Premium Лицензия\n\n"
+            f"<b>Доступные расширенные лимиты:</b>\n{features_text}"
         )
     features = get_free_features()
     features_text = "\n".join(f"· {f}" for f in features)
     return (
-        f"💳 <b>Статус подписки</b>\n\n"
-        f"Текущий план: {Emoji.CHECK} Базовый (Free)\n\n"
-        f"<b>Лимиты тарифа:</b>\n{features_text}"
+        f"💳 <b>Аналитика тарифного плана</b>\n\n"
+        f"Текущий статус: {Emoji.CHECK} Базовый доступ\n\n"
+        f"<b>Действующие ограничения аккаунта:</b>\n{features_text}"
     )
 
 SUBSCRIPTION_INFO_TEXT = None
@@ -282,43 +283,43 @@ def subscription_info_text() -> str:
     features = get_premium_features()
     features_text = "\n".join(f"· {f}" for f in features)
     return (
-        f"💳 <b>Возможности расширенной подписки</b>\n\n"
-        f"<b>{Emoji.NOTIF} Привилегии Premium-плана:</b>\n{features_text}"
+        f"💳 <b>Спецификация Premium-лицензии</b>\n\n"
+        f"<b>{Emoji.NOTIF} Преимущества коммерческого плана:</b>\n{features_text}"
     )
 
 SUBSCRIPTION_BUY_TEXT = (
-    f"💳 <b>Оформление подписки</b>\n\n"
-    f"Выберите расчетный период для активации Premium-доступа:"
+    f"💳 <b>Пролонгация и смена тарифа</b>\n\n"
+    f"Выберите необходимый расчетный период для активации облачных преимуществ:"
 )
 
 def subscription_buy_plan_text(plan_label: str, price: int) -> str:
     return (
-        f"💳 <b>Оплата подписки</b>\n\n"
-        f"Выбранный тариф: <b>Premium {plan_label}</b>\n"
-        f"Сумма к оплате: <b>{price}₽</b>\n\n"
-        f"Для завершения транзакции и выставления счета свяжитесь с администрацией."
+        f"💳 <b>Оплата коммерческого плана</b>\n\n"
+        f"Конфигурация: <b>Premium {plan_label}</b>\n"
+        f"Итого к оплате: <b>{price}₽</b>\n\n"
+        f"Для выставления инвойса и проведения транзакции свяжитесь с биллинг-менеджером."
     )
 
 
 # ─── BACKUPS ───
 
 BACKUPS_LIST_EMPTY_TEXT = (
-    f"☁ <b>Резервные копии</b>\n\n"
-    f"В данный момент у вас нет активных проектов для создания бэкапов."
+    f"☁ <b>Снимки файловой системы</b>\n\n"
+    f"Резервные копии отсутствуют, так как у вас нет активных вычислительных сред."
 )
 
 BACKUPS_LIST_TEXT = (
-    f"☁ <b>Архив резервных копий</b>\n\n"
-    f"🟢 — Снимок успешно сохранен\n"
-    f"🟡 — Процесс архивации в очереди\n"
-    f"🔴 — Критическая ошибка создания снимка\n\n"
-    f"Выберите существующую точку восстановления или создайте актуальный бэкап:"
+    f"☁ <b>Архив точек восстановления</b>\n\n"
+    f"🟢 — Точка восстановления активна\n"
+    f"🟡 — Выполняется архивация ресурсов\n"
+    f"🔴 — Процесс архивации завершился критическим сбоем\n\n"
+    f"Выберите нужный снимок из архива или инициализируйте создание новой копии:"
 )
 
 def backups_bot_text(name: str, count: int) -> str:
     return (
         f"☁ <b>Резервные копии инстанса: {name}</b>\n\n"
-        f"Всего доступно архивов: {count}"
+        f"Доступное количество архивов: {count}"
     )
 
 
@@ -326,35 +327,35 @@ def backups_bot_text(name: str, count: int) -> str:
 
 def admin_panel_text(users: int, projects: int, servers: int) -> str:
     return (
-        f"{Emoji.SETTINGS} <b>Консоль администратора</b>\n\n"
-        f"{Emoji.PROFILE} Зарегистрировано пользователей: {users}\n"
-        f"{Emoji.FILE} Активных проектов в системе: {projects}\n"
-        f"{Emoji.HOME} Подключено нод (серверов): {servers}"
+        f"{Emoji.SETTINGS} <b>Консоль главного администратора</b>\n\n"
+        f"{Emoji.PROFILE} Зарегистрированные аккаунты: {users}\n"
+        f"{Emoji.FILE} Контейнеров в рантайме: {projects}\n"
+        f"{Emoji.HOME} Доступные серверные ноды: {servers}"
     )
 
 def admin_users_text(count: int) -> str:
-    return f"{Emoji.PEOPLE} <b>Менеджмент пользователей</b> ({count})"
+    return f"{Emoji.PEOPLE} <b>Реестр пользователей системы</b> ({count})"
 
 def admin_user_view_text(
     telegram_id: int, username: str, full_name: str,
     tariff: str, balance: float, is_banned: bool,
     projects_count: int, registered_at: str
 ) -> str:
-    status = "🚫 Заблокирован" if is_banned else "✅ Активен"
+    status = "🚫 Ограничен (Ban)" if is_banned else "✅ Активен"
     return (
-        f"{Emoji.PROFILE} <b>Карточка аккаунта</b>\n\n"
+        f"{Emoji.PROFILE} <b>Параметры профиля</b>\n\n"
         f"Telegram ID: <code>{telegram_id}</code>\n"
-        f"Username: @{username or '—'}\n"
-        f"Имя профиля: {full_name or '—'}\n"
-        f"Тарифный план: <b>{tariff}</b>\n"
-        f"Баланс счета: <b>{balance:.2f}</b>\n"
-        f"Системный статус: {status}\n"
-        f"Запущено проектов: {projects_count}\n"
-        f"Дата регистрации: {registered_at}"
+        f"Юзернейм: @{username or '—'}\n"
+        f"Отображаемое имя: {full_name or '—'}\n"
+        f"Текущий план: <b>{tariff}</b>\n"
+        f"Финансовый баланс: <b>{balance:.2f}</b>\n"
+        f"Статус доступа: {status}\n"
+        f"Количество проектов: {projects_count}\n"
+        f"Дата создания аккаунта: {registered_at}"
     )
 
 def admin_servers_text(count: int) -> str:
-    return f"{Emoji.HOME} <b>Инфраструктура нод</b> ({count})"
+    return f"{Emoji.HOME} <b>Управление вычислительными узлами</b> ({count})"
 
 def admin_server_view_text(
     name: str, country: str, ip: str, port: int,
@@ -362,448 +363,448 @@ def admin_server_view_text(
     rating: float, ping: int, load_cpu: float, load_ram: float,
     status: str
 ) -> str:
-    status_icon = "🟢 На линии" if status == "online" else "🔴 Нет связи"
-    api_key_text = "Валиден" if api_key else "Отсутствует"
+    status_icon = "🟢 Сеть стабильна" if status == "online" else "🔴 Хост недоступен"
+    api_key_text = "Активен" if api_key else "Выключен"
     return (
-        f"{Emoji.HOME} <b>Узел: {name}</b>\n\n"
-        f"🌍 Геолокация: {country}\n"
-        f"📡 Адрес хоста: {ip}:{port}\n"
-        f"🔑 Токен агента: {api_key_text}\n"
-        f"💻 Распределение слотов: {free_slots}/{total_slots}\n"
-        f"⭐ Индекс приоритета: {rating:.1f}\n"
-        f"📡 Задержка сети: {ping}ms\n"
-        f"📊 Нагрузка ядра CPU: {load_cpu:.1f}%\n"
-        f"🧠 Выделение RAM: {load_ram:.1f}%\n"
-        f"Статус ноды: {status_icon}"
+        f"{Emoji.HOME} <b>Спецификация ноды: {name}</b>\n\n"
+        f"🌍 Локация: {country}\n"
+        f"📡 Сетевой адрес: {ip}:{port}\n"
+        f"🔑 Авторизация агента: {api_key_text}\n"
+        f"💻 Заполненность слотов: {free_slots}/{total_slots}\n"
+        f"⭐ Приоритет распределения: {rating:.1f}\n"
+        f"📡 Сетевой пинг: {ping}ms\n"
+        f"📊 Утилизация CPU: {load_cpu:.1f}%\n"
+        f"🧠 Занятость RAM: {load_ram:.1f}%\n"
+        f"Текущий статус: {status_icon}"
     )
 
 def admin_stats_text(users: int, projects: int, active: int, servers: int, online: int) -> str:
     return (
-        f"{Emoji.GRAPH_STATS} <b>Аналитика и метрики платформы</b>\n\n"
-        f"👤 Всего пользователей: {users}\n"
-        f"📦 Создано инстансов: {projects}\n"
-        f"🟢 Работает в рантайме: {active}\n"
-        f"🌍 Подключено серверов: {servers}\n"
-        f"🟢 Узлов в статусе Online: {online}"
+        f"{Emoji.GRAPH_STATS} <b>Сводная системная аналитика</b>\n\n"
+        f"👤 Всего профилей в БД: {users}\n"
+        f"📦 Всего конфигураций: {projects}\n"
+        f"🟢 Активных процессов: {active}\n"
+        f"🌍 Общее число нод: {servers}\n"
+        f"🟢 Серверов онлайн: {online}"
     )
 
 def admin_promos_text(count: int) -> str:
-    return f"{Emoji.GIFT} <b>Активные промокоды</b> ({count})"
+    return f"{Emoji.GIFT} <b>Архив промо-кодов</b> ({count})"
 
 def admin_subscriptions_text(free_count: int, premium_count: int, total: int) -> str:
     return (
-        f"💎 <b>Статистика тарифных планов</b>\n\n"
-        f"🆓 Базовый тариф (Free): {free_count}\n"
-        f"💎 Премиум-доступ (Premium): {premium_count}\n"
-        f"Всего учетных записей: {total}"
+        f"💎 <b>Распределение тарифных планов</b>\n\n"
+        f"🆓 Базовые аккаунты: {free_count}\n"
+        f"💎 Премиум лицензии: {premium_count}\n"
+        f"Всего пользователей: {total}"
     )
 
 def admin_referrals_text(count: int) -> str:
     return (
-        f"🔗 <b>Реферальная сеть</b>\n\n"
-        f"Всего приглашенных участников: {count}"
+        f"🔗 <b>Статистика партнерской сети</b>\n\n"
+        f"Общее количество реферальных связей: {count}"
     )
 
 
 # ─── ADMIN: SERVER ADD ───
 
-ADMIN_SERVER_ADD_NAME = f"{Emoji.HOME} Введите уникальное имя для новой ноды:"
-ADMIN_SERVER_ADD_COUNTRY = f"{Emoji.HOME} Укажите страну (локацию) сервера:"
-ADMIN_SERVER_ADD_IP = f"{Emoji.HOME} Укажите IP-адрес хоста:"
-ADMIN_SERVER_ADD_API_KEY = f"{Emoji.HOME} Введите секретный ключ агента (или «-» для деплоя без авторизации):"
-ADMIN_SERVER_ADD_SLOTS = f"{Emoji.HOME} Задайте максимальный лимит слотов:"
+ADMIN_SERVER_ADD_NAME = f"{Emoji.HOME} Укажите уникальное наименование для новой ноды кластера:"
+ADMIN_SERVER_ADD_COUNTRY = f"{Emoji.HOME} Введите географическое расположение сервера:"
+ADMIN_SERVER_ADD_IP = f"{Emoji.HOME} Введите публичный IPv4/IPv6 адрес хоста:"
+ADMIN_SERVER_ADD_API_KEY = f"{Emoji.HOME} Введите токен аутентификации агента (или «-» при его отсутствии):"
+ADMIN_SERVER_ADD_SLOTS = f"{Emoji.HOME} Укажите лимит одновременно размещаемых контейнеров:"
 
-ADMIN_SERVER_ADD_CHECKING = f"{Emoji.LOADING} <b>Выполняется сопряжение с удаленным агентом...</b>"
+ADMIN_SERVER_ADD_CHECKING = f"{Emoji.LOADING} <b>Выполняется проверка сетевого сопряжения с удаленным агентом...</b>"
 
 def admin_server_add_success(name: str, country: str, ip: str, slots: int, api_key: str) -> str:
     return (
-        f"✅ <b>Нода {name} успешно интегрирована в кластер!</b>\n\n"
+        f"✅ <b>Новый вычислительный узел {name} успешно интегрирован</b>\n\n"
         f"🌍 Локация: {country}\n"
-        f"📡 Сетевой адрес: {ip}:8080\n"
-        f"💻 Выделено слотов: {slots}\n"
-        f"🔑 Токен доступа: {api_key}"
+        f"📡 Сетевой интерфейс: {ip}:8080\n"
+        f"💻 Доступные слоты: {slots}\n"
+        f"🔑 Токен безопасности: {api_key}"
     )
 
 ADMIN_SERVER_ADD_ERROR = (
-    f"❌ <b>Ошибка сетевого сопряжения с удаленным хостом</b>\n\n"
-    f"Рекомендации по устранению:\n"
-    f"1. Проверьте статус демона агента на целевом сервере\n"
-    f"2. Убедитесь, что порт 8080 открыт во внешнем Firewall\n"
-    f"3. Корректно ли указан сетевой IPv4/IPv6 адрес"
+    f"❌ <b>Не удалось установить стабильное соединение с удаленным хостом</b>\n\n"
+    f"Чек-лист для проверки:\n"
+    f"1. Убедитесь, что процесс серверного агента запущен\n"
+    f"2. Проверьте правила Firewall для входящего порта 8080\n"
+    f"3. Проверьте корректность указанного IP адреса"
 )
 
 
 # ─── ADMIN: PROMO CREATE ───
 
-ADMIN_PROMO_CREATE_CODE = f"{Emoji.GIFT} Введите буквенно-цифровой код купона:"
-ADMIN_PROMO_CREATE_TYPE = f"{Emoji.GIFT} Задайте тип бонуса (tariff / projects / balance):"
-ADMIN_PROMO_CREATE_VALUE = f"{Emoji.GIFT} Укажите номинал вознаграждения:"
-ADMIN_PROMO_CREATE_MAX = f"{Emoji.GIFT} Установите лимит общего числа активаций:"
+ADMIN_PROMO_CREATE_CODE = f"{Emoji.GIFT} Введите уникальную комбинацию символов промокода:"
+ADMIN_PROMO_CREATE_TYPE = f"{Emoji.GIFT} Выберите тип начисляемого бонуса (tariff / projects / balance):"
+ADMIN_PROMO_CREATE_VALUE = f"{Emoji.GIFT} Задайте числовой эквивалент награды:"
+ADMIN_PROMO_CREATE_MAX = f"{Emoji.GIFT} Установите максимальный лимит использований купона:"
 
 def admin_promo_create_success(code: str) -> str:
-    return f"{Emoji.CHECK} Промокод <b>{code}</b> успешно сгенерирован и внесен в реестр."
+    return f"{Emoji.CHECK} Промокод <b>{code}</b> успешно сгенерирован и добавлен в глобальный реестр."
 
 
 # ─── ADMIN: BROADCAST ───
 
-ADMIN_BROADCAST_TEXT = f"{Emoji.SPEAKER} Введите текст или медиафайл для глобальной рассылки:"
+ADMIN_BROADCAST_TEXT = f"{Emoji.SPEAKER} Сформируйте информационный пакет (текст/медиа) для массовой отправки:"
 
 def admin_broadcast_done(sent: int, failed: int) -> str:
     return (
-        f"{Emoji.CHECK} Информационная кампания завершена.\n\n"
-        f"✅ Доставлено адресатам: {sent}\n"
-        f"❌ Исключения/ошибки сети: {failed}"
+        f"{Emoji.CHECK} Процедура массового уведомления пользователей завершена.\n\n"
+        f"✅ Успешно доставлено: {sent}\n"
+        f"❌ Системные сбои доставки: {failed}"
     )
 
 
 # ─── ADMIN: SETTINGS ───
 
-ADMIN_SETTINGS_TEXT = f"{Emoji.SETTINGS} <b>Глобальная конфигурация платформы</b>"
+ADMIN_SETTINGS_TEXT = f"{Emoji.SETTINGS} <b>Глобальные системные триггеры платформы</b>"
 
 def admin_sleep_changed(minutes: int) -> str:
-    return f"✅ Интервал автоматического сна изменен: {minutes} мин."
+    return f"✅ Параметр автоматического перевода процессов в спящий режим изменен: {minutes} мин."
 
 
 # ─── ADMIN: PHOTOS ───
 
 ADMIN_PHOTOS_TEXT = (
-    f"{Emoji.MEDIA} <b>Менеджер графических ресурсов интерфейса</b>\n\n"
-    f"✅ — Медиаресурс активен\n"
-    f"⬜ — Используется стандартная верстка\n\n"
-    f"Выберите интерфейсный экран для загрузки или обновления баннера."
+    f"{Emoji.MEDIA} <b>Менеджер статических медиаресурсов</b>\n\n"
+    f"✅ — Изображение активно\n"
+    f"⬜ — Используется текстовая разметка по умолчанию\n\n"
+    f"Выберите целевой экран интерфейса для кастомизации баннера."
 )
 
 def admin_photo_set_text(label: str, status: str) -> str:
     return (
-        f"{Emoji.MEDIA} <b>Экран: {label}</b>\n\n"
-        f"Статус отрисовки: {status}\n\n"
-        f"Прикрепите и отправьте новое изображение для данного интерфейса.\n"
-        f"Отправьте команду <code>удалить</code>, чтобы сбросить баннер до дефолтных настроек."
+        f"{Emoji.MEDIA} <b>Интерфейс: {label}</b>\n\n"
+        f"Текущее состояние медиа: {status}\n\n"
+        f"Прикрепите и отправьте новое графическое изображение.\n"
+        f"Для сброса настроек отправьте ключевое слово <code>удалить</code>."
     )
 
 def admin_photo_success(label: str) -> str:
-    return f"{Emoji.CHECK} Графический ресурс для экрана <b>{label}</b> успешно применен!"
+    return f"{Emoji.CHECK} Графическое оформление для экрана <b>{label}</b> успешно обновлено."
 
 def admin_photo_deleted(label: str) -> str:
-    return f"{Emoji.CHECK} Медиаресурс для экрана <b>{label}</b> успешно деинсталлирован."
+    return f"{Emoji.CHECK} Кастомный баннер для экрана <b>{label}</b> успешно аннулирован."
 
 
 # ─── ERRORS ───
 
-ERROR_NOT_FOUND = "Указанный проект не зарегистрирован в системе."
-ERROR_NO_ACCESS = "Недостаточно прав для выполнения данной операции."
-ERROR_INVALID_NAME = "❌ Ошибка синтаксиса имени. Разрешены только символы латиницы, цифры, дефис и нижнее подчеркивание (1-50 знаков)."
-ERROR_INVALID_ZIP = "❌ Неверный формат данных. Требуется архив расширения .zip."
-ERROR_INVALID_URL = "❌ Некорректный синтаксис адреса. Используйте спецификацию:\n<code>https://github.com/user/repo</code>"
-ERROR_REPO_NOT_FOUND = "❌ Репозиторий скрыт настройками приватности или не существует."
-ERROR_DOCKER_UNAVAILABLE = "Системная подсистема контейнеризации недоступна"
-ERROR_CONTAINER_NOT_RUNNING = "Процесс инстанса остановлен"
-ERROR_ADMIN_ONLY = "⛔ Доступ ограничен. Требуются привилегии суперадминистратора."
+ERROR_NOT_FOUND = "Запрошенный инстанс отсутствует в текущей конфигурации кластера."
+ERROR_NO_ACCESS = "Действие заблокировано подсистемой разграничения прав доступа."
+ERROR_INVALID_NAME = "❌ Синтаксическая ошибка. Идентификатор должен содержать от 1 до 50 символов латиницы, цифры, дефисы или знаки подчеркивания."
+ERROR_INVALID_ZIP = "❌ Ошибка валидации пакета. Допускается импорт исключительно .zip архивов."
+ERROR_INVALID_URL = "❌ Неверный формат веб-адреса. Пожалуйста, используйте спецификацию:\n<code>https://github.com/user/repo</code>"
+ERROR_REPO_NOT_FOUND = "❌ Целевой репозиторий не обнаружен. Проверьте права доступа или область видимости ссылки."
+ERROR_DOCKER_UNAVAILABLE = "Сбой подсистемы виртуализации контейнеров на хосте"
+ERROR_CONTAINER_NOT_RUNNING = "Процесс в рантайме отсутствует"
+ERROR_ADMIN_ONLY = "⛔ Данная операция требует наивысшего уровня привилегий системы."
 
 def error_limit_reached(limit: int) -> str:
-    return f"Превышен доступный лимит активных инстансов на вашей учетной записи (макс. {limit})"
+    return f"Вы исчерпали доступную квоту на создание изолированных контейнеров (Максимум: {limit})"
 
 def error_upload_failed(error: str) -> str:
-    return f"Сбой подсистемы ввода-вывода при загрузке: {error}"
+    return f"Критический сбой подсистемы ввода-вывода при импорте исходного кода: {error}"
 
 
 # ─── BUTTONS ───
 
 BTN_BACK = "Вернуться"
-BTN_CANCEL = "Отмена"
-BTN_CONFIRM = "✅ Подтвердить конфигурацию"
+BTN_CANCEL = "Отменить операцию"
+BTN_CONFIRM = "✅ Утвердить спецификацию"
 BTN_DELETE = "🗑 Удалить"
-BTN_YES_DELETE = "✅ Да, подтверждаю удаление"
+BTN_YES_DELETE = "✅ Да, подтверждаю безвозвратное удаление"
 BTN_NO = "❌ Отклонить"
-BTN_CLOSE = "✕ Закрыть"
+BTN_CLOSE = "✕ Закрыть терминал"
 BTN_ADD = "➕ Добавить"
 
-BTN_START = "▶ Запустить процесс"
-BTN_STOP = "⏹ Остановить процесс"
-BTN_RESTART = "🔄 Перезапустить"
-BTN_LOGS = "📋 Просмотр TTY-логов"
-BTN_LOGS_FILE = "📄 Экспорт .log файлом"
-BTN_LOGS_REFRESH = "🔄 Обновить терминал"
-BTN_SETTINGS = "⚙ Конфигурация инстанса"
+BTN_START = "▶ Запустить контейнер"
+BTN_STOP = "⏹ Инициировать SIGTERM"
+BTN_RESTART = "🔄 Выполнить Reboot"
+BTN_LOGS = "📋 Вывод stdout/stderr"
+BTN_LOGS_FILE = "📄 Скачать лог-файл"
+BTN_LOGS_REFRESH = "🔄 Перезапустить поток логов"
+BTN_SETTINGS = "⚙ Системная конфигурация"
 
-BTN_LIBRARIES = "📦 Управление Pip-пакетами"
-BTN_LIBRARY_ADD = "➕ Установить зависимость"
-BTN_FILES = "📁 Файловый менеджер"
-BTN_PYTHON_VERSION = "🐍 Версия Runtime-интерпретатора"
-BTN_ENTRY_POINT = "📄 Изменить точку входа"
-BTN_COOWNERS = "👥 Делегирование доступов"
-BTN_GRAPHS = "📊 Телеметрия и метрики"
-BTN_NOTIFICATIONS = "🔔 Настройки алертов"
-BTN_RENAME = "✏ Изменить название"
-BTN_DELETE_BOT = "🗑 Уничтожить проект"
+BTN_LIBRARIES = "📦 Сборщик пакетов Pip"
+BTN_LIBRARY_ADD = "➕ Добавить зависимость"
+BTN_FILES = "📁 Структура директорий"
+BTN_PYTHON_VERSION = "🐍 Версия рантайма Python"
+BTN_ENTRY_POINT = "📄 Конфигурация точки входа"
+BTN_COOWNERS = "👥 Настройка прав доступа"
+BTN_GRAPHS = "📊 Метрики утилизации ресурсов"
+BTN_NOTIFICATIONS = "🔔 Настройка системных алертов"
+BTN_RENAME = "✏ Модифицировать ID инстанса"
+BTN_DELETE_BOT = "🗑 Ликвидировать инстанс"
 
-BTN_ADD_BOT = "➕ Создать новый инстанс"
-BTN_UPLOAD_FILES = "📥 Импортировать .ZIP"
-BTN_CONNECT_GITHUB = "🔗 Интеграция с GitHub"
+BTN_ADD_BOT = "➕ Развернуть новый сервис"
+BTN_UPLOAD_FILES = "📥 Загрузить локальный .ZIP"
+BTN_CONNECT_GITHUB = "🔗 Авторизовать репозиторий GitHub"
 BTN_SCRIPT_MODE = "📄 Скриптовый запуск"
 BTN_MODULE_MODE = "📦 Модульный пакет"
 
-BTN_FILE_DOWNLOAD = "⬇️ Скачать"
-BTN_FILE_DELETE = "🗑 Удалить"
+BTN_FILE_DOWNLOAD = "⬇️ Экспорт"
+BTN_FILE_DELETE = "🗑 Стереть"
 BTN_FILE_UP = "⬆ На уровень выше"
 
-BTN_COOWNER_ADD = "➕ Добавить разработчика"
-BTN_COOWNER_DELETE = "🗑 Отзыв прав"
+BTN_COOWNER_ADD = "➕ Предоставить права"
+BTN_COOWNER_DELETE = "🗑 Аннулировать доступ"
 
-BTN_SUBSCRIPTION_INFO = "❓ Спецификация Premium-тарифа"
-BTN_SUBSCRIPTION_BUY = "💳 Оформить Premium-доступ"
+BTN_SUBSCRIPTION_INFO = "❓ Спецификация коммерческих тарифов"
+BTN_SUBSCRIPTION_BUY = "💳 Перейти к оформлению лицензии"
 
-BTN_ADMIN_USERS = "👤 Менеджмент аккаунтов"
-BTN_ADMIN_SERVERS = "🖥 Управление кластером"
-BTN_ADMIN_STATS = "📊 Сводная статистика"
-BTN_ADMIN_PROMOS = "🎁 Система промокодов"
-BTN_ADMIN_BROADCAST = "📢 Глобальный пуш-ап"
-BTN_ADMIN_SETTINGS = "⚙ Системные триггеры"
-BTN_ADMIN_PHOTOS = "🖼 Настройка графики"
+BTN_ADMIN_USERS = "👤 База аккаунтов"
+BTN_ADMIN_SERVERS = "🖥 Управление нодами кластера"
+BTN_ADMIN_STATS = "📊 Аналитическая панель"
+BTN_ADMIN_PROMOS = "🎁 Промокоды и купоны"
+BTN_ADMIN_BROADCAST = "📢 Системный пуш-алерт"
+BTN_ADMIN_SETTINGS = "⚙ Глобальные триггеры"
+BTN_ADMIN_PHOTOS = "🖼 Управление графикой"
 
-BTN_CREATE_BACKUP = "➕ Сгенерировать снимок"
-BTN_RESTORE_BACKUP = "🔄 Откатить систему"
-BTN_DELETE_BACKUP = "🗑 Стереть снимок"
+BTN_CREATE_BACKUP = "➕ Создать снимок системы"
+BTN_RESTORE_BACKUP = "🔄 Восстановить конфигурацию"
+BTN_DELETE_BACKUP = "🗑 Стереть архивный снимок"
 
 
 # ─── PROJECT MONITOR ───
 
 def project_monitor_text(name: str, status_text: str, cpu: float, ram: float, disk: float, uptime: str, restarts: int) -> str:
     return (
-        f"{Emoji.GRAPH_STATS} <b>Инфраструктурный мониторинг: {name}</b>\n\n"
-        f"Текущее состояние: {status_text}\n"
-        f"Выделение CPU: <b>{cpu:.1f}%</b>\n"
-        f"Аллокация RAM: <b>{ram:.1f} MB</b>\n"
-        f"Потребление диска: <b>{disk:.1f} MB</b>\n"
-        f"Время непрерывной работы: <b>{uptime}</b>\n"
-        f"Системных перезапусков: <b>{restarts}</b>"
+        f"{Emoji.GRAPH_STATS} <b>Телеметрия ресурсов инстанса: {name}</b>\n\n"
+        f"Состояние контейнера: {status_text}\n"
+        f"Нагрузка на ядро CPU: <b>{cpu:.1f}%</b>\n"
+        f"Выделенная память RAM: <b>{ram:.1f} MB</b>\n"
+        f"Объем дискового пространства: <b>{disk:.1f} MB</b>\n"
+        f"Uptime текущей сессии: <b>{uptime}</b>\n"
+        f"Количество аварийных перезапусков: <b>{restarts}</b>"
     )
 
 def project_graphs_text(hours: int, avg_cpu: float, max_cpu: float, avg_ram: float, max_ram: float, data_points: int) -> str:
     return (
-        f"{Emoji.GRAPH_UP} <b>Историческая телеметрия за {hours}ч</b>\n\n"
+        f"{Emoji.GRAPH_UP} <b>Агрегированная статистика за интервал {hours}ч</b>\n\n"
         f"{Emoji.GRAPH_STATS} Вычислительная мощность (CPU):\n"
-        f"  Средний показатель: {avg_cpu:.1f}%\n"
-        f"  Пиковая нагрузка: {max_cpu:.1f}%\n\n"
+        f"  Медианное значение: {avg_cpu:.1f}%\n"
+        f"  Пиковый всплеск: {max_cpu:.1f}%\n\n"
         f"{Emoji.GRAPH_UP} Оперативная память (RAM):\n"
-        f"  Среднее выделение: {avg_ram:.1f} MB\n"
-        f"  Пиковое выделение: {max_ram:.1f} MB\n\n"
-        f"{Emoji.INFO} Агрегировано точек данных: {data_points}"
+        f"  Среднее заполнение: {avg_ram:.1f} MB\n"
+        f"  Максимальная аллокация: {max_ram:.1f} MB\n\n"
+        f"{Emoji.INFO} Всего обработано маркеров телеметрии: {data_points}"
     )
 
-ERROR_NO_STATS_DATA = "В выбранном временном диапазоне метрики отсутствуют"
+ERROR_NO_STATS_DATA = "За выбранный хронологический период метрики отсутствуют в базе данных."
 
 
 # ─── PROJECT SETTINGS ───
 
 def project_settings_text(name: str, python_version: str, entry_point: str, entry_type: str) -> str:
     return (
-        f"{Emoji.SETTINGS} <b>Спецификация инстанса: {name}</b>\n\n"
-        f"Интерпретатор: Python {python_version}\n"
-        f"Скрипт запуска: <code>{entry_point}</code>\n"
-        f"Тип архитектуры: {entry_type}"
+        f"{Emoji.SETTINGS} <b>Спецификация конфигурации: {name}</b>\n\n"
+        f"Версия интерпретатора: Python {python_version}\n"
+        f"Исполняемый маркер: <code>{entry_point}</code>\n"
+        f"Архитектура вызова: {entry_type}"
     )
 
-PROJECT_PYTHON_SELECT_TEXT = f"{Emoji.SETTINGS} Укажите целевую версию среды выполнения Python:"
-PROJECT_ENTRY_INPUT_TEXT = f"{Emoji.PENCIL} Задайте новый вектор инициализации (например: main.py или package.module):"
-PROJECT_SETTINGS_USE_CARD = "Применить дефолтные параметры из карточки метаданных проекта"
+PROJECT_PYTHON_SELECT_TEXT = f"{Emoji.SETTINGS} Укажите необходимую версию изолированной среды Python:"
+PROJECT_ENTRY_INPUT_TEXT = f"{Emoji.PENCIL} Задайте новый корневой скрипт или пространство имен модуля:"
+PROJECT_SETTINGS_USE_CARD = "Синхронизировать параметры со стандартной конфигурационной схемой проекта"
 
 
 # ─── PROJECT LOGS ───
 
 def project_logs_menu_text(name: str) -> str:
-    return f"{Emoji.FILE} <b>Консоль вывода: {name}</b>"
+    return f"{Emoji.FILE} <b>Терминал логирования: {name}</b>"
 
 def project_logs_view_text(logs: str) -> str:
-    return f"<b>📋 Поток вывода stderr/stdout:</b>\n\n<code>{logs}</code>"
+    return f"<b>📋 Поток вывода stdout/stderr процессов:</b>\n\n<code>{logs}</code>"
 
 def project_logs_file_caption(name: str) -> str:
-    return f"Лог-файл системных событий инстанса {name}"
+    return f"Системный дамп логов для инстанса {name}"
 
-PROJECT_LOGS_CLEARED = "Буфер вывода успешно очищен."
-PROJECT_LOGS_CLEAR_ERROR = "Не удалось очистить буфер событий."
+PROJECT_LOGS_CLEARED = "Буфер вывода терминала успешно сброшен."
+PROJECT_LOGS_CLEAR_ERROR = "Ошибка подсистемы при попытке очистить буфер логов."
 
 
 # ─── PROJECT MANAGE ───
 
 def project_delete_confirm_text(name: str) -> str:
     return (
-        f"{Emoji.TRASH} <b>Инициализация удаления инстанса</b>\n\n"
-        f"Вы абсолютно уверены, что хотите стереть проект <b>{name}</b>?\n"
-        f"Данная операция сотрет проект с физического диска без возможности отката."
+        f"{Emoji.TRASH} <b>Уничтожение изолированной среды</b>\n\n"
+        f"Вы собираетесь полностью удалить инстанс <b>{name}</b>.\n"
+        f"Это сотрет все ассоциированные контейнеры и локальные папки без возможности восстановления."
     )
 
-PROJECT_DELETED_TEXT = f"{Emoji.CHECK} Локальные ресурсы проекта полностью уничтожены."
-PROJECT_DELETE_ERROR = "Сбой файловой системы при удалении контейнера."
+PROJECT_DELETED_TEXT = f"{Emoji.CHECK} Виртуальное окружение проекта успешно ликвидировано."
+PROJECT_DELETE_ERROR = "Критический сбой API при попытке деинсталлировать контейнер."
 
 
 # ─── PROFILE & SETTINGS ───
 
-SETTINGS_NOT_FOUND = "Конфигурационные данные профиля не обнаружены."
-SETTINGS_UNKNOWN = "Запрошен неподдерживаемый системный параметр."
-SETTINGS_CHANGED = "Конфигурация успешно обновлена."
+SETTINGS_NOT_FOUND = "Конфигурационный профиль текущей сессии не обнаружен."
+SETTINGS_UNKNOWN = "Запрошен недокументированный или устаревший параметр."
+SETTINGS_CHANGED = "Системная конфигурация успешно обновлена."
 
 def notification_settings_text() -> str:
-    return f"{Emoji.NOTIF} <b>Управление системными алертами и событиями</b>"
+    return f"{Emoji.NOTIF} <b>Конфигурация каналов push-оповещений и триггеров алертов</b>"
 
 
 # ─── LOCATIONS ───
 
-LOCATIONS_NO_SERVERS = f"{Emoji.HOME} <b>Узлы кластера</b>\n\nДоступные физические серверы отсутствуют."
-LOCATIONS_SERVERS_TEXT = f"{Emoji.HOME} <b>Доступные вычислительные узлы</b>"
-LOCATION_NOT_FOUND = "Целевой сервер обслуживания не обнаружен в сети."
+LOCATIONS_NO_SERVERS = f"{Emoji.HOME} <b>Вычислительные кластеры</b>\n\nДоступные физические серверные ноды отсутствуют."
+LOCATIONS_SERVERS_TEXT = f"{Emoji.HOME} <b>Список активных серверных узлов</b>"
+LOCATION_NOT_FOUND = "Выбранный физический сервер не отвечает на запросы кластера."
 
 
 # ─── SUBSCRIPTION ───
 
-SUBSCRIPTION_PLAN_UNKNOWN = "Запрошен несуществующий тарифный план."
+SUBSCRIPTION_PLAN_UNKNOWN = "Запрошена неподдерживаемая или архивная тарифная сетка."
 
 def subscription_buy_confirm_text(plan_label: str, price: int) -> str:
     return (
-        f"💳 <b>Оформление подписки</b>\n\n"
-        f"Выбранный пакет: <b>Premium {plan_label}</b>\n"
-        f"Стоимость тарифа: <b>{price}₽</b>\n\n"
-        f"Для завершения процедуры транзакции перейдите в чат поддержки клиентов."
+        f"💳 <b>Активация подписки</b>\n\n"
+        f"Выбранный тарифный план: <b>Premium {plan_label}</b>\n"
+        f"Фиксированная стоимость: <b>{price}₽</b>\n\n"
+        f"Для генерации платежной сессии и проведения транзакции перейдите в диалог с биллингом."
     )
 
 
 # ─── COOWNERS ───
 
-COOWNER_ENTER_ID = f"{Emoji.PROFILE} Перешлите или введите числовой Telegram ID пользователя для предоставления прав:"
-COOWNER_REMOVED = "Права совместного управления успешно отозваны."
-COOWNER_INVALID_ID = "❌ Ошибка формата данных. ID аккаунта должен быть исключительно числовым значением."
-COOWNER_SELF_ADD = "❌ Недопустимая операция. Вы не можете выдать доступ самому себе."
-COOWNER_USER_NOT_FOUND = "❌ Пользователь не прошел первичную регистрацию. Ему необходимо хотя бы раз инициализировать сессию с ботом."
-COOWNER_ALREADY_EXISTS = "❌ Данный разработчик уже имеет права доступа к этой инфраструктуре."
+COOWNER_ENTER_ID = f"{Emoji.PROFILE} Передайте уникальный числовой Telegram ID аккаунта для авторизации доступа:"
+COOWNER_REMOVED = "Права совместного администрирования инстанса отозваны."
+COOWNER_INVALID_ID = "❌ Ошибка валидации. Идентификатор аккаунта должен состоять исключительно из числовых символов."
+COOWNER_SELF_ADD = "❌ Недопустимое действие. Вы не можете делегировать права самому себе."
+COOWNER_USER_NOT_FOUND = "❌ Пользователь не обнаружен. Ему необходимо пройти первичный процесс авторизации на нашей платформе."
+COOWNER_ALREADY_EXISTS = "❌ Данный специалист уже авторизован в списке разработчиков этого инстанса."
 
 def coowner_added_text(username: str) -> str:
-    return f"{Emoji.CHECK} Пользователь <b>{username}</b> успешно интегрирован в состав разработчиков проекта."
+    return f"{Emoji.CHECK} Пользователю <b>{username}</b> успешно делегированы права соавтора проекта."
 
 
 # ─── BOT CREATE ───
 
-BOT_CREATE_INVALID_ZIP = "❌ Ошибка пакета. Отправьте валидный несжатый .zip архив."
-BOT_CREATE_INVALID_URL = "❌ Ошибка синтаксиса ссылки. Используйте формат регулярного выражения:\n<code>https://github.com/user/repo</code>"
-BOT_CREATE_REPO_NOT_FOUND = "❌ Репозиторий GitHub скрыт настройками приватности либо удален."
-BOT_CREATE_ARCHIVE_NOT_FOUND = "Бинарный архив исходного кода не обнаружен в кэше"
-BOT_CREATE_NO_SERVERS = "Свободные вычислительные мощности в кластере на данный момент отсутствуют"
-BOT_CREATE_INVALID_NAME = "❌ Ошибка валидации имени: допустимы только латинские символы, цифры, знаки _ и - (до 50 символов)."
-BOT_CREATE_LIMIT_REACHED = lambda limit: f"Достигнута максимальная квота активных инстансов для вашего уровня аккаунта ({limit})"
-BOT_CREATE_DOWNLOAD_ERROR = lambda e: f"Сбой сетевого стрима при скачивании пакета: {e}"
+BOT_CREATE_INVALID_ZIP = "❌ Сбой парсинга. Загруженный файл не является валидным архивом сжатия .zip."
+BOT_CREATE_INVALID_URL = "❌ Ошибка синтаксиса URL. Шаблон ссылки должен соответствовать стандарту:\n<code>https://github.com/user/repo</code>"
+BOT_CREATE_REPO_NOT_FOUND = "❌ Запрошенный удаленный репозиторий удален или закрыт настройками приватности VCS."
+BOT_CREATE_ARCHIVE_NOT_FOUND = "Пакет исходного кода не обнаружен во временном буфере хоста."
+BOT_CREATE_NO_SERVERS = "В данный момент все серверные ноды кластера загружены на 100%. Слоты отсутствуют."
+BOT_CREATE_INVALID_NAME = "❌ Ошибка валидации ID: разрешены латинские символы, цифры, знаки дефиса и нижнего подчеркивания (до 50 знаков)."
+BOT_CREATE_LIMIT_REACHED = lambda limit: f"Превышена квота на выделение параллельных виртуальных сред для вашего аккаунта (максимум: {limit})"
+BOT_CREATE_DOWNLOAD_ERROR = lambda e: f"Стековый сбой сетевого протокола при скачивании исходного пакета: {e}"
 
-BOT_CREATE_NAME_TEXT = "📝 <b>Идентификатор проекта</b>\n\nУкажите имя инстанса (от 1 до 50 символов: латиница, цифры, дефис, нижнее подчеркивание):"
+BOT_CREATE_NAME_TEXT = "📝 <b>Идентификация нового сервиса</b>\n\nУкажите системный ID проекта (от 1 до 50 символов: латиница, цифры, дефис, нижнее подчеркивание):"
 BOT_CREATE_ENTRY_MANUAL_TEXT = (
-    "📄 <b>Конфигурация точки запуска</b>\n\n"
-    "Введите имя корневого исполняемого файла вручную.\n"
+    "📄 <b>Определение главного файла</b>\n\n"
+    "Введите точное имя исполняемого файла конфигурации вручную.\n"
     "Пример: <code>main.py</code>"
 )
 BOT_CREATE_ENTRY_MODULE_TEXT = (
-    "📄 <b>Конфигурация точки запуска</b>\n\n"
-    "Режим выполнения: Пакетный модуль / python -m\n\n"
-    "Укажите наименование исполняемого модуля.\n"
+    "📄 <b>Определение главного файла</b>\n\n"
+    "Режим исполнения: Пакетный модуль (вызов через -m)\n\n"
+    "Введите валидное имя пространства имен модуля.\n"
     "Пример: <code>app.pkg.main</code>"
 )
 def bot_create_entry_confirm_text(entry: str) -> str:
     return (
-        f"📄 <b>Конфигурация: {entry}</b>\n\n"
-        f"Подтвердите выбор точки входа. Значение можно будет динамически скорректировать позже."
+        f"📄 <b>Параметр вызова: {entry}</b>\n\n"
+        f"Утвердите выбранную точку входа. Изменение сценария запуска доступно в панели управления проектом."
     )
 
 def bot_create_confirm_text(name: str, python: str, entry: str) -> str:
     return (
-        f"{Emoji.CHECK} <b>Валидация параметров деплоя</b>\n\n"
+        f"{Emoji.CHECK} <b>Верификация архитектурной схемы деплоя</b>\n\n"
         f"📝 Проект: <b>{name}</b>\n"
-        f"🐍 Среда: Python {python}\n"
-        f"📄 Выполнение: <code>{entry}</code>\n\n"
-        f"Инициализировать развертывание и сборку?"
+        f"🐍 Рантайм: Python {python}\n"
+        f"📄 Инициализатор: <code>{entry}</code>\n\n"
+        f"Запустить компиляцию образов и сборку проекта?"
     )
 
 BOT_CREATE_SUCCESS_TEXT = (
-    f"🤖 <b>Процесс виртуализации успешно завершен!</b>\n\n"
-    f"Контейнер инстанса переведен в активную фазу выполнения.\n\n"
-    f"Используйте основное меню для контроля параметров рантайма."
+    f"🤖 <b>Оркестрация контейнера завершена успешно!</b>\n\n"
+    f"Ваш сервис переведен в рабочую фазу выполнения на удаленном узле.\n\n"
+    f"Используйте главный дашборд для администрирования параметров рантайма."
 )
 
 
 # ─── ADMIN ───
 
-ADMIN_NO_ACCESS = "⛔ Ошибка аутентификации. Требуются права суперпользователя (Root)."
-ADMIN_USER_NOT_FOUND = "Указанная учетная запись не найдена в базе данных."
-ADMIN_SERVER_NOT_FOUND = "Физический узел кластера не зарегистрирован."
-ADMIN_SERVER_DELETED = "Вычислительный узел успешно удален из инфраструктуры."
-ADMIN_REFERRAL_WIP = "Функциональный модуль реферального процессинга находится на стадии инженерной сборки"
+ADMIN_NO_ACCESS = "⛔ Критическая ошибка авторизации. Требуются root-привилегии суперпользователя."
+ADMIN_USER_NOT_FOUND = "Запрошенная учетная запись пользователя отсутствует в глобальной базе данных."
+ADMIN_SERVER_NOT_FOUND = "Выбранный физический узел инфраструктуры не зарегистрирован в системе."
+ADMIN_SERVER_DELETED = "Вычислительный узел успешно выведен из кластера и удален."
+ADMIN_REFERRAL_WIP = "Компонент реферального трекинга находится на стадии разработки и закрытого тестирования."
 
-ADMIN_USER_BANNED = "🚫 Учетная запись переведена в статус перманентной блокировки"
-ADMIN_USER_UNBANNED = "✅ Системные ограничения для учетной записи полностью сняты"
-ADMIN_TARIFF_CHANGED = lambda tariff: f"✅ Тарифный план пользователя переопределен на {tariff}"
-ADMIN_BALANCE_INPUT_ERROR = "❌ Ошибка валидации типа. Введите корректное числовое значение:"
-ADMIN_PROMO_TYPE_ERROR = "❌ Недопустимый тип сущности. Разрешенные параметры: tariff, projects, balance"
+ADMIN_USER_BANNED = "🚫 К аккаунту применены санкции перманентного ограничения доступа (Ban)"
+ADMIN_USER_UNBANNED = "✅ Ограничения доступа с учетной записи пользователя полностью сняты"
+ADMIN_TARIFF_CHANGED = lambda tariff: f"✅ Тарифный план учетной записи успешно изменен на {tariff}"
+ADMIN_BALANCE_INPUT_ERROR = "❌ Неверный тип данных. Система ожидает исключительно числовой формат формата float/int:"
+ADMIN_PROMO_TYPE_ERROR = "❌ Ошибка валидации типа сущности купона. Разрешенные значения: tariff, projects, balance"
 
 def admin_user_status_text(username: str, status: str) -> str:
-    return f"{Emoji.PROFILE} <b>@{username}</b> — Системный статус аккаунта: {status}"
+    return f"{Emoji.PROFILE} <b>@{username}</b> — Статус системной активности аккаунта: {status}"
 
 def admin_user_tariff_text(username: str, tariff: str) -> str:
-    return f"{Emoji.PROFILE} <b>@{username}</b> — Активный тариф: {tariff}"
+    return f"{Emoji.PROFILE} <b>@{username}</b> — Действующий тарифный план: {tariff}"
 
 def admin_balance_result_text(amount: float, balance: float) -> str:
     return (
-        f"{Emoji.CHECK} Баланс скорректирован на величину: {amount:.2f}\n"
-        f"Актуальное состояние счета: {balance:.2f}"
+        f"{Emoji.CHECK} Финансовый баланс скорректирован на величину: {amount:.2f}\n"
+        f"Текущее состояние внутреннего счета: {balance:.2f}"
     )
 
 def admin_server_delete_confirm_text(name: str) -> str:
-    return f"{Emoji.TRASH} Инициировать деинсталляцию физического сервера <b>{name}</b> из сети?"
+    return f"{Emoji.TRASH} Вы действительно хотите деинсталлировать физический сервер <b>{name}</b> из инфраструктуры?"
 
-ADMIN_SERVER_ENTER_NAME = f"{Emoji.HOME} Введите уникальное кодовое имя ноды:"
-ADMIN_SERVER_ENTER_COUNTRY = f"{Emoji.HOME} Укажите географическую локацию хоста:"
-ADMIN_SERVER_ENTER_IP = f"{Emoji.HOME} Задайте IPv4/IPv6 адрес сервера:"
-ADMIN_SERVER_ENTER_API_KEY = f"{Emoji.HOME} Укажите токен авторизации агента (или «-» для пропуска защиты):"
-ADMIN_SERVER_ENTER_SLOTS = f"{Emoji.HOME} Задайте максимальный лимит доступных слотов виртуализации:"
-ADMIN_SERVER_CHECKING = f"{Emoji.LOADING} <b>Ожидание ответа от сетевого интерфейса агента...</b>"
+ADMIN_SERVER_ENTER_NAME = f"{Emoji.HOME} Задайте кодовое наименование для регистрируемой ноды:"
+ADMIN_SERVER_ENTER_COUNTRY = f"{Emoji.HOME} Укажите страну физического размещения сервера:"
+ADMIN_SERVER_ENTER_IP = f"{Emoji.HOME} Задайте статический IPv4/IPv6 адрес хоста:"
+ADMIN_SERVER_ENTER_API_KEY = f"{Emoji.HOME} Задайте токен безопасности агента (или «-» для деплоя без авторизации):"
+ADMIN_SERVER_ENTER_SLOTS = f"{Emoji.HOME} Установите предел доступных виртуальных слотов памяти:"
+ADMIN_SERVER_CHECKING = f"{Emoji.LOADING} <b>Ожидание ответа по сетевому протоколу от удаленного агента...</b>"
 
-ADMIN_PROMO_ENTER_CODE = f"{Emoji.GIFT} Задайте кодовую комбинацию промокода:"
-ADMIN_PROMO_ENTER_TYPE = f"{Emoji.GIFT} Выберите тип процессинга купона (tariff/projects/balance):"
-ADMIN_PROMO_ENTER_VALUE = f"{Emoji.GIFT} Задайте математический номинал вознаграждения:"
-ADMIN_PROMO_ENTER_MAX = f"{Emoji.GIFT} Определите лимит пула активаций промокода:"
+ADMIN_PROMO_ENTER_CODE = f"{Emoji.GIFT} Задайте комбинацию символов промокода:"
+ADMIN_PROMO_ENTER_TYPE = f"{Emoji.GIFT} Выберите категорию процессинга купона (tariff/projects/balance):"
+ADMIN_PROMO_ENTER_VALUE = f"{Emoji.GIFT} Задайте номинал начисляемого вознаграждения:"
+ADMIN_PROMO_ENTER_MAX = f"{Emoji.GIFT} Укажите лимит общего пула активаций для данного промокода:"
 
-ADMIN_BROADCAST_ENTER_MESSAGE = f"{Emoji.SPEAKER} Сформируйте текстовое уведомление для пакетной рассылки:"
+ADMIN_BROADCAST_ENTER_MESSAGE = f"{Emoji.SPEAKER} Сформируйте информационный пакет сообщений для глобальной пуш-рассылки:"
 
 def admin_broadcast_done_text(sent: int, failed: int) -> str:
     return (
-        f"{Emoji.CHECK} Пакетная отправка пуш-уведомлений завершена.\n\n"
+        f"{Emoji.CHECK} Глобальная рассылка пуш-уведомлений пользователям успешно завершена.\n\n"
         f"✅ Успешных доставок: {sent}\n"
-        f"❌ Ошибок сетевой маршрутизации: {failed}"
+        f"❌ Исключений сетевого тайм-аута: {failed}"
     )
 
-ADMIN_SLEEP_CHANGED = lambda minutes: f"✅ Тайм-аут перехода инстансов в режим сна изменен: {minutes} минут"
-ADMIN_TARIFF_SELECT_TEXT = f"{Emoji.SETTINGS} Выберите целевой тарифный план для данного аккаунта:"
-ADMIN_BALANCE_INPUT_TEXT = f"{Emoji.COIN} Задайте дельту изменения баланса (положительное число — пополнение, отрицательное — списание):"
+ADMIN_SLEEP_CHANGED = lambda minutes: f"✅ Период неактивности до перевода процессов в режим сна изменен: {minutes} минут"
+ADMIN_TARIFF_SELECT_TEXT = f"{Emoji.SETTINGS} Выберите целевой тарифный план для активации на аккаунте пользователя:"
+ADMIN_BALANCE_INPUT_TEXT = f"{Emoji.COIN} Задайте значение модификации баланса (положительное — пополнение счета, отрицательное — списание ресурсов):"
 
 
 # ─── SUCCESS ───
 
-SUCCESS_BOT_STARTED = f"{Emoji.CHECK} Контейнер инстанса успешно запущен в рантайме"
-SUCCESS_BOT_STOPPED = f"{Emoji.CHECK} Сигналы процесса успешно остановлены (SIGTERM)"
+SUCCESS_BOT_STARTED = f"{Emoji.CHECK} Контейнер инстанса успешно запущен в изолированном рантайме."
+SUCCESS_BOT_STOPPED = f"{Emoji.CHECK} Выполнение процессов успешно прекращено, контейнер остановлен."
 
 def success_bot_renamed(name: str) -> str:
-    return f"{Emoji.CHECK} Идентификатор инстанса успешно изменен на <b>{name}</b>"
+    return f"{Emoji.CHECK} Идентификатор инстанса в метаданных изменен на <b>{name}</b>."
 
 def success_secret_added(key: str) -> str:
-    return f"{Emoji.CHECK} Переменная окружения (ENV) <b>{key}</b> добавлена в стек конфигов."
+    return f"{Emoji.CHECK} Переменная конфигов (ENV) <b>{key}</b> успешно добавлена в параметры окружения."
 
 def success_secret_deleted(key: str) -> str:
-    return f"{Emoji.CHECK} Переменная окружения (ENV) <b>{key}</b> успешно стерта из контейнера."
+    return f"{Emoji.CHECK} Переменная конфигов (ENV) <b>{key}</b> полностью удалена из параметров окружения."
 
 def success_lib_added(lib: str) -> str:
-    return f"{Emoji.CHECK} Пакет <b>{lib}</b> успешно скомпилирован.\nПерезапустите инстанс для применения новых зависимостей."
+    return f"{Emoji.CHECK} Пакет зависимостей <b>{lib}</b> успешно скомпилирован.\nПерезапустите инстанс для интеграции изменений."
 
-SUCCESS_BACKUP_CREATED = "☁ Снимок файловой системы и метаданных успешно сохранен в облачном архиве!"
+SUCCESS_BACKUP_CREATED = "☁ Актуальный снимок системы успешно сгенерирован и отправлен в облачный репозиторий!"
 
 def success_entry_changed(entry: str) -> str:
-    return f"{Emoji.CHECK} Вектор инициализации процесса изменен на: <code>{entry}</code>"
+    return f"{Emoji.CHECK} Архитектурный маркер вызова процесса изменен на: <code>{entry}</code>"
 
 def success_python_changed(version: str) -> str:
-    return f"✅ Интерпретатор рантайма успешно переключен на Python {version}"
+    return f"✅ Среда рантайма переключена на интерпретатор Python {version}"
 
 def success_balance_changed(amount: float, balance: float) -> str:
-    return f"✅ Транзакция проведена на сумму {amount:.2f}\nТекущий баланс пользователя: {balance:.2f}"
+    return f"✅ Финансовая транзакция проведена. Изменение: {amount:.2f} | Текущий остаток на счете: {balance:.2f}"
