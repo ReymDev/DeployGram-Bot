@@ -26,6 +26,7 @@ from bot.utils.emojis import Emoji
 from bot.utils.media import edit_photo_or_text
 from bot.utils.formatters import format_status, format_uptime
 from bot.config_photos import get_photo
+from bot import texts
 
 router = Router()
 
@@ -53,7 +54,7 @@ async def _check_owner(callback: CallbackQuery, project_service, db_user, projec
     """Check if user has access (owner or coowner)."""
     project = await project_service.get_project(project_id)
     if project is None:
-        await callback.answer("Бот не найден", show_alert=True)
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return None
     
     # Owner always has access
@@ -67,7 +68,7 @@ async def _check_owner(callback: CallbackQuery, project_service, db_user, projec
         if has_access:
             return project
     
-    await callback.answer("Нет доступа", show_alert=True)
+    await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
     return None
 
 
@@ -78,7 +79,7 @@ async def bots_page(callback: CallbackQuery, db_user, project_service):
     from bot.keyboards.user import get_bot_list_keyboard
     await edit_photo_or_text(
         callback.message,
-        "📋 <b>Панель управления</b>\n\nНажми на кнопку с названием бота, чтобы управлять им.",
+        texts.CONTROL_PANEL_TEXT,
         "control_panel",
         reply_markup=get_bot_list_keyboard(projects, page),
     )
@@ -111,12 +112,13 @@ async def bot_view(callback: CallbackQuery, project_service, db_user, session):
     cpu = monitoring.get("cpu", 0)
     ram = monitoring.get("ram", 0)
 
-    text = (
-        f"📋 <b>Панель управления</b>\n\n"
-        f"<b>{project.name}</b>\n"
-        f"{server_text}\n\n"
-        f"{status_text} · Аптайм: {uptime}\n"
-        f"CPU: {cpu:.2f}% · RAM: {ram:.2f}%"
+    text = texts.bot_control_text(
+        project.name,
+        server_text,
+        status_text,
+        uptime,
+        cpu,
+        ram
     )
 
     await edit_photo_or_text(
@@ -223,15 +225,10 @@ async def bot_settings(callback: CallbackQuery, project_service, db_user):
     if project is None:
         return
 
-    text = (
-        f"⚙ <b>Настройки бота</b>\n\n"
-        f"Выбери, что хочешь сделать с ботом:"
-    )
-
     from bot.keyboards.user import get_bot_settings_keyboard
     await edit_photo_or_text(
         callback.message,
-        text,
+        texts.BOT_SETTINGS_TEXT,
         "bot_settings",
         reply_markup=get_bot_settings_keyboard(project_id),
     )
@@ -245,7 +242,7 @@ async def bot_rename(callback: CallbackQuery, state: FSMContext):
 
     await edit_photo_or_text(
         callback.message,
-        "✏ <b>Смена названия</b>\n\nВведи новое название для бота:",
+        texts.BOT_RENAME_TEXT,
         "rename_bot",
         reply_markup=get_back_keyboard(f"bot_settings_{project_id}"),
     )
@@ -258,7 +255,7 @@ async def bot_rename_received(message: Message, state: FSMContext, project_servi
     import re
     name = message.text.strip()
     if not re.match(r"^[a-zA-Z0-9_-]{1,50}$", name):
-        await message.answer("❌ Имя: буквы, цифры, _ и - (1-50 символов)")
+        await message.answer(texts.ERROR_INVALID_NAME)
         return
 
     data = await state.get_data()
@@ -272,7 +269,7 @@ async def bot_rename_received(message: Message, state: FSMContext, project_servi
 
     await state.clear()
     await message.answer(
-        f"{Emoji.CHECK} Бот переименован в <b>{name}</b>",
+        texts.success_bot_renamed(name),
         reply_markup=get_back_keyboard(f"bot_view_{project_id}"),
     )
 
@@ -284,15 +281,9 @@ async def bot_delete(callback: CallbackQuery, project_service, db_user):
     if project is None:
         return
 
-    text = (
-        f"🗑 <b>Удаление бота</b>\n\n"
-        f"Подтверди удаление бота, восстановить доступ к нему будет "
-        f"невозможно - только загрузить заново."
-    )
-
     await edit_photo_or_text(
         callback.message,
-        text,
+        texts.BOT_DELETE_TEXT,
         "delete_bot",
         reply_markup=get_delete_confirm_keyboard(project_id),
     )
@@ -313,14 +304,9 @@ async def bot_delete_confirm(callback: CallbackQuery, project_service, db_user):
         await callback.answer(f"Ошибка: {e}", show_alert=True)
         return
 
-    text = (
-        f"🗑 <b>Удаление бота</b>\n\n"
-        f"Бот <b>{project_name}</b> удален."
-    )
-
     await edit_photo_or_text(
         callback.message,
-        text,
+        texts.bot_deleted_text(project_name),
         "bot_deleted",
         reply_markup=get_back_keyboard("control_panel"),
     )
@@ -334,14 +320,9 @@ async def bot_python(callback: CallbackQuery, project_service, db_user):
     if project is None:
         return
 
-    text = (
-        f"🐍 <b>Смена версии Python</b>\n\n"
-        f"Бот перезапустится после смены версии."
-    )
-
     await edit_photo_or_text(
         callback.message,
-        text,
+        texts.BOT_PYTHON_TEXT,
         "python_change",
         reply_markup=get_python_change_keyboard(project_id, project.python_version),
     )
@@ -364,7 +345,7 @@ async def set_python(callback: CallbackQuery, project_service, db_user):
         project_repo = ProjectRepository(session)
         await project_repo.update(project_id, python_version=version)
 
-    await callback.answer(f"✅ Python изменён на {version}", show_alert=True)
+    await callback.answer(texts.success_python_changed(version), show_alert=True)
     await bot_python(callback, project_service, db_user)
 
 
@@ -375,18 +356,9 @@ async def bot_entry(callback: CallbackQuery, project_service, db_user):
     if project is None:
         return
 
-    text = (
-        f"📄 <b>Смена точки входа</b>\n\n"
-        f"Выбери режим запуска:\n"
-        f"• <b>Скрипт</b> - для <code>python file.py</code>\n"
-        f"• <b>Модуль</b> - для <code>python -m package.module</code>\n\n"
-        f"Текущий режим: <b>{project.entry_type}</b>\n"
-        f"Текущее значение: <b>{project.entry_point}</b>"
-    )
-
     await edit_photo_or_text(
         callback.message,
-        text,
+        texts.bot_entry_text(project.entry_type, project.entry_point),
         "entry_change",
         reply_markup=get_entry_change_keyboard(project_id, project.entry_type, project.entry_point),
     )
@@ -406,7 +378,7 @@ async def set_entry(callback: CallbackQuery, project_service, db_user, state: FS
     if entry_type == "module":
         await state.update_data(entry_project_id=project_id)
         await callback.message.edit_text(
-            "📄 <b>Выбор точки входа</b>\n\n"
+            texts.BOT_ENTRY_MODULE_TEXT,
             "Режим: Модульный запуск / python -m\n\n"
             "Отправь имя модуля вручную.\n"
             "Примеры: <code>app.pkg.main</code>",
@@ -447,15 +419,9 @@ async def bot_files(callback: CallbackQuery, project_service, db_user):
 
     files = await project_service.list_files(project_id, "/app")
 
-    text = (
-        f"📁 <b>Файловый менеджер</b>\n\n"
-        f"Выбери файл для скачивания или удаления.\n"
-        f"Чтобы загрузить новый файл - отправь его в чат."
-    )
-
     await edit_photo_or_text(
         callback.message,
-        text,
+        texts.BOT_FILES_TEXT,
         "file_manager",
         reply_markup=get_file_manager_keyboard(project_id, files, "/app"),
     )
@@ -472,15 +438,9 @@ async def bot_libs(callback: CallbackQuery, project_service, db_user):
     # Получаем установленные пакеты через pip list
     libs = await project_service.get_installed_packages(project_id)
 
-    text = (
-        f"📦 <b>Менеджер библиотек</b>\n\n"
-        f"Тут находятся все твои библиотеки, можешь установить новые "
-        f"или удалить текущие."
-    )
-
     await edit_photo_or_text(
         callback.message,
-        text,
+        texts.BOT_LIBS_TEXT,
         "library_manager",
         reply_markup=get_libs_keyboard(project_id, libs),
     )
@@ -493,9 +453,7 @@ async def lib_add(callback: CallbackQuery, state: FSMContext):
     await state.update_data(lib_project_id=project_id)
 
     await callback.message.edit_text(
-        "📦 <b>Установка библиотеки</b>\n\n"
-        "Отправь название библиотеки.\n"
-        "Примеры: <code>aiogram</code>, <code>requests>=2.0</code>",
+        texts.BOT_LIB_ADD_TEXT,
         reply_markup=get_back_keyboard(f"bot_libs_{project_id}"),
     )
     await state.set_state(BotLibStates.waiting_lib)
@@ -510,7 +468,7 @@ async def lib_add_received(message: Message, state: FSMContext, project_service,
 
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
-        await message.answer("❌ Проект не найден")
+        await message.answer(texts.ERROR_NOT_FOUND)
         await state.clear()
         return
 
@@ -529,8 +487,7 @@ async def lib_add_received(message: Message, state: FSMContext, project_service,
 
     await state.clear()
     await message.answer(
-        f"{Emoji.CHECK} Библиотека <b>{lib}</b> добавлена.\n"
-        f"Перезапустите бота для применения.",
+        texts.success_lib_added(lib),
         reply_markup=get_back_keyboard(f"bot_view_{project_id}"),
     )
 

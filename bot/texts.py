@@ -180,6 +180,38 @@ def bot_entry_text(entry_type: str, entry_point: str) -> str:
         f"Текущее значение: <b>{entry_point}</b>"
     )
 
+BOT_ENTRY_MODULE_TEXT = (
+    "📄 <b>Выбор точки входа</b>\n\n"
+    "Режим: Модульный запуск / python -m\n\n"
+    "Отправь имя модуля вручную.\n"
+    "Примеры: <code>app.pkg.main</code>"
+)
+
+BOT_ENTRY_SELECT_FILE_TEXT = "Выберите файл через файловый менеджер"
+
+
+# ─── BOT COOWNERS ───
+
+def bot_coowners_text(name: str) -> str:
+    return (
+        f"👥 <b>Совладельцы: {name}</b>\n\n"
+        f"Роли:\n"
+        f"  <b>Owner</b> — полный доступ\n"
+        f"  <b>Developer</b> — запуск, остановка, логи, файлы"
+    )
+
+BOT_COOWNER_ADD_TEXT = "👤 Отправь Telegram ID пользователя для добавления:"
+BOT_COOWNER_ADD_ROLE_TEXT = "👤 Выбери роль для нового совладельца:"
+
+def bot_coowner_added_text(user_id: int, role: str) -> str:
+    return f"{Emoji.CHECK} Пользователь {user_id} добавлен как {role}"
+
+def bot_coowner_deleted_text(user_id: int) -> str:
+    return f"{Emoji.CHECK} Совладелец {user_id} удалён"
+
+BOT_COOWNER_NOT_FOUND_TEXT = "Пользователь не найден"
+BOT_COOWNER_ALREADY_EXISTS_TEXT = "Этот пользователь уже является совладельцем"
+
 
 # ─── BOT LOGS ───
 
@@ -194,10 +226,17 @@ def bot_logs_text(name: str, logs: str) -> str:
 
 BOT_FILES_TEXT = (
     f"📁 <b>Файловый менеджер</b>\n\n"
-    f"Чтобы загрузить новый файл - отправь его, он попадет "
-    f"в открытую директорию заменой. Если файлов несколько, "
-    f"пришли их архивом, он будет распакован."
+    f"Выбери файл для скачивания или удаления.\n"
+    f"Чтобы загрузить новый файл - отправь его в чат."
 )
+
+def bot_files_path_text(path: str) -> str:
+    return f"📁 <b>📁 {path}</b>"
+
+BOT_FILE_DELETE_CONFIRM_TEXT = lambda file_path: f"🗑 Удалить <b>{file_path}</b>?"
+BOT_FILE_DELETED_TEXT = "Файл удалён"
+BOT_FILE_DELETE_ERROR_TEXT = "Ошибка удаления"
+BOT_FILE_NOT_FOUND_TEXT = "Файл не найден или пуст"
 
 
 # ─── BOT LIBRARIES ───
@@ -466,6 +505,74 @@ def error_limit_reached(limit: int) -> str:
 
 def error_upload_failed(error: str) -> str:
     return f"Ошибка загрузки файла: {error}"
+
+
+# ─── BUTTONS ───
+
+# Common buttons
+BTN_BACK = "Назад"
+BTN_CANCEL = "Отмена"
+BTN_CONFIRM = "✅ Подтвердить"
+BTN_DELETE = "🗑 Удалить"
+BTN_YES_DELETE = "✅ Да, удалить"
+BTN_NO = "❌ Нет"
+BTN_CLOSE = "✕ Закрыть"
+BTN_ADD = "➕ Добавить"
+
+# Bot control buttons
+BTN_START = "▶ Запустить"
+BTN_STOP = "⏹ Остановить"
+BTN_RESTART = "🔄 Перезапустить"
+BTN_LOGS = "📋 Логи"
+BTN_LOGS_FILE = "📄 Отправить файлом"
+BTN_LOGS_REFRESH = "🔄 Обновить логи"
+BTN_SETTINGS = "⚙ Настройки бота"
+
+# Bot settings buttons
+BTN_LIBRARIES = "📦 Библиотеки"
+BTN_LIBRARY_ADD = "➕ Установить библиотеку"
+BTN_FILES = "📁 Файлы"
+BTN_PYTHON_VERSION = "🐍 Версия Python"
+BTN_ENTRY_POINT = "📄 Точка входа"
+BTN_COOWNERS = "👥 Совладельцы"
+BTN_GRAPHS = "📊 Графики"
+BTN_NOTIFICATIONS = "🔔 Уведомления"
+BTN_RENAME = "✏ Переименовать"
+BTN_DELETE_BOT = "🗑 Удалить бота"
+
+# Bot creation buttons
+BTN_ADD_BOT = "➕ Добавить бота"
+BTN_UPLOAD_FILES = "📥 Загрузить файлы"
+BTN_CONNECT_GITHUB = "🔗 Подключить Github"
+BTN_SCRIPT_MODE = "📄 Скрипт"
+BTN_MODULE_MODE = "📦 Модуль"
+
+# File manager buttons
+BTN_FILE_DOWNLOAD = "⬇️"
+BTN_FILE_DELETE = "🗑"
+BTN_FILE_UP = "⬆ .."
+
+# Coowner buttons
+BTN_COOWNER_ADD = "➕ Добавить"
+BTN_COOWNER_DELETE = "🗑"
+
+# Subscription buttons
+BTN_SUBSCRIPTION_INFO = "❓ Что дает подписка \"Premium\"?"
+BTN_SUBSCRIPTION_BUY = "💳 Купить подписку"
+
+# Admin buttons
+BTN_ADMIN_USERS = "👤 Пользователи"
+BTN_ADMIN_SERVERS = "🖥 Серверы"
+BTN_ADMIN_STATS = "📊 Статистика"
+BTN_ADMIN_PROMOS = "🎁 Промокоды"
+BTN_ADMIN_BROADCAST = "📢 Рассылка"
+BTN_ADMIN_SETTINGS = "⚙ Настройки"
+BTN_ADMIN_PHOTOS = "🖼 Фото"
+
+# Backup buttons
+BTN_CREATE_BACKUP = "➕ Создать бэкап"
+BTN_RESTORE_BACKUP = "🔄 Восстановить"
+BTN_DELETE_BACKUP = "🗑 Удалить бэкап"
 
 
 # ─── SUCCESS ───

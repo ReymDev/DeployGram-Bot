@@ -4,6 +4,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from bot.utils.emojis import Emoji
+from bot import texts
 
 router = Router()
 
@@ -12,7 +13,7 @@ async def _check_file_access(callback: CallbackQuery, project_service, db_user, 
     """Check if user has access to project files (owner or coowner)."""
     project = await project_service.get_project(project_id)
     if project is None:
-        await callback.answer("Проект не найден", show_alert=True)
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return None
     
     # Owner always has access
@@ -26,7 +27,7 @@ async def _check_file_access(callback: CallbackQuery, project_service, db_user, 
         if has_access:
             return project
     
-    await callback.answer("Нет доступа", show_alert=True)
+    await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
     return None
 
 
@@ -126,7 +127,7 @@ async def file_delete_confirm(callback: CallbackQuery, project_service, db_user,
 
     success = await project_service.delete_file(project_id, file_path)
     if success:
-        await callback.answer("Файл удалён", show_alert=True)
+        await callback.answer(texts.BOT_FILE_DELETED_TEXT, show_alert=True)
         parent = "/".join(file_path.strip("/").split("/")[:-1]) or "/app"
         files = await project_service.list_files(project_id, parent)
         from bot.keyboards.user import get_file_manager_keyboard
@@ -135,7 +136,7 @@ async def file_delete_confirm(callback: CallbackQuery, project_service, db_user,
             reply_markup=get_file_manager_keyboard(project_id, files, parent),
         )
     else:
-        await callback.answer("Ошибка удаления", show_alert=True)
+        await callback.answer(texts.BOT_FILE_DELETE_ERROR_TEXT, show_alert=True)
 
 
 @router.callback_query(F.data.startswith("file_download_"))
@@ -147,7 +148,7 @@ async def file_download(callback: CallbackQuery, project_service, db_user, sessi
 
     content = await project_service.read_file(project_id, file_path)
     if not content:
-        await callback.answer("Файл не найден или пуст", show_alert=True)
+        await callback.answer(texts.BOT_FILE_NOT_FOUND_TEXT, show_alert=True)
         return
 
     from aiogram.types import BufferedInputFile
