@@ -166,11 +166,13 @@ async def bot_logs(callback: CallbackQuery, project_service, db_user):
 
     logs = await project_service.get_logs(project_id, tail=100)
     from bot.utils.formatters import truncate_text
+    from html import escape
     truncated = truncate_text(logs, 3500)
+    escaped_logs = escape(truncated)
 
     text = (
         f"📋 Логи <b>{project.name}</b> (последние 3500 симв.)\n\n"
-        f"<code>{truncated}</code>"
+        f"<code>{escaped_logs}</code>"
     )
 
     try:

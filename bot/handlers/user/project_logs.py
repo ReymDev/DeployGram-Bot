@@ -36,9 +36,11 @@ async def logs_view(callback: CallbackQuery, project_service, db_user):
 
     logs = await project_service.get_logs(project_id, tail=100)
     truncated = truncate_text(logs, 3500)
+    from html import escape
+    escaped_logs = escape(truncated)
 
     await callback.message.edit_text(
-        f"<b>📋 Последние логи:</b>\n\n<code>{truncated}</code>",
+        f"<b>📋 Последние логи:</b>\n\n<code>{escaped_logs}</code>",
         reply_markup=get_logs_keyboard(project_id),
         parse_mode=ParseMode.HTML,
     )
