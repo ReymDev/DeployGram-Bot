@@ -8,22 +8,9 @@ from bot.config import settings
 from bot.keyboards.common import get_welcome_keyboard, get_control_panel_keyboard
 from bot.utils.emojis import Emoji
 from bot.utils.media import send_photo_or_text, edit_photo_or_text
+from bot import texts
 
 router = Router()
-
-WELCOME_TEXT = (
-    f"{Emoji.SMILE} <b>Добро пожаловать!</b>\n\n"
-    f"Привет, это <b>DeployGram</b> - дом для твоих ботов!\n\n"
-    f"Здесь ты можешь бесплатно захостить свой код или запустить "
-    f"готовый пресет всего за пару кликов.\n\n"
-    f"Начиная работу, ты принимаешь наши <a href=\"#\">условия</a> "
-    f"и <a href=\"#\">политику</a>."
-)
-
-CONTROL_PANEL_TEXT = (
-    f"📋 <b>Панель управления</b>\n\n"
-    f"Нажми на кнопку с названием бота, чтобы управлять им."
-)
 
 
 @router.message(CommandStart())
@@ -40,7 +27,7 @@ async def cmd_start(message: Message, session, db_user, user_service):
 
     await send_photo_or_text(
         message,
-        WELCOME_TEXT,
+        texts.welcome_text(message.from_user.username or message.from_user.first_name or "друг"),
         "welcome",
         reply_markup=get_welcome_keyboard(),
     )
@@ -54,14 +41,14 @@ async def control_panel(callback: CallbackQuery, db_user, project_service):
     if projects:
         await edit_photo_or_text(
             callback.message,
-            CONTROL_PANEL_TEXT,
+            texts.CONTROL_PANEL_TEXT,
             "control_panel",
             reply_markup=get_bot_list_keyboard(projects),
         )
     else:
         await edit_photo_or_text(
             callback.message,
-            CONTROL_PANEL_TEXT,
+            texts.CONTROL_PANEL_TEXT,
             "control_panel",
             reply_markup=get_control_panel_keyboard(),
         )
@@ -76,14 +63,14 @@ async def main_menu(callback: CallbackQuery, db_user, project_service):
     if projects:
         await edit_photo_or_text(
             callback.message,
-            CONTROL_PANEL_TEXT,
+            texts.CONTROL_PANEL_TEXT,
             "control_panel",
             reply_markup=get_bot_list_keyboard(projects),
         )
     else:
         await edit_photo_or_text(
             callback.message,
-            CONTROL_PANEL_TEXT,
+            texts.CONTROL_PANEL_TEXT,
             "control_panel",
             reply_markup=get_control_panel_keyboard(),
         )
