@@ -61,6 +61,8 @@ async def edit_photo_or_text(
     reply_markup: InlineKeyboardMarkup | None = None,
     parse_mode: str = "HTML",
 ) -> Message | None:
+    from aiogram.exceptions import TelegramBadRequest
+    
     photo_file_id = get_photo(photo_key)
 
     if photo_file_id:
@@ -81,9 +83,8 @@ async def edit_photo_or_text(
                 reply_markup=reply_markup,
                 parse_mode=parse_mode,
             )
-        except Exception:
-            return await message.edit_text(
-                text,
-                reply_markup=reply_markup,
-                parse_mode=parse_mode,
-            )
+        except TelegramBadRequest as e:
+            # Игнорируем ошибку "message is not modified"
+            if "message is not modified" in str(e).lower():
+                return message
+            raise
