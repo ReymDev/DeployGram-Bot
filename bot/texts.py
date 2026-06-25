@@ -319,7 +319,7 @@ def bot_logs_text(name: str, logs: str) -> str:
 
 Последние 3500 символов:
 
-<code>{logs}</code>
+<pre>{logs}</pre>
 
 💡 <i>Используй "Скачать всё" для полного файла логов</i>"""
 

@@ -113,7 +113,8 @@ async def bot_view(callback: CallbackQuery, project_service, db_user, session):
 
     status = monitoring.get("status", project.status)
     status_text = format_status(status)
-    uptime = monitoring.get("uptime", "—")
+    uptime_seconds = monitoring.get("uptime", 0)
+    uptime = format_uptime(uptime_seconds) if uptime_seconds else "—"
     cpu = monitoring.get("cpu", 0)
     ram = monitoring.get("ram", 0)
 
@@ -252,13 +253,11 @@ async def bot_logs(callback: CallbackQuery, project_service, db_user, session):
 
     logs = await project_service.get_logs(project_id, tail=100)
     from bot.utils.formatters import truncate_text
-    from html import escape
     truncated = truncate_text(logs, 3500)
-    escaped_logs = escape(truncated)
 
     text = (
         f"📋 Логи <b>{project.name}</b> (последние 3500 симв.)\n\n"
-        f"<code>{escaped_logs}</code>"
+        f"<pre>{truncated}</pre>"
     )
 
     try:

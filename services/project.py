@@ -348,7 +348,7 @@ class ProjectService:
     async def get_monitoring(self, project_id: int) -> dict:
         project = await self.project_repo.get_by_id(project_id)
         if project is None or not project.docker_container_id:
-            return {"status": "stopped", "cpu": 0, "ram": 0, "disk": 0, "uptime": "—", "restarts": 0}
+            return {"status": "stopped", "cpu": 0, "ram": 0, "disk": 0, "uptime": 0, "restarts": 0}
 
         if project.server_id:
             from repositories.server import ServerRepository
@@ -368,14 +368,14 @@ class ProjectService:
                         "cpu": stats.get("cpu_percent", 0),
                         "ram": stats.get("ram_mb", 0),
                         "disk": stats.get("disk_mb", 0),
-                        "uptime": "—",
+                        "uptime": stats.get("uptime_seconds", 0),
                         "restarts": project.restart_count,
                     }
                 except Exception:
                     pass
 
         if not self.docker:
-            return {"status": "stopped", "cpu": 0, "ram": 0, "disk": 0, "uptime": "—", "restarts": 0}
+            return {"status": "stopped", "cpu": 0, "ram": 0, "disk": 0, "uptime": 0, "restarts": 0}
 
         status = await self.docker.get_container_status(project.docker_container_id)
         stats = await self.docker.get_container_stats(project.docker_container_id)
@@ -385,7 +385,7 @@ class ProjectService:
             "cpu": stats.get("cpu_percent", 0),
             "ram": stats.get("ram_mb", 0),
             "disk": stats.get("disk_mb", 0),
-            "uptime": "—",
+            "uptime": stats.get("uptime_seconds", 0),
             "restarts": project.restart_count,
         }
 
