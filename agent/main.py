@@ -166,6 +166,15 @@ class VPSAgent:
             logs = await dm.get_container_logs(container_id, tail)
             return web.json_response({"logs": logs})
         except Exception as e:
+            import traceback
+            logger.error(
+                "Failed to get logs for container %s:\n"
+                "Error: %s\n"
+                "Traceback:\n%s",
+                container_id,
+                str(e),
+                traceback.format_exc()
+            )
             return web.json_response({"error": str(e)}, status=500)
 
     async def run(self) -> None:
