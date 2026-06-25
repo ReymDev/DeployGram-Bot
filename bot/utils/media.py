@@ -62,6 +62,10 @@ async def edit_photo_or_text(
     parse_mode: str = "HTML",
 ) -> Message | None:
     from aiogram.exceptions import TelegramBadRequest
+    import logging
+    import traceback
+    
+    logger = logging.getLogger(__name__)
     
     photo_file_id = get_photo(photo_key)
 
@@ -86,5 +90,23 @@ async def edit_photo_or_text(
         except TelegramBadRequest as e:
             # Игнорируем ошибку "message is not modified"
             if "message is not modified" in str(e).lower():
+                logger.warning(
+                    f"[edit_photo_or_text] Message not modified error ignored.\n"
+                    f"File: {__file__}\n"
+                    f"Function: edit_photo_or_text\n"
+                    f"Photo key: {photo_key}\n"
+                    f"Text length: {len(text)}\n"
+                    f"Error: {str(e)}"
+                )
                 return message
-            raise
+            else:
+                logger.error(
+                    f"[edit_photo_or_text] Telegram error occurred.\n"
+                    f"File: {__file__}\n"
+                    f"Function: edit_photo_or_text\n"
+                    f"Photo key: {photo_key}\n"
+                    f"Text length: {len(text)}\n"
+                    f"Error: {str(e)}\n"
+                    f"Traceback:\n{traceback.format_exc()}"
+                )
+                raise

@@ -138,6 +138,10 @@ async def bot_view(callback: CallbackQuery, project_service, db_user, session):
 @router.callback_query(F.data.startswith("bot_start_"))
 async def bot_start(callback: CallbackQuery, project_service, db_user, session):
     from aiogram.exceptions import TelegramBadRequest
+    import logging
+    import traceback
+    
+    logger = logging.getLogger(__name__)
     
     project_id = int(callback.data.replace("bot_start_", ""))
     project = await _check_owner(callback, project_service, db_user, project_id, session)
@@ -153,16 +157,45 @@ async def bot_start(callback: CallbackQuery, project_service, db_user, session):
                 reply_markup=get_bot_control_keyboard(project_id, project.status),
             )
         except TelegramBadRequest as e:
-            if "message is not modified" not in str(e).lower():
-                pass
-        except Exception:
-            pass
+            if "message is not modified" in str(e).lower():
+                logger.warning(
+                    f"[bot_start] Message not modified error ignored.\n"
+                    f"File: {__file__}\n"
+                    f"Function: bot_start\n"
+                    f"Project ID: {project_id}\n"
+                    f"User: {db_user.telegram_id}\n"
+                    f"Error: {str(e)}"
+                )
+            else:
+                logger.error(
+                    f"[bot_start] Telegram error occurred.\n"
+                    f"File: {__file__}\n"
+                    f"Function: bot_start\n"
+                    f"Project ID: {project_id}\n"
+                    f"User: {db_user.telegram_id}\n"
+                    f"Error: {str(e)}\n"
+                    f"Traceback:\n{traceback.format_exc()}"
+                )
+        except Exception as e:
+            logger.error(
+                f"[bot_start] Unexpected error occurred.\n"
+                f"File: {__file__}\n"
+                f"Function: bot_start\n"
+                f"Project ID: {project_id}\n"
+                f"User: {db_user.telegram_id}\n"
+                f"Error: {str(e)}\n"
+                f"Traceback:\n{traceback.format_exc()}"
+            )
     await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
 
 
 @router.callback_query(F.data.startswith("bot_stop_"))
 async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
     from aiogram.exceptions import TelegramBadRequest
+    import logging
+    import traceback
+    
+    logger = logging.getLogger(__name__)
     
     project_id = int(callback.data.replace("bot_stop_", ""))
     project = await _check_owner(callback, project_service, db_user, project_id, session)
@@ -178,10 +211,35 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
                 reply_markup=get_bot_control_keyboard(project_id, project.status),
             )
         except TelegramBadRequest as e:
-            if "message is not modified" not in str(e).lower():
-                pass
-        except Exception:
-            pass
+            if "message is not modified" in str(e).lower():
+                logger.warning(
+                    f"[bot_stop] Message not modified error ignored.\n"
+                    f"File: {__file__}\n"
+                    f"Function: bot_stop\n"
+                    f"Project ID: {project_id}\n"
+                    f"User: {db_user.telegram_id}\n"
+                    f"Error: {str(e)}"
+                )
+            else:
+                logger.error(
+                    f"[bot_stop] Telegram error occurred.\n"
+                    f"File: {__file__}\n"
+                    f"Function: bot_stop\n"
+                    f"Project ID: {project_id}\n"
+                    f"User: {db_user.telegram_id}\n"
+                    f"Error: {str(e)}\n"
+                    f"Traceback:\n{traceback.format_exc()}"
+                )
+        except Exception as e:
+            logger.error(
+                f"[bot_stop] Unexpected error occurred.\n"
+                f"File: {__file__}\n"
+                f"Function: bot_stop\n"
+                f"Project ID: {project_id}\n"
+                f"User: {db_user.telegram_id}\n"
+                f"Error: {str(e)}\n"
+                f"Traceback:\n{traceback.format_exc()}"
+            )
     await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
 
 
