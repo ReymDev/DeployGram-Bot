@@ -267,10 +267,39 @@ async def bot_logs(callback: CallbackQuery, project_service, db_user, session):
             reply_markup=get_logs_keyboard(project_id),
         )
     except Exception as e:
+        from aiogram.exceptions import TelegramBadRequest
         import logging
-        logging.error(f"Failed to show logs for project {project_id}: {e}")
-        await callback.answer(f"Ошибка получения логов: {str(e)[:100]}", show_alert=True)
-        return
+        import traceback
+        
+        logger = logging.getLogger(__name__)
+        
+        if isinstance(e, TelegramBadRequest) and "message is not modified" in str(e).lower():
+            logger.warning(
+                f"[bot_logs] Message not modified error ignored.\n"
+                f"File: {__file__}\n"
+                f"Function: bot_logs\n"
+                f"Project ID: {project_id}\n"
+                f"Project name: {project.name}\n"
+                f"User: {db_user.telegram_id}\n"
+                f"Logs length: {len(logs)}\n"
+                f"Text length: {len(text)}\n"
+                f"Error: {str(e)}"
+            )
+        else:
+            logger.error(
+                f"[bot_logs] Failed to show logs.\n"
+                f"File: {__file__}\n"
+                f"Function: bot_logs\n"
+                f"Project ID: {project_id}\n"
+                f"Project name: {project.name}\n"
+                f"User: {db_user.telegram_id}\n"
+                f"Logs length: {len(logs)}\n"
+                f"Text length: {len(text)}\n"
+                f"Error: {str(e)}\n"
+                f"Traceback:\n{traceback.format_exc()}"
+            )
+            await callback.answer(f"Ошибка получения логов: {str(e)[:100]}", show_alert=True)
+            return
     await callback.answer()
 
 
