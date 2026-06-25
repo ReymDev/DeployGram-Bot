@@ -14,7 +14,7 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, session, db_user, user_service):
+async def cmd_start(message: Message, session, db_user, user_service, project_service):
     args = message.text.split()
     referral_code = args[1] if len(args) > 1 else None
 
@@ -25,9 +25,15 @@ async def cmd_start(message: Message, session, db_user, user_service):
             ref_svc = ReferralService(session)
             await ref_svc.process_referral(referrer_id, db_user.telegram_id)
 
+    # Получаем количество проектов для персонализации приветствия
+    projects = await project_service.get_user_projects(db_user.id)
+    
     await send_photo_or_text(
         message,
-        texts.welcome_text(message.from_user.username or message.from_user.first_name or "друг"),
+        texts.welcome_text(
+            message.from_user.first_name or "друг",
+            len(projects)
+        ),
         "welcome",
         reply_markup=get_welcome_keyboard(),
     )
@@ -46,9 +52,10 @@ async def control_panel(callback: CallbackQuery, db_user, project_service):
             reply_markup=get_bot_list_keyboard(projects),
         )
     else:
+        # Если проектов нет - показываем дружелюбное сообщение
         await edit_photo_or_text(
             callback.message,
-            texts.CONTROL_PANEL_TEXT,
+            texts.EMPTY_PROJECTS,
             "control_panel",
             reply_markup=get_control_panel_keyboard(),
         )
@@ -68,9 +75,10 @@ async def main_menu(callback: CallbackQuery, db_user, project_service):
             reply_markup=get_bot_list_keyboard(projects),
         )
     else:
+        # Если проектов нет - показываем дружелюбное сообщение
         await edit_photo_or_text(
             callback.message,
-            texts.CONTROL_PANEL_TEXT,
+            texts.EMPTY_PROJECTS,
             "control_panel",
             reply_markup=get_control_panel_keyboard(),
         )
