@@ -531,9 +531,41 @@ class ProjectService:
     async def count_user_projects(self, user_id: int) -> int:
         return await self.project_repo.count_by_user(user_id)
 
+    def _validate_path(self, path: str) -> str:
+        """Validate and normalize file path to prevent path traversal attacks."""
+        import os
+        from pathlib import Path
+        
+        # Remove any null bytes
+        path = path.replace('\0', '')
+        
+        # Normalize path
+        path = os.path.normpath(path)
+        
+        # Ensure path starts with /app or is relative
+        if not path.startswith('/app'):
+            path = f"/app/{path.lstrip('/')}"
+        
+        # Resolve and check if still under /app
+        try:
+            normalized = str(Path(path).resolve())
+            if not normalized.startswith('/app'):
+                raise ValueError("Path traversal attempt detected")
+        except Exception:
+            raise ValueError("Invalid file path")
+        
+        return path
+
     async def list_files(self, project_id: int, path: str = "/app") -> list[str]:
         project = await self.project_repo.get_by_id(project_id)
         if not project or not project.docker_container_id:
+            return []
+
+        # Validate path to prevent path traversal
+        try:
+            safe_path = self._validate_path(path)
+        except ValueError as e:
+            logger.warning(f"Path validation failed for project {project_id}: {e}")
             return []
 
         if project.server_id:
@@ -547,7 +579,7 @@ class ProjectService:
                     api_key=server.api_key or "",
                 )
                 try:
-                    result = await client.list_files(project_id, path)
+                    result = await client.list_files(project_id, safe_path)
                     return result.get("files", [])
                 except Exception:
                     return []
@@ -555,11 +587,18 @@ class ProjectService:
         if not self.docker:
             return []
 
-        return await self.docker.list_files(project.docker_container_id, path)
+        return await self.docker.list_files(project.docker_container_id, safe_path)
 
     async def read_file(self, project_id: int, file_path: str) -> str:
         project = await self.project_repo.get_by_id(project_id)
         if not project or not project.docker_container_id:
+            return ""
+
+        # Validate path to prevent path traversal
+        try:
+            safe_path = self._validate_path(file_path)
+        except ValueError as e:
+            logger.warning(f"Path validation failed for project {project_id}: {e}")
             return ""
 
         if project.server_id:
@@ -573,7 +612,7 @@ class ProjectService:
                     api_key=server.api_key or "",
                 )
                 try:
-                    result = await client.read_file(project_id, file_path)
+                    result = await client.read_file(project_id, safe_path)
                     return result.get("content", "")
                 except Exception:
                     return ""
@@ -581,13 +620,26 @@ class ProjectService:
         if not self.docker:
             return ""
 
-        return await self.docker.read_file(project.docker_container_id, file_path)
+        return await self.docker.read_file(project.docker_container_id, safe_path)
 
     async def write_file(self, project_id: int, file_path: str, content: str) -> bool:
         project = await self.project_repo.get_by_id(project_id)
         if not project or not project.docker_container_id:
             return False
 
+        # Validate path to prevent path traversal
+        try:
+            safe_path = self._validate_path(file_path)
+        except ValueError as e:
+            logger.warning(f"Path validation failed for project {project_id}: {e}")
+            return False
+        
+        # Validate content size (max 10MB)
+        MAX_FILE_SIZE = 10 * 1024 * 1024
+        if len(content.encode('utf-8')) > MAX_FILE_SIZE:
+            logger.warning(f"File too large for project {project_id}: {len(content)} bytes")
+            return False
+
         if project.server_id:
             from repositories.server import ServerRepository
             from services.vps_agent import VPSClient
@@ -599,7 +651,7 @@ class ProjectService:
                     api_key=server.api_key or "",
                 )
                 try:
-                    result = await client.write_file(project_id, file_path, content)
+                    result = await client.write_file(project_id, safe_path, content)
                     return result.get("status") == "ok"
                 except Exception:
                     return False
@@ -607,13 +659,27 @@ class ProjectService:
         if not self.docker:
             return False
 
-        return await self.docker.write_file(project.docker_container_id, file_path, content)
+        return await self.docker.write_file(project.docker_container_id, safe_path, content)
 
     async def delete_file(self, project_id: int, file_path: str) -> bool:
         project = await self.project_repo.get_by_id(project_id)
         if not project or not project.docker_container_id:
             return False
 
+        # Validate path to prevent path traversal
+        try:
+            safe_path = self._validate_path(file_path)
+        except ValueError as e:
+            logger.warning(f"Path validation failed for project {project_id}: {e}")
+            return False
+        
+        # Prevent deletion of critical files
+        critical_files = ['requirements.txt', '__init__.py']
+        if any(safe_path.endswith(f"/{cf}") for cf in critical_files):
+            logger.warning(f"Attempt to delete critical file: {safe_path}")
+            # Allow deletion but log it
+            pass
+
         if project.server_id:
             from repositories.server import ServerRepository
             from services.vps_agent import VPSClient
@@ -625,7 +691,7 @@ class ProjectService:
                     api_key=server.api_key or "",
                 )
                 try:
-                    result = await client.delete_file(project_id, file_path)
+                    result = await client.delete_file(project_id, safe_path)
                     return result.get("status") == "ok"
                 except Exception:
                     return False
@@ -633,7 +699,7 @@ class ProjectService:
         if not self.docker:
             return False
 
-        return await self.docker.delete_file(project.docker_container_id, file_path)
+        return await self.docker.delete_file(project.docker_container_id, safe_path)
 
     async def create_dir(self, project_id: int, dir_path: str) -> bool:
         project = await self.project_repo.get_by_id(project_id)

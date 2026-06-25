@@ -14,6 +14,7 @@ from bot.config import settings, BASE_DIR
 from bot.middlewares.database import DatabaseMiddleware
 from bot.middlewares.auth import AuthMiddleware
 from bot.middlewares.rate_limit import RateLimitMiddleware
+from bot.middlewares.operation_limit import OperationRateLimitMiddleware
 from bot.handlers.user.start import router as start_router
 from bot.handlers.user.bot_create import router as create_router
 from bot.handlers.user.bot_manage import router as manage_router
@@ -53,6 +54,7 @@ def setup_dispatcher() -> Dispatcher:
     dp.callback_query.middleware(DatabaseMiddleware())
     dp.callback_query.middleware(AuthMiddleware())
     dp.callback_query.middleware(RateLimitMiddleware())
+    dp.callback_query.middleware(OperationRateLimitMiddleware())
 
     dp.include_router(start_router)
     dp.include_router(create_router)

@@ -94,6 +94,16 @@ async def zip_received(message: Message, state: FSMContext):
         )
         return
 
+    # Check file size (max 100MB)
+    MAX_ZIP_SIZE = 100 * 1024 * 1024  # 100 MB
+    if message.document.file_size and message.document.file_size > MAX_ZIP_SIZE:
+        await message.answer(
+            f"❌ Файл слишком большой. Максимум: {MAX_ZIP_SIZE // (1024*1024)} МБ\n"
+            f"Ваш файл: {message.document.file_size // (1024*1024)} МБ",
+            reply_markup=get_back_keyboard("create_project"),
+        )
+        return
+
     await state.update_data(zip_file_id=message.document.file_id)
     await message.answer(
         "✅ Архив получен.\n\nВыберите версию Python:",
@@ -150,6 +160,44 @@ async def entry_module(callback: CallbackQuery, state: FSMContext):
 @router.message(ProjectCreateStates.waiting_entry_module)
 async def entry_received(message: Message, state: FSMContext):
     entry = message.text.strip() or "main.py"
+    
+    data = await state.get_data()
+    entry_type = data.get("entry_type", "script")
+    
+    # Validate entry point for security
+    if entry_type == "module":
+        # Block dangerous built-in modules
+        dangerous_modules = [
+            "os", "subprocess", "sys", "socket", "requests",
+            "urllib", "http", "smtplib", "ftplib", "telnetlib",
+            "__import__", "eval", "exec", "compile"
+        ]
+        module_parts = entry.split(".")
+        if any(part in dangerous_modules for part in module_parts):
+            await message.answer(
+                "❌ Использование системных модулей запрещено из соображений безопасности.\n"
+                "Используйте пользовательские модули из вашего проекта.",
+                reply_markup=get_back_keyboard("create_project"),
+            )
+            return
+        
+        # Validate module name format
+        import re
+        if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_.]*$', entry):
+            await message.answer(
+                "❌ Невалидное имя модуля. Используйте формат: mypackage.mymodule",
+                reply_markup=get_back_keyboard("create_project"),
+            )
+            return
+    else:
+        # Validate script path
+        if ".." in entry or entry.startswith("/"):
+            await message.answer(
+                "❌ Невалидный путь к файлу. Используйте относительный путь без ../",
+                reply_markup=get_back_keyboard("create_project"),
+            )
+            return
+    
     await state.update_data(entry_point=entry)
 
     data = await state.get_data()

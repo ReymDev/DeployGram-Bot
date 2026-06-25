@@ -7,9 +7,10 @@ import aiohttp
 
 
 class VPSClient:
-    def __init__(self, base_url: str, api_key: str) -> None:
+    def __init__(self, base_url: str, api_key: str, timeout: int = 30) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
+        self.timeout = aiohttp.ClientTimeout(total=timeout)
 
     def _headers(self) -> dict[str, str]:
         if not self.api_key:
@@ -17,12 +18,12 @@ class VPSClient:
         return {"Authorization": f"Bearer {self.api_key}"}
 
     async def health(self) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(f"{self.base_url}/health") as resp:
                 return await resp.json()
 
     async def create_container(self, data: dict) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.post(
                 f"{self.base_url}/container/create",
                 json=data,
@@ -31,7 +32,7 @@ class VPSClient:
                 return await resp.json()
 
     async def start_container(self, container_id: str) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.post(
                 f"{self.base_url}/container/start",
                 json={"container_id": container_id},
@@ -40,7 +41,7 @@ class VPSClient:
                 return await resp.json()
 
     async def stop_container(self, container_id: str) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.post(
                 f"{self.base_url}/container/stop",
                 json={"container_id": container_id},
@@ -49,7 +50,7 @@ class VPSClient:
                 return await resp.json()
 
     async def remove_container(self, container_id: str) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.post(
                 f"{self.base_url}/container/remove",
                 json={"container_id": container_id},
@@ -58,7 +59,7 @@ class VPSClient:
                 return await resp.json()
 
     async def get_status(self, container_id: str) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(
                 f"{self.base_url}/container/{container_id}/status",
                 headers=self._headers(),
@@ -66,7 +67,7 @@ class VPSClient:
                 return await resp.json()
 
     async def get_stats(self, container_id: str) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(
                 f"{self.base_url}/container/{container_id}/stats",
                 headers=self._headers(),
@@ -74,7 +75,7 @@ class VPSClient:
                 return await resp.json()
 
     async def get_logs(self, container_id: str, tail: int = 100) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(
                 f"{self.base_url}/container/{container_id}/logs",
                 params={"tail": tail},
@@ -83,7 +84,7 @@ class VPSClient:
                 return await resp.json()
 
     async def get_server_stats(self) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(
                 f"{self.base_url}/stats",
                 headers=self._headers(),
@@ -91,7 +92,9 @@ class VPSClient:
                 return await resp.json()
 
     async def upload_project(self, project_id: int, files_zip: bytes) -> dict:
-        async with aiohttp.ClientSession() as session:
+        # Increase timeout for file upload
+        upload_timeout = aiohttp.ClientTimeout(total=300)  # 5 minutes
+        async with aiohttp.ClientSession(timeout=upload_timeout) as session:
             data = aiohttp.FormData()
             data.add_field("file", files_zip, filename="project.zip", content_type="application/zip")
             async with session.post(
@@ -102,7 +105,7 @@ class VPSClient:
                 return await resp.json()
 
     async def list_files(self, project_id: int, path: str = "/") -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(
                 f"{self.base_url}/project/{project_id}/files",
                 params={"path": path},
@@ -111,7 +114,7 @@ class VPSClient:
                 return await resp.json()
 
     async def read_file(self, project_id: int, file_path: str) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(
                 f"{self.base_url}/project/{project_id}/file",
                 params={"path": file_path},
@@ -120,7 +123,7 @@ class VPSClient:
                 return await resp.json()
 
     async def write_file(self, project_id: int, file_path: str, content: str) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.post(
                 f"{self.base_url}/project/{project_id}/file",
                 json={"path": file_path, "content": content},
@@ -129,7 +132,7 @@ class VPSClient:
                 return await resp.json()
 
     async def delete_file(self, project_id: int, file_path: str) -> dict:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.post(
                 f"{self.base_url}/project/{project_id}/file/delete",
                 json={"path": file_path},

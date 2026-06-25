@@ -50,19 +50,24 @@ class BotCreateStates(StatesGroup):
     waiting_module = State()
 
 
-async def _check_owner(callback: CallbackQuery, project_service, db_user, project_id: int, session=None):
-    """Check if user has access (owner or coowner)."""
+async def _check_owner(callback: CallbackQuery, project_service, db_user, project_id: int, session=None, required_role: str = "developer"):
+    """
+    Check if user has access (owner or coowner).
+    
+    Args:
+        required_role: Minimum role required. "developer" allows all coowners, "owner" requires owner only
+    """
     project = await project_service.get_project(project_id)
     if project is None:
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return None
     
-    # Owner always has access
+    # Owner always has full access
     if project.user_id == db_user.id:
         return project
     
     # Check coowner access if session provided
-    if session is not None:
+    if session is not None and required_role == "developer":
         from bot.utils.access import check_project_access
         has_access = await check_project_access(project, db_user, session)
         if has_access:
@@ -219,10 +224,15 @@ async def logs_file(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("bot_settings_"))
-async def bot_settings(callback: CallbackQuery, project_service, db_user):
+async def bot_settings(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("bot_settings_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    # Settings require owner access
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    if project.user_id != db_user.id:
+        await callback.answer("⛔ Только владелец может изменять настройки", show_alert=True)
         return
 
     from bot.keyboards.user import get_bot_settings_keyboard
@@ -236,8 +246,17 @@ async def bot_settings(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("bot_rename_"))
-async def bot_rename(callback: CallbackQuery, state: FSMContext):
+async def bot_rename(callback: CallbackQuery, state: FSMContext, project_service, db_user):
     project_id = int(callback.data.replace("bot_rename_", ""))
+    # Rename requires owner access
+    project = await project_service.get_project(project_id)
+    if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    if project.user_id != db_user.id:
+        await callback.answer("⛔ Только владелец может переименовать проект", show_alert=True)
+        return
+    
     await state.update_data(rename_project_id=project_id)
 
     await edit_photo_or_text(
@@ -275,10 +294,15 @@ async def bot_rename_received(message: Message, state: FSMContext, project_servi
 
 
 @router.callback_query(F.data.startswith("bot_delete_"))
-async def bot_delete(callback: CallbackQuery, project_service, db_user):
+async def bot_delete(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("bot_delete_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    # Only owner can delete project
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    if project.user_id != db_user.id:
+        await callback.answer("⛔ Только владелец может удалить проект", show_alert=True)
         return
 
     await edit_photo_or_text(
@@ -293,8 +317,13 @@ async def bot_delete(callback: CallbackQuery, project_service, db_user):
 @router.callback_query(F.data.startswith("bot_del_confirm_"))
 async def bot_delete_confirm(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.replace("bot_del_confirm_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    # Only owner can delete project
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    if project.user_id != db_user.id:
+        await callback.answer("⛔ Только владелец может удалить проект", show_alert=True)
         return
 
     project_name = project.name
@@ -524,8 +553,13 @@ async def lib_del(callback: CallbackQuery, project_service, db_user):
 @router.callback_query(F.data.startswith("bot_coowners_"))
 async def bot_coowners(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("bot_coowners_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    # Only owner can manage coowners
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    if project.user_id != db_user.id:
+        await callback.answer("⛔ Только владелец может управлять совладельцами", show_alert=True)
         return
 
     from repositories.coowner import CoOwnerRepository

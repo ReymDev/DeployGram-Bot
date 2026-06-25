@@ -1,159 +1,196 @@
-root@vnfnc:~/DeployGram-locate/docker# docker compose logs -f
-agent-1  | 2026-06-21 17:12:36,783 | INFO     | __main__ | VPS Agent started on 0.0.0.0:8080
-agent-1  | 2026-06-21 17:12:41,682 | INFO     | aiohttp.access | 127.0.0.1 [21/Jun/2026:17:12:41 +0000] "GET /health HTTP/1.1" 200 224 "-" "curl/8.14.1"
-agent-1  | 2026-06-21 17:13:11,780 | INFO     | aiohttp.access | 127.0.0.1 [21/Jun/2026:17:13:11 +0000] "GET /health HTTP/1.1" 200 225 "-" "curl/8.14.1"
-agent-1  | 2026-06-21 17:13:26,330 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:26 +0000] "GET /health HTTP/1.1" 200 225 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:26,444 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:26 +0000] "GET /stats HTTP/1.1" 200 261 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:26,785 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:26 +0000] "POST /container/create HTTP/1.1" 200 243 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:26,813 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:26 +0000] "POST /container/start HTTP/1.1" 200 176 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:26,984 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:26 +0000] "POST /container/remove HTTP/1.1" 200 176 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:41,877 | INFO     | aiohttp.access | 127.0.0.1 [21/Jun/2026:17:13:41 +0000] "GET /health HTTP/1.1" 200 225 "-" "curl/8.14.1"
-agent-1  | 2026-06-21 17:13:45,701 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:45 +0000] "POST /container/create HTTP/1.1" 200 243 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:45,729 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:45 +0000] "POST /container/start HTTP/1.1" 200 176 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:49,751 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:49 +0000] "GET /container/075beef49b568454b7a96751a68d5fa81b4efc827907f316819498848616a054/logs?tail=100 HTTP/1.1" 200 171 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:51,828 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:51 +0000] "GET /container/075beef49b568454b7a96751a68d5fa81b4efc827907f316819498848616a054/logs?tail=100 HTTP/1.1" 200 250 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:54,455 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:54 +0000] "GET /container/075beef49b568454b7a96751a68d5fa81b4efc827907f316819498848616a054/logs?tail=100 HTTP/1.1" 200 328 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:55,727 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:55 +0000] "GET /container/075beef49b568454b7a96751a68d5fa81b4efc827907f316819498848616a054/logs?tail=100 HTTP/1.1" 200 328 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:14:11,986 | INFO     | aiohttp.access | 127.0.0.1 [21/Jun/2026:17:14:11 +0000] "GET /health HTTP/1.1" 200 225 "-" "curl/8.14.1"
-
-
-
-root@vnfnc:~/DeployGram-Bot/docker# docker compose logs -f
-agent-1  | 2026-06-21 17:12:36,783 | INFO     | __main__ | VPS Agent started on 0.0.0.0:8080
-agent-1  | 2026-06-21 17:12:41,682 | INFO     | aiohttp.access | 127.0.0.1 [21/Jun/2026:17:12:41 +0000] "GET /health HTTP/1.1" 200 224 "-" "curl/8.14.1"
-agent-1  | 2026-06-21 17:13:11,780 | INFO     | aiohttp.access | 127.0.0.1 [21/Jun/2026:17:13:11 +0000] "GET /health HTTP/1.1" 200 225 "-" "curl/8.14.1"
-agent-1  | 2026-06-21 17:13:26,330 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:26 +0000] "GET /health HTTP/1.1" 200 225 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:26,444 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:26 +0000] "GET /stats HTTP/1.1" 200 261 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:26,785 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:26 +0000] "POST /container/create HTTP/1.1" 200 243 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:26,813 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:26 +0000] "POST /container/start HTTP/1.1" 200 176 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:26,984 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:26 +0000] "POST /container/remove HTTP/1.1" 200 176 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:41,877 | INFO     | aiohttp.access | 127.0.0.1 [21/Jun/2026:17:13:41 +0000] "GET /health HTTP/1.1" 200 225 "-" "curl/8.14.1"
-agent-1  | 2026-06-21 17:13:45,701 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:45 +0000] "POST /container/create HTTP/1.1" 200 243 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:45,729 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:45 +0000] "POST /container/start HTTP/1.1" 200 176 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:49,751 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:49 +0000] "GET /container/075beef49b568454b7a96751a68d5fa81b4efc827907f316819498848616a054/logs?tail=100 HTTP/1.1" 200 171 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:51,828 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:51 +0000] "GET /container/075beef49b568454b7a96751a68d5fa81b4efc827907f316819498848616a054/logs?tail=100 HTTP/1.1" 200 250 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:54,455 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:54 +0000] "GET /container/075beef49b568454b7a96751a68d5fa81b4efc827907f316819498848616a054/logs?tail=100 HTTP/1.1" 200 328 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:13:55,727 | INFO     | aiohttp.access | 172.19.0.1 [21/Jun/2026:17:13:55 +0000] "GET /container/075beef49b568454b7a96751a68d5fa81b4efc827907f316819498848616a054/logs?tail=100 HTTP/1.1" 200 328 "-" "Python/3.12 aiohttp/3.14.1"
-agent-1  | 2026-06-21 17:14:11,986 | INFO     | aiohttp.access | 127.0.0.1 [21/Jun/2026:17:14:11 +0000] "GET /health HTTP/1.1" 200 225 "-" "curl/8.14.1"
-redis-1  | 1:C 21 Jun 2026 17:10:37.332 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
-redis-1  | 1:C 21 Jun 2026 17:10:37.333 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-redis-1  | 1:C 21 Jun 2026 17:10:37.333 * Redis version=7.4.9, bits=64, commit=00000000, modified=0, pid=1, just started
-redis-1  | 1:C 21 Jun 2026 17:10:37.333 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
-redis-1  | 1:M 21 Jun 2026 17:10:37.333 * Increased maximum number of open files to 10032 (it was originally set to 1024).
-redis-1  | 1:M 21 Jun 2026 17:10:37.333 * monotonic clock: POSIX clock_gettime
-redis-1  | 1:M 21 Jun 2026 17:10:37.336 * Running mode=standalone, port=6379.
-redis-1  | 1:M 21 Jun 2026 17:10:37.336 * Server initialized
-redis-1  | 1:M 21 Jun 2026 17:10:37.343 * Loading RDB produced by version 7.4.9
-redis-1  | 1:M 21 Jun 2026 17:10:37.343 * RDB age 111 seconds
-redis-1  | 1:M 21 Jun 2026 17:10:37.343 * RDB memory usage when created 0.93 Mb
-redis-1  | 1:M 21 Jun 2026 17:10:37.343 * Done loading RDB, keys loaded: 4, keys expired: 0.
-redis-1  | 1:M 21 Jun 2026 17:10:37.343 * DB loaded from disk: 0.006 seconds
-redis-1  | 1:M 21 Jun 2026 17:10:37.343 * Ready to accept connections tcp
-bot-1    | 2026-06-21 17:10:44 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
-bot-1    | 2026-06-21 17:10:44 | INFO     | bot.main | Database tables ensured
-bot-1    | 2026-06-21 17:10:44 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
-bot-1    | 2026-06-21 17:10:44 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
-bot-1    | 2026-06-21 17:10:44 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
-bot-1    | 2026-06-21 17:10:44 | INFO     | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
-bot-1    | 2026-06-21 17:10:44 | INFO     | apscheduler.scheduler | Added job "SchedulerService.collect_metrics" to job store "default"
-bot-1    | 2026-06-21 17:10:44 | INFO     | apscheduler.scheduler | Added job "SchedulerService.check_auto_sleep" to job store "default"
-bot-1    | 2026-06-21 17:10:44 | INFO     | apscheduler.scheduler | Added job "SchedulerService.cleanup_inactive_projects" to job store "default"
-bot-1    | 2026-06-21 17:10:44 | INFO     | apscheduler.scheduler | Added job "SchedulerService.auto_backup" to job store "default"
-bot-1    | 2026-06-21 17:10:44 | INFO     | apscheduler.scheduler | Scheduler started
-bot-1    | 2026-06-21 17:10:44 | INFO     | bot.main | Scheduler started
-bot-1    | 2026-06-21 17:10:44 | INFO     | bot.main | DeployGram bot starting...
-bot-1    | 2026-06-21 17:10:44 | INFO     | aiogram.dispatcher | Start polling
-bot-1    | 2026-06-21 17:10:44 | INFO     | aiogram.dispatcher | Run polling for bot @DeployGramBot id=8807504973 - 'DeployGram'
-bot-1    | 2026-06-21 17:11:44 | INFO     | apscheduler.executors.default | Running job "SchedulerService.check_auto_sleep (trigger: interval[0:01:00], next run at: 2026-06-21 17:12:44 UTC)" (scheduled at 2026-06-21 17:11:44.165290+00:00)
-bot-1    | 2026-06-21 17:11:44 | INFO     | apscheduler.executors.default | Job "SchedulerService.check_auto_sleep (trigger: interval[0:01:00], next run at: 2026-06-21 17:12:44 UTC)" executed successfully
-bot-1    | 2026-06-21 17:12:44 | INFO     | apscheduler.executors.default | Running job "SchedulerService.check_auto_sleep (trigger: interval[0:01:00], next run at: 2026-06-21 17:13:44 UTC)" (scheduled at 2026-06-21 17:12:44.165290+00:00)
-bot-1    | 2026-06-21 17:12:44 | INFO     | apscheduler.executors.default | Job "SchedulerService.check_auto_sleep (trigger: interval[0:01:00], next run at: 2026-06-21 17:13:44 UTC)" executed successfully
-bot-1    | 2026-06-21 17:12:48 | INFO     | aiogram.event | Update id=554084112 is handled. Duration 332 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:12:49 | INFO     | aiogram.event | Update id=554084113 is handled. Duration 98 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:12:50 | INFO     | aiogram.event | Update id=554084114 is handled. Duration 78 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:12:55 | INFO     | aiogram.event | Update id=554084115 is handled. Duration 65 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:12:58 | INFO     | aiogram.event | Update id=554084116 is handled. Duration 58 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:07 | INFO     | aiogram.event | Update id=554084117 is handled. Duration 58 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:23 | INFO     | aiogram.event | Update id=554084118 is handled. Duration 65 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:27 | INFO     | aiogram.event | Update id=554084119 is handled. Duration 843 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:35 | INFO     | aiogram.event | Update id=554084120 is handled. Duration 86 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:42 | INFO     | aiogram.event | Update id=554084121 is handled. Duration 66 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:43 | INFO     | aiogram.event | Update id=554084122 is handled. Duration 88 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:44 | INFO     | apscheduler.executors.default | Running job "SchedulerService.check_auto_sleep (trigger: interval[0:01:00], next run at: 2026-06-21 17:14:44 UTC)" (scheduled at 2026-06-21 17:13:44.165290+00:00)
-bot-1    | 2026-06-21 17:13:44 | INFO     | apscheduler.executors.default | Job "SchedulerService.check_auto_sleep (trigger: interval[0:01:00], next run at: 2026-06-21 17:14:44 UTC)" executed successfully
-bot-1    | 2026-06-21 17:13:44 | INFO     | aiogram.event | Update id=554084123 is handled. Duration 88 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:46 | INFO     | aiogram.event | Update id=554084124 is handled. Duration 642 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:49 | INFO     | aiogram.event | Update id=554084125 is handled. Duration 110 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:52 | INFO     | aiogram.event | Update id=554084126 is handled. Duration 633 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:54 | INFO     | aiogram.event | Update id=554084127 is handled. Duration 145 ms by bot id=8807504973
-bot-1    | 2026-06-21 17:13:55 | ERROR    | bot.main | Unhandled exception in update 554084128: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+root@vnfnc:~/DeployGram-locate/docker# docker compose -p mainbot logs -f
+redis-1  | 1:C 24 Jun 2026 15:16:21.210 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+redis-1  | 1:C 24 Jun 2026 15:16:21.211 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+redis-1  | 1:C 24 Jun 2026 15:16:21.211 * Redis version=7.4.9, bits=64, commit=00000000, modified=0, pid=1, just started
+redis-1  | 1:C 24 Jun 2026 15:16:21.211 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+redis-1  | 1:M 24 Jun 2026 15:16:21.211 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+redis-1  | 1:M 24 Jun 2026 15:16:21.211 * monotonic clock: POSIX clock_gettime
+redis-1  | 1:M 24 Jun 2026 15:16:21.213 * Running mode=standalone, port=6379.
+redis-1  | 1:M 24 Jun 2026 15:16:21.214 * Server initialized
+redis-1  | 1:M 24 Jun 2026 15:16:21.216 * Loading RDB produced by version 7.4.9
+redis-1  | 1:M 24 Jun 2026 15:16:21.216 * RDB age 27 seconds
+redis-1  | 1:M 24 Jun 2026 15:16:21.216 * RDB memory usage when created 0.93 Mb
+redis-1  | 1:M 24 Jun 2026 15:16:21.216 * Done loading RDB, keys loaded: 4, keys expired: 0.
+redis-1  | 1:M 24 Jun 2026 15:16:21.216 * DB loaded from disk: 0.003 seconds
+redis-1  | 1:M 24 Jun 2026 15:16:21.216 * Ready to accept connections tcp
+bot-1    | 2026-06-24 15:16:28 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
 bot-1    | Traceback (most recent call last):
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/middlewares/error.py", line 27, in __call__
-bot-1    |     return await handler(event, data)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/middlewares/user_context.py", line 58, in __call__
-bot-1    |     return await handler(event, data)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/fsm/middleware.py", line 43, in __call__
-bot-1    |     return await handler(event, data)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/event/telegram.py", line 126, in trigger
-bot-1    |     return await wrapped_inner(event, kwargs)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/event/handler.py", line 71, in call
-bot-1    |     return await wrapped()
+bot-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+bot-1    |   File "<frozen runpy>", line 88, in _run_code
+bot-1    |   File "/app/bot/__main__.py", line 5, in <module>
+bot-1    |     asyncio.run(main())
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+bot-1    |     return runner.run(main)
+bot-1    |            ^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+bot-1    |     return self._loop.run_until_complete(task)
+bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1    |     return future.result()
 bot-1    |            ^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/dispatcher.py", line 283, in _listen_update
-bot-1    |     return await self.propagate_event(update_type=update_type, event=event, **kwargs)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/router.py", line 165, in propagate_event
-bot-1    |     return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/router.py", line 157, in _wrapped
-bot-1    |     return await self._propagate_event(
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/router.py", line 193, in _propagate_event
-bot-1    |     response = await router.propagate_event(update_type=update_type, event=event, **kwargs)
-bot-1    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/router.py", line 165, in propagate_event
-bot-1    |     return await observer.wrap_outer_middleware(_wrapped, event=event, data=kwargs)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/router.py", line 157, in _wrapped
-bot-1    |     return await self._propagate_event(
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/router.py", line 185, in _propagate_event
-bot-1    |     response = await observer.trigger(event, **kwargs)
-bot-1    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/event/telegram.py", line 126, in trigger
-bot-1    |     return await wrapped_inner(event, kwargs)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/app/bot/middlewares/database.py", line 23, in __call__
-bot-1    |     result = await handler(event, data)
-bot-1    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/app/bot/middlewares/auth.py", line 44, in __call__
-bot-1    |     return await handler(event, data)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/app/bot/middlewares/rate_limit.py", line 37, in __call__
-bot-1    |     return await handler(event, data)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/dispatcher/event/handler.py", line 71, in call
-bot-1    |     return await wrapped()
+bot-1    |   File "/app/bot/main.py", line 78, in main
+bot-1    |     raise ValueError("SECRET_KEY must be changed from default value")
+bot-1    | ValueError: SECRET_KEY must be changed from default value
+bot-1    | 2026-06-24 15:16:34 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
+bot-1    | Traceback (most recent call last):
+bot-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+bot-1    |   File "<frozen runpy>", line 88, in _run_code
+bot-1    |   File "/app/bot/__main__.py", line 5, in <module>
+bot-1    |     asyncio.run(main())
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+bot-1    |     return runner.run(main)
+bot-1    |            ^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+bot-1    |     return self._loop.run_until_complete(task)
+bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1    |     return future.result()
 bot-1    |            ^^^^^^^^^^^^^^^
-bot-1    |   File "/app/bot/handlers/user/bot_manage.py", line 176, in bot_logs
-bot-1    |     await callback.message.edit_text(
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/methods/base.py", line 82, in emit
-bot-1    |     return await bot(self)
+bot-1    |   File "/app/bot/main.py", line 78, in main
+bot-1    |     raise ValueError("SECRET_KEY must be changed from default value")
+bot-1    | ValueError: SECRET_KEY must be changed from default value
+bot-1    | 2026-06-24 15:16:41 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
+bot-1    | Traceback (most recent call last):
+bot-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+bot-1    |   File "<frozen runpy>", line 88, in _run_code
+bot-1    |   File "/app/bot/__main__.py", line 5, in <module>
+bot-1    |     asyncio.run(main())
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+bot-1    |     return runner.run(main)
+bot-1    |            ^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+bot-1    |     return self._loop.run_until_complete(task)
+bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1    |     return future.result()
 bot-1    |            ^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/client/bot.py", line 509, in __call__
-bot-1    |     return await self.session(self, method, timeout=request_timeout)
-bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/client/session/base.py", line 259, in __call__
-bot-1    |     return cast(TelegramType, await middleware(bot, method))
-bot-1    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/client/session/aiohttp.py", line 177, in make_request
-bot-1    |     response = self.check_response(
-bot-1    |                ^^^^^^^^^^^^^^^^^^^^
-bot-1    |   File "/usr/local/lib/python3.12/site-packages/aiogram/client/session/base.py", line 121, in check_response
-bot-1    |     raise TelegramBadRequest(method=method, message=description)
-bot-1    | aiogram.exceptions.TelegramBadRequest: Telegram server says - Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
-bot-1    | 2026-06-21 17:13:55 | INFO     | aiogram.event | Update id=554084128 is handled. Duration 134 ms by bot id=8807504973
+bot-1    |   File "/app/bot/main.py", line 78, in main
+bot-1    |     raise ValueError("SECRET_KEY must be changed from default value")
+bot-1    | ValueError: SECRET_KEY must be changed from default value
+bot-1    | 2026-06-24 15:16:49 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
+bot-1    | Traceback (most recent call last):
+bot-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+bot-1    |   File "<frozen runpy>", line 88, in _run_code
+bot-1    |   File "/app/bot/__main__.py", line 5, in <module>
+bot-1    |     asyncio.run(main())
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+bot-1    |     return runner.run(main)
+bot-1    |            ^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+bot-1    |     return self._loop.run_until_complete(task)
+bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1    |     return future.result()
+bot-1    |            ^^^^^^^^^^^^^^^
+bot-1    |   File "/app/bot/main.py", line 78, in main
+bot-1    |     raise ValueError("SECRET_KEY must be changed from default value")
+bot-1    | ValueError: SECRET_KEY must be changed from default value
+bot-1    | 2026-06-24 15:16:58 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
+bot-1    | Traceback (most recent call last):
+bot-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+bot-1    |   File "<frozen runpy>", line 88, in _run_code
+bot-1    |   File "/app/bot/__main__.py", line 5, in <module>
+bot-1    |     asyncio.run(main())
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+bot-1    |     return runner.run(main)
+bot-1    |            ^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+bot-1    |     return self._loop.run_until_complete(task)
+bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1    |     return future.result()
+bot-1    |            ^^^^^^^^^^^^^^^
+bot-1    |   File "/app/bot/main.py", line 78, in main
+bot-1    |     raise ValueError("SECRET_KEY must be changed from default value")
+bot-1    | ValueError: SECRET_KEY must be changed from default value
+bot-1    | 2026-06-24 15:17:07 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
+bot-1    | Traceback (most recent call last):
+bot-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+bot-1    |   File "<frozen runpy>", line 88, in _run_code
+bot-1    |   File "/app/bot/__main__.py", line 5, in <module>
+bot-1    |     asyncio.run(main())
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+bot-1    |     return runner.run(main)
+bot-1    |            ^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+bot-1    |     return self._loop.run_until_complete(task)
+bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1    |     return future.result()
+bot-1    |            ^^^^^^^^^^^^^^^
+bot-1    |   File "/app/bot/main.py", line 78, in main
+bot-1    |     raise ValueError("SECRET_KEY must be changed from default value")
+bot-1    | ValueError: SECRET_KEY must be changed from default value
+bot-1    | 2026-06-24 15:17:16 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
+bot-1    | Traceback (most recent call last):
+bot-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+bot-1    |   File "<frozen runpy>", line 88, in _run_code
+bot-1    |   File "/app/bot/__main__.py", line 5, in <module>
+bot-1    |     asyncio.run(main())
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+bot-1    |     return runner.run(main)
+bot-1    |            ^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+bot-1    |     return self._loop.run_until_complete(task)
+bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1    |     return future.result()
+bot-1    |            ^^^^^^^^^^^^^^^
+bot-1    |   File "/app/bot/main.py", line 78, in main
+bot-1    |     raise ValueError("SECRET_KEY must be changed from default value")
+bot-1    | ValueError: SECRET_KEY must be changed from default value
+bot-1    | 2026-06-24 15:17:28 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
+bot-1    | Traceback (most recent call last):
+bot-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+bot-1    |   File "<frozen runpy>", line 88, in _run_code
+bot-1    |   File "/app/bot/__main__.py", line 5, in <module>
+bot-1    |     asyncio.run(main())
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+bot-1    |     return runner.run(main)
+bot-1    |            ^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+bot-1    |     return self._loop.run_until_complete(task)
+bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1    |     return future.result()
+bot-1    |            ^^^^^^^^^^^^^^^
+bot-1    |   File "/app/bot/main.py", line 78, in main
+bot-1    |     raise ValueError("SECRET_KEY must be changed from default value")
+bot-1    | ValueError: SECRET_KEY must be changed from default value
+bot-1    | 2026-06-24 15:17:47 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
+bot-1    | Traceback (most recent call last):
+bot-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+bot-1    |   File "<frozen runpy>", line 88, in _run_code
+bot-1    |   File "/app/bot/__main__.py", line 5, in <module>
+bot-1    |     asyncio.run(main())
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+bot-1    |     return runner.run(main)
+bot-1    |            ^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+bot-1    |     return self._loop.run_until_complete(task)
+bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1    |     return future.result()
+bot-1    |            ^^^^^^^^^^^^^^^
+bot-1    |   File "/app/bot/main.py", line 78, in main
+bot-1    |     raise ValueError("SECRET_KEY must be changed from default value")
+bot-1    | ValueError: SECRET_KEY must be changed from default value
+bot-1    | 2026-06-24 15:18:19 | INFO     | bot.main | ADMIN_IDS parsed as: [7936690973]
+bot-1    | Traceback (most recent call last):
+bot-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+bot-1    |   File "<frozen runpy>", line 88, in _run_code
+bot-1    |   File "/app/bot/__main__.py", line 5, in <module>
+bot-1    |     asyncio.run(main())
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+bot-1    |     return runner.run(main)
+bot-1    |            ^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+bot-1    |     return self._loop.run_until_complete(task)
+bot-1    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1    |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1    |     return future.result()
+bot-1    |            ^^^^^^^^^^^^^^^
+bot-1    |   File "/app/bot/main.py", line 78, in main
+bot-1    |     raise ValueError("SECRET_KEY must be changed from default value")
+bot-1    | ValueError: SECRET_KEY must be changed from default value
+agent-1  | INFO:__main__:VPS Agent started on 0.0.0.0:8080
