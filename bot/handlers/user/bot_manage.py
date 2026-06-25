@@ -137,6 +137,8 @@ async def bot_view(callback: CallbackQuery, project_service, db_user, session):
 
 @router.callback_query(F.data.startswith("bot_start_"))
 async def bot_start(callback: CallbackQuery, project_service, db_user, session):
+    from aiogram.exceptions import TelegramBadRequest
+    
     project_id = int(callback.data.replace("bot_start_", ""))
     project = await _check_owner(callback, project_service, db_user, project_id, session)
     if project is None:
@@ -150,6 +152,9 @@ async def bot_start(callback: CallbackQuery, project_service, db_user, session):
                 f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
                 reply_markup=get_bot_control_keyboard(project_id, project.status),
             )
+        except TelegramBadRequest as e:
+            if "message is not modified" not in str(e).lower():
+                pass
         except Exception:
             pass
     await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
@@ -157,6 +162,8 @@ async def bot_start(callback: CallbackQuery, project_service, db_user, session):
 
 @router.callback_query(F.data.startswith("bot_stop_"))
 async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
+    from aiogram.exceptions import TelegramBadRequest
+    
     project_id = int(callback.data.replace("bot_stop_", ""))
     project = await _check_owner(callback, project_service, db_user, project_id, session)
     if project is None:
@@ -170,6 +177,9 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
                 f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
                 reply_markup=get_bot_control_keyboard(project_id, project.status),
             )
+        except TelegramBadRequest as e:
+            if "message is not modified" not in str(e).lower():
+                pass
         except Exception:
             pass
     await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
