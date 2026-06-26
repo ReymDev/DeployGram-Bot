@@ -355,11 +355,10 @@ async def bot_rename(callback: CallbackQuery, state: FSMContext, project_service
     
     await state.update_data(rename_project_id=project_id)
 
-    await edit_photo_or_text(
-        callback.message,
+    await callback.message.edit_text(
         texts.BOT_RENAME_TEXT,
-        "rename_bot",
         reply_markup=get_back_keyboard(f"bot_settings_{project_id}"),
+        parse_mode="HTML"
     )
     await state.set_state(BotRenameStates.waiting_name)
     await callback.answer()
@@ -370,7 +369,7 @@ async def bot_rename_received(message: Message, state: FSMContext, project_servi
     import re
     name = message.text.strip()
     if not re.match(r"^[a-zA-Z0-9_-]{1,50}$", name):
-        await message.answer(texts.ERROR_INVALID_NAME)
+        await message.answer(texts.ERROR_INVALID_NAME, parse_mode="HTML")
         return
 
     data = await state.get_data()
@@ -386,6 +385,7 @@ async def bot_rename_received(message: Message, state: FSMContext, project_servi
     await message.answer(
         texts.success_bot_renamed(name),
         reply_markup=get_back_keyboard(f"bot_view_{project_id}"),
+        parse_mode="HTML"
     )
 
 
