@@ -43,13 +43,13 @@ class Settings(BaseSettings):
     FREE_TARIFF_CPU: float = 0.3
     FREE_TARIFF_DISK: int = 100
 
-    PREMIUM_TARIFF_PROJECTS: int = 5
+    PREMIUM_TARIFF_PROJECTS: int = 6
     PREMIUM_TARIFF_RAM: int = 1024
     PREMIUM_TARIFF_CPU: float = 1.0
     PREMIUM_TARIFF_DISK: int = 500
 
     AUTO_SLEEP_MINUTES: int = 0
-    BACKUP_INTERVAL_HOURS: int = 24
+    BACKUP_INTERVAL_HOURS: int = 1
     INACTIVE_DELETE_DAYS: int = 5
 
     PREMIUM_PRICE_1W: int = 49
