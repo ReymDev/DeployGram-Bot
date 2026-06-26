@@ -41,10 +41,13 @@ async def files_menu(callback: CallbackQuery, project_service, db_user, session)
     from bot.keyboards.user import get_file_manager_keyboard
     files = await project_service.list_files(project_id, "/app")
 
+    # Используем новый стиль текста
+    text = texts.bot_files_text(project.name, "/app")
+
     await callback.message.edit_text(
-        f"{Emoji.FILE} <b>Файлы: {project.name}</b>\n\n"
-        f"📁 /app",
+        text,
         reply_markup=get_file_manager_keyboard(project_id, files, "/app"),
+        parse_mode="HTML"
     )
     await callback.answer()
 
@@ -82,9 +85,13 @@ async def file_nav(callback: CallbackQuery, project_service, db_user, session):
     from bot.keyboards.user import get_file_manager_keyboard
     files = await project_service.list_files(project_id, path)
 
+    # Используем новый стиль текста
+    text = texts.bot_files_text(project.name, path)
+
     await callback.message.edit_text(
-        f"{Emoji.FILE} <b>📁 {path}</b>",
+        text,
         reply_markup=get_file_manager_keyboard(project_id, files, path),
+        parse_mode="HTML"
     )
     await callback.answer()
 
@@ -103,17 +110,20 @@ async def file_delete(callback: CallbackQuery, project_service, db_user, session
         InlineKeyboardButton(
             text="✅ Да, удалить",
             callback_data=f"file_delete_confirm_{project_id}_{file_path}",
-            style="danger",
         ),
         InlineKeyboardButton(
             text="❌ Нет",
-            callback_data=f"bot_files_{project_id}",
+            callback_data=f"project_files_{project_id}",
         ),
     )
 
+    # Используем новый стиль текста
+    text = texts.bot_file_delete_confirm(file_path)
+
     await callback.message.edit_text(
-        f"{Emoji.TRASH} Удалить <b>{file_path}</b>?",
+        text,
         reply_markup=builder.as_markup(),
+        parse_mode="HTML"
     )
     await callback.answer()
 
@@ -131,9 +141,14 @@ async def file_delete_confirm(callback: CallbackQuery, project_service, db_user,
         parent = "/".join(file_path.strip("/").split("/")[:-1]) or "/app"
         files = await project_service.list_files(project_id, parent)
         from bot.keyboards.user import get_file_manager_keyboard
+        
+        # Используем новый стиль текста
+        text = texts.bot_files_text(project.name, parent)
+        
         await callback.message.edit_text(
-            f"{Emoji.FILE} <b>📁 {parent}</b>",
+            text,
             reply_markup=get_file_manager_keyboard(project_id, files, parent),
+            parse_mode="HTML"
         )
     else:
         await callback.answer(texts.BOT_FILE_DELETE_ERROR_TEXT, show_alert=True)
@@ -159,6 +174,7 @@ async def file_download(callback: CallbackQuery, project_service, db_user, sessi
 
     await callback.message.answer_document(
         file,
-        caption=f"{Emoji.FILE} {file_path}",
+        caption=f"📄 <code>{file_path}</code>",
+        parse_mode="HTML"
     )
-    await callback.answer()
+    await callback.answer("✅ Файл загружен")

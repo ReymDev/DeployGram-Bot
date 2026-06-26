@@ -6,7 +6,6 @@ from aiogram.types import CallbackQuery
 from bot.config import settings
 from bot.keyboards.user import get_settings_keyboard
 from bot.keyboards.common import get_back_keyboard
-from bot.utils.text import profile_text
 from bot.utils.emojis import Emoji
 from bot import texts
 
@@ -24,7 +23,8 @@ async def profile(callback: CallbackQuery, db_user, user_service, session):
     projects = await project_svc.get_user_projects(db_user.id)
     projects_count = len(projects)
 
-    text = profile_text(
+    # Используем новую функцию из texts.py
+    text = texts.profile_text(
         username=db_user.username or str(db_user.telegram_id),
         tariff=db_user.tariff,
         projects_count=projects_count,
@@ -36,6 +36,7 @@ async def profile(callback: CallbackQuery, db_user, user_service, session):
     await callback.message.edit_text(
         text,
         reply_markup=get_back_keyboard("main_menu"),
+        parse_mode="HTML"
     )
     await callback.answer()
 
@@ -61,6 +62,7 @@ async def settings_page(callback: CallbackQuery, user_service, db_user):
     await callback.message.edit_text(
         texts.notification_settings_text(),
         reply_markup=keyboard,
+        parse_mode="HTML"
     )
     await callback.answer()
 

@@ -12,9 +12,15 @@ router = Router()
 
 
 @router.callback_query(F.data == "subscription")
-async def subscription_menu(callback: CallbackQuery, db_user):
+async def subscription_menu(callback: CallbackQuery, db_user, project_service):
     is_premium = db_user.tariff == "premium"
-    text = texts.subscription_text(is_premium)
+    
+    # Получаем количество проектов пользователя
+    projects = await project_service.get_user_projects(db_user.id)
+    projects_count = len(projects)
+    max_projects = 10 if is_premium else 3
+    
+    text = texts.subscription_text(is_premium, projects_count, max_projects)
 
     await edit_photo_or_text(
         callback.message,
@@ -62,10 +68,11 @@ async def buy_selected(callback: CallbackQuery, db_user):
         await callback.answer(texts.SUBSCRIPTION_PLAN_UNKNOWN, show_alert=True)
         return
 
-    text = texts.subscription_buy_confirm_text(plan['label'], plan['price'])
+    text = texts.subscription_buy_plan_text(plan['label'], plan['price'])
 
     await callback.message.edit_text(
         text,
         reply_markup=get_back_keyboard("subscription_buy"),
+        parse_mode="HTML"
     )
     await callback.answer()
