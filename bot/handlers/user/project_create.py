@@ -21,12 +21,13 @@ router = Router()
 
 @router.callback_query(F.data == "create_project")
 async def create_project_start(callback: CallbackQuery, user_service, db_user, state: FSMContext):
+    from bot import texts
     max_projects = await user_service.get_max_projects(db_user.tariff)
 
     await callback.message.edit_text(
-        f"{Emoji.FILE} <b>Создание проекта</b>\n\n"
-        f"Выберите источник проекта:",
+        texts.ADD_BOT_SOURCE_TEXT,
         reply_markup=get_create_project_step1_keyboard(),
+        parse_mode="HTML"
     )
     await state.set_state(ProjectCreateStates.waiting_source)
     await callback.answer()
@@ -34,20 +35,22 @@ async def create_project_start(callback: CallbackQuery, user_service, db_user, s
 
 @router.callback_query(F.data.startswith("create_type_"), ProjectCreateStates.waiting_source)
 async def create_type_selected(callback: CallbackQuery, state: FSMContext):
+    from bot import texts
     source_type = callback.data.replace("create_type_", "")
     await state.update_data(source_type=source_type)
 
     if source_type == "github":
         await callback.message.edit_text(
-            f"{Emoji.LINK} Введите URL GitHub репозитория:\n\n"
-            f"Пример: <code>https://github.com/user/repo</code>",
+            texts.ADD_BOT_GITHUB_TEXT,
             reply_markup=get_back_keyboard("create_project"),
+            parse_mode="HTML"
         )
         await state.set_state(ProjectCreateStates.waiting_github_url)
     else:
         await callback.message.edit_text(
-            f"{Emoji.FILE} Отправьте ZIP архив проекта.",
+            texts.ADD_BOT_ZIP_TEXT,
             reply_markup=get_back_keyboard("create_project"),
+            parse_mode="HTML"
         )
         await state.set_state(ProjectCreateStates.waiting_zip)
     await callback.answer()
@@ -55,13 +58,16 @@ async def create_type_selected(callback: CallbackQuery, state: FSMContext):
 
 @router.message(ProjectCreateStates.waiting_github_url)
 async def github_url_received(message: Message, state: FSMContext):
+    from bot import texts
     url = message.text.strip()
     parsed = GitHubService.parse_github_url(url)
     if parsed is None:
         await message.answer(
-            "❌ Невалидный URL. Используйте формат:\n"
+            "❌ <b>Невалидный URL</b>\n\n"
+            "Используй формат:\n"
             "<code>https://github.com/user/repo</code>",
             reply_markup=get_back_keyboard("create_project"),
+            parse_mode="HTML"
         )
         return
 
@@ -70,27 +76,36 @@ async def github_url_received(message: Message, state: FSMContext):
     info = await gh.get_repo_info(owner, repo)
     if info is None:
         await message.answer(
-            "❌ Репозиторий не найден или приватный.",
+            "❌ <b>Репозиторий не найден</b>\n\n"
+            "Проверь что репозиторий публичный или у нас есть доступ.",
             reply_markup=get_back_keyboard("create_project"),
+            parse_mode="HTML"
         )
         return
 
     await state.update_data(source_url=url, source_owner=owner, source_repo=repo)
+    
+    description = info.get('description', 'Без описания')
     await message.answer(
-        f"✅ Репозиторий: <b>{info.get('full_name', url)}</b>\n"
-        f"📝 {info.get('description', 'Без описания')}\n\n"
-        f"Выберите версию Python:",
+        f"✅ <b>Репозиторий найден</b>\n\n"
+        f"📦 <b>{info.get('full_name', url)}</b>\n"
+        f"📝 {description}\n\n"
+        f"{texts.add_bot_python_text()}",
         reply_markup=get_python_version_keyboard(),
+        parse_mode="HTML"
     )
     await state.set_state(ProjectCreateStates.waiting_python)
 
 
 @router.message(ProjectCreateStates.waiting_zip)
 async def zip_received(message: Message, state: FSMContext):
+    from bot import texts
     if not message.document or not message.document.file_name.endswith(".zip"):
         await message.answer(
-            "❌ Отправьте ZIP архив (.zip файл).",
+            "❌ <b>Неверный формат</b>\n\n"
+            "Отправь ZIP архив (.zip файл).",
             reply_markup=get_back_keyboard("create_project"),
+            parse_mode="HTML"
         )
         return
 
@@ -98,28 +113,35 @@ async def zip_received(message: Message, state: FSMContext):
     MAX_ZIP_SIZE = 100 * 1024 * 1024  # 100 MB
     if message.document.file_size and message.document.file_size > MAX_ZIP_SIZE:
         await message.answer(
-            f"❌ Файл слишком большой. Максимум: {MAX_ZIP_SIZE // (1024*1024)} МБ\n"
-            f"Ваш файл: {message.document.file_size // (1024*1024)} МБ",
+            f"❌ <b>Файл слишком большой</b>\n\n"
+            f"Максимум: {MAX_ZIP_SIZE // (1024*1024)} МБ\n"
+            f"Твой файл: {message.document.file_size // (1024*1024)} МБ",
             reply_markup=get_back_keyboard("create_project"),
+            parse_mode="HTML"
         )
         return
 
     await state.update_data(zip_file_id=message.document.file_id)
     await message.answer(
-        "✅ Архив получен.\n\nВыберите версию Python:",
+        f"✅ <b>Архив получен</b>\n\n"
+        f"{texts.add_bot_python_text(message.document.file_name)}",
         reply_markup=get_python_version_keyboard(),
+        parse_mode="HTML"
     )
     await state.set_state(ProjectCreateStates.waiting_python)
 
 
 @router.callback_query(F.data.startswith("create_python_"), ProjectCreateStates.waiting_python)
 async def python_selected(callback: CallbackQuery, state: FSMContext):
+    from bot import texts
     version = callback.data.replace("create_python_", "")
     await state.update_data(python_version=version)
 
     await callback.message.edit_text(
-        f"🐍 Python {version}\n\nВыберите тип точки входа:",
+        f"✅ <b>Python {version}</b>\n\n"
+        f"{texts.ADD_BOT_ENTRY_TEXT}",
         reply_markup=get_entry_type_keyboard(),
+        parse_mode="HTML"
     )
     await state.set_state(ProjectCreateStates.waiting_entry)
     await callback.answer()
@@ -127,31 +149,27 @@ async def python_selected(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "create_entry_script", ProjectCreateStates.waiting_entry)
 async def entry_script(callback: CallbackQuery, state: FSMContext):
+    from bot import texts
     await state.update_data(entry_type="script")
-    data = await state.get_data()
-    if data.get("source_type") == "github":
-        await callback.message.edit_text(
-            "📄 Точка входа: <b>скрипт</b>\n\n"
-            "Введите имя файла (по умолчанию main.py):",
-            reply_markup=get_back_keyboard("create_project"),
-        )
-    else:
-        await callback.message.edit_text(
-            "📄 Точка входа: <b>скрипт</b>\n\n"
-            "Введите имя файла (по умолчанию main.py):",
-            reply_markup=get_back_keyboard("create_project"),
-        )
+    
+    await callback.message.edit_text(
+        texts.add_bot_entry_script_text(),
+        reply_markup=get_back_keyboard("create_project"),
+        parse_mode="HTML"
+    )
     await state.set_state(ProjectCreateStates.waiting_entry_module)
     await callback.answer()
 
 
 @router.callback_query(F.data == "create_entry_module", ProjectCreateStates.waiting_entry)
 async def entry_module(callback: CallbackQuery, state: FSMContext):
+    from bot import texts
     await state.update_data(entry_type="module")
+    
     await callback.message.edit_text(
-        "📦 Точка входа: <b>модуль</b>\n\n"
-        "Введите путь модуля (например: mypackage.mymodule):",
+        texts.ADD_BOT_ENTRY_MODULE_TEXT,
         reply_markup=get_back_keyboard("create_project"),
+        parse_mode="HTML"
     )
     await state.set_state(ProjectCreateStates.waiting_entry_module)
     await callback.answer()
@@ -159,6 +177,7 @@ async def entry_module(callback: CallbackQuery, state: FSMContext):
 
 @router.message(ProjectCreateStates.waiting_entry_module)
 async def entry_received(message: Message, state: FSMContext):
+    from bot import texts
     entry = message.text.strip() or "main.py"
     
     data = await state.get_data()
@@ -175,9 +194,11 @@ async def entry_received(message: Message, state: FSMContext):
         module_parts = entry.split(".")
         if any(part in dangerous_modules for part in module_parts):
             await message.answer(
-                "❌ Использование системных модулей запрещено из соображений безопасности.\n"
-                "Используйте пользовательские модули из вашего проекта.",
+                "❌ <b>Небезопасный модуль</b>\n\n"
+                "Использование системных модулей запрещено из соображений безопасности.\n\n"
+                "Используй пользовательские модули из своего проекта.",
                 reply_markup=get_back_keyboard("create_project"),
+                parse_mode="HTML"
             )
             return
         
@@ -185,28 +206,30 @@ async def entry_received(message: Message, state: FSMContext):
         import re
         if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_.]*$', entry):
             await message.answer(
-                "❌ Невалидное имя модуля. Используйте формат: mypackage.mymodule",
+                "❌ <b>Невалидное имя модуля</b>\n\n"
+                "Используй формат: <code>mypackage.mymodule</code>",
                 reply_markup=get_back_keyboard("create_project"),
+                parse_mode="HTML"
             )
             return
     else:
         # Validate script path
         if ".." in entry or entry.startswith("/"):
             await message.answer(
-                "❌ Невалидный путь к файлу. Используйте относительный путь без ../",
+                "❌ <b>Невалидный путь</b>\n\n"
+                "Используй относительный путь без <code>../</code>",
                 reply_markup=get_back_keyboard("create_project"),
+                parse_mode="HTML"
             )
             return
     
     await state.update_data(entry_point=entry)
 
-    data = await state.get_data()
-    project_name = data.get("name", "my_project")
-
     await message.answer(
-        f"📝 Точка входа: <code>{entry}</code>\n\n"
-        f"Название проекта (1-50 символов, буквы, цифры, _ -):",
+        f"✅ <b>Точка входа:</b> <code>{entry}</code>\n\n"
+        f"{texts.ADD_BOT_NAME_TEXT}",
         reply_markup=get_back_keyboard("create_project"),
+        parse_mode="HTML"
     )
     await state.set_state(ProjectCreateStates.waiting_name)
 
@@ -217,8 +240,10 @@ async def name_received(message: Message, state: FSMContext):
     name = message.text.strip()
     if not re.match(r"^[a-zA-Z0-9_-]{1,50}$", name):
         await message.answer(
-            "❌ Невалидное имя. Используйте буквы, цифры, _ и - (1-50 символов).",
+            "❌ <b>Невалидное имя</b>\n\n"
+            "Используй буквы, цифры, _ и - (1-50 символов).",
             reply_markup=get_back_keyboard("create_project"),
+            parse_mode="HTML"
         )
         return
 
@@ -233,16 +258,18 @@ async def name_received(message: Message, state: FSMContext):
 
     if not servers:
         await message.answer(
-            f"🌍 Нет доступных серверов.\n\n"
+            f"🌍 <b>Нет доступных серверов</b>\n\n"
             f"Проект будет создан без конкретного сервера.",
             reply_markup=get_back_keyboard("create_project"),
+            parse_mode="HTML"
         )
         await state.set_state(ProjectCreateStates.confirming)
         await show_confirmation(message, state)
     else:
         await message.answer(
-            f"🌍 Выберите сервер:",
+            f"🌍 <b>Выбери сервер:</b>",
             reply_markup=get_server_select_keyboard(servers),
+            parse_mode="HTML"
         )
         await state.set_state(ProjectCreateStates.waiting_server)
 
@@ -256,37 +283,30 @@ async def server_selected(callback: CallbackQuery, state: FSMContext):
 
 
 async def show_confirmation(message, state: FSMContext, edit: bool = False):
+    from bot import texts
     data = await state.get_data()
     source = data.get("source_type", "zip")
-    source_text = "GitHub" if source == "github" else "ZIP архив"
+    source_text = "🔗 GitHub" if source == "github" else "📦 ZIP архив"
     version = data.get("python_version", "3.12")
     entry = data.get("entry_point", "main.py")
     entry_type = data.get("entry_type", "script")
     name = data.get("name", "my_project")
 
-    text = (
-        f"{Emoji.CHECK} <b>Подтверждение создания проекта</b>\n\n"
-        f"📦 Название: <b>{name}</b>\n"
-        f"🔗 Источник: {source_text}\n"
-        f"🐍 Python: {version}\n"
-        f"📄 Вход: <code>{entry}</code> ({entry_type})\n\n"
-        f"Создать проект?"
-    )
+    text = texts.add_bot_confirm_text(name, version, entry)
 
-    keyboard = get_confirm_start_keyboard(0)
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="✅ Создать", callback_data="create_confirm", style="success"),
-        InlineKeyboardButton(text="❌ Отмена", callback_data="main_menu", style="danger"),
+        InlineKeyboardButton(text="✅ Создать проект", callback_data="create_confirm"),
+        InlineKeyboardButton(text="❌ Отмена", callback_data="main_menu"),
     )
     kb = builder.as_markup()
 
     if edit:
-        await message.edit_text(text, reply_markup=kb)
+        await message.edit_text(text, reply_markup=kb, parse_mode="HTML")
     else:
-        await message.answer(text, reply_markup=kb)
+        await message.answer(text, reply_markup=kb, parse_mode="HTML")
 
     await state.set_state(ProjectCreateStates.confirming)
 
@@ -294,6 +314,7 @@ async def show_confirmation(message, state: FSMContext, edit: bool = False):
 @router.callback_query(F.data == "create_confirm", ProjectCreateStates.confirming)
 async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, project_service, user_service, session):
     import logging
+    from bot import texts
     logger = logging.getLogger(__name__)
     
     data = await state.get_data()
@@ -302,7 +323,7 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
     current_count = await project_service.count_user_projects(db_user.id)
     if current_count >= max_projects:
         await callback.answer(
-            f"Достигнут лимит проектов ({max_projects})",
+            f"⚠️ Достигнут лимит проектов ({max_projects})\n\nОбнови подписку для больших возможностей!",
             show_alert=True,
         )
         return
@@ -323,7 +344,7 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
                 logger.info("ZIP file downloaded successfully, size: %d bytes", size)
             except Exception as e:
                 logger.error("Failed to download ZIP file: %s", e)
-                await callback.answer(f"Ошибка загрузки файла: {e}", show_alert=True)
+                await callback.answer(f"❌ Ошибка загрузки файла: {e}", show_alert=True)
                 return
     
     logger.info("Creating project: name=%s, source_type=%s, server_id=%s, has_files=%s",
@@ -347,8 +368,10 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
 
     from bot.keyboards.user import get_project_manage_keyboard
     await callback.message.edit_text(
-        f"{Emoji.PARTY} Проект <b>{project.name}</b> создан!\n\n"
-        f"Запустите проект из меню управления.",
+        f"🎉 <b>Проект создан!</b>\n\n"
+        f"<b>{project.name}</b> готов к запуску.\n\n"
+        f"Нажми <b>\"Запустить\"</b> чтобы развернуть его в облаке.",
         reply_markup=get_project_manage_keyboard(project.id, project.status),
+        parse_mode="HTML"
     )
     await callback.answer()
