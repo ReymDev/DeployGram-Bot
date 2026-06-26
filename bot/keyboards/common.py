@@ -7,30 +7,53 @@ from bot.utils.emojis import Emoji, EmojiID
 
 
 def get_welcome_keyboard() -> InlineKeyboardMarkup:
+    """Главное меню - всегда показываем все кнопки."""
     builder = InlineKeyboardBuilder()
+    
+    # Главные действия
     builder.row(
         InlineKeyboardButton(
-            text="⚙ Панель управления",
+            text="📱 Мои проекты",
             callback_data="control_panel",
-            style="primary",
         ),
     )
-    return builder.as_markup()
-
-
-def get_control_panel_keyboard(has_bots: bool = False) -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="✨ Создать проект",
+            callback_data="create_project",
+        ),
+    )
+    
+    # Дополнительные функции
     builder.row(
         InlineKeyboardButton(text="💳 Подписка", callback_data="subscription"),
-        InlineKeyboardButton(text="☁ Бэкапы", callback_data="backups_list"),
+        InlineKeyboardButton(text="💾 Бэкапы", callback_data="backups_list"),
     )
     builder.row(
         InlineKeyboardButton(text="🎁 Промокод", callback_data="promo_activate"),
         InlineKeyboardButton(text="🔗 Рефералы", callback_data="referrals"),
     )
+    
+    return builder.as_markup()
+
+
+def get_control_panel_keyboard(has_bots: bool = False) -> InlineKeyboardMarkup:
+    """Клавиатура когда нет проектов."""
+    builder = InlineKeyboardBuilder()
+    
     builder.row(
-        InlineKeyboardButton(text="➕ Добавить бота", callback_data="add_bot", style="primary"),
+        InlineKeyboardButton(text="✨ Создать проект", callback_data="create_project"),
     )
+    
+    builder.row(
+        InlineKeyboardButton(text="💳 Подписка", callback_data="subscription"),
+        InlineKeyboardButton(text="💾 Бэкапы", callback_data="backups_list"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="🎁 Промокод", callback_data="promo_activate"),
+        InlineKeyboardButton(text="🔗 Рефералы", callback_data="referrals"),
+    )
+    
     return builder.as_markup()
 
 
