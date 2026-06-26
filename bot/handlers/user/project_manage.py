@@ -4,8 +4,6 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from bot.keyboards.user import get_project_manage_keyboard, get_project_list_keyboard
-from bot.utils.text import project_card
-from bot.utils.emojis import Emoji
 from bot import texts
 
 router = Router()
@@ -31,20 +29,22 @@ async def project_view(callback: CallbackQuery, project_service, db_user):
 
     monitoring = await project_service.get_monitoring(project_id)
     from bot.utils.formatters import format_uptime
-    text = project_card(
+    
+    text = texts.project_card_text(
         name=project.name,
         status=monitoring.get("status", project.status),
         python_version=project.python_version,
         entry_point=project.entry_point,
         cpu=monitoring.get("cpu", 0),
         ram=monitoring.get("ram", 0),
-        uptime=format_uptime(0),
+        uptime=format_uptime(monitoring.get("uptime_seconds", 0)),
         restarts=monitoring.get("restarts", 0),
     )
 
     await callback.message.edit_text(
         text,
         reply_markup=get_project_manage_keyboard(project_id, project.status),
+        parse_mode="HTML"
     )
     await callback.answer()
 
@@ -58,10 +58,17 @@ async def project_start(callback: CallbackQuery, project_service, db_user):
 
     success, msg = await project_service.start_project(project_id)
     project = await project_service.get_project(project_id)
+    
     if project:
+        if success:
+            text = texts.PROJECT_START_SUCCESS
+        else:
+            text = f"{texts.PROJECT_START_ERROR}\n\n<i>{msg}</i>"
+        
         await callback.message.edit_text(
-            f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
+            text,
             reply_markup=get_project_manage_keyboard(project_id, project.status),
+            parse_mode="HTML"
         )
     await callback.answer()
 
@@ -75,10 +82,17 @@ async def project_stop(callback: CallbackQuery, project_service, db_user):
 
     success, msg = await project_service.stop_project(project_id)
     project = await project_service.get_project(project_id)
+    
     if project:
+        if success:
+            text = texts.PROJECT_STOP_SUCCESS
+        else:
+            text = f"{texts.PROJECT_STOP_ERROR}\n\n<i>{msg}</i>"
+        
         await callback.message.edit_text(
-            f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
+            text,
             reply_markup=get_project_manage_keyboard(project_id, project.status),
+            parse_mode="HTML"
         )
     await callback.answer()
 
@@ -92,10 +106,17 @@ async def project_restart(callback: CallbackQuery, project_service, db_user):
 
     success, msg = await project_service.restart_project(project_id)
     project = await project_service.get_project(project_id)
+    
     if project:
+        if success:
+            text = texts.PROJECT_RESTART_SUCCESS
+        else:
+            text = f"{texts.PROJECT_RESTART_ERROR}\n\n<i>{msg}</i>"
+        
         await callback.message.edit_text(
-            f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
+            text,
             reply_markup=get_project_manage_keyboard(project_id, project.status),
+            parse_mode="HTML"
         )
     await callback.answer()
 

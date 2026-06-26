@@ -307,6 +307,55 @@ BOT_COOWNER_NOT_FOUND_TEXT = "Заданный идентификатор отс
 BOT_COOWNER_ALREADY_EXISTS_TEXT = "Данный пользователь уже включен в список соавторов этого проекта."
 
 
+# ─── PROJECT MANAGE ───
+
+def project_card_text(
+    name: str,
+    status: str,
+    python_version: str,
+    entry_point: str,
+    cpu: float = 0.0,
+    ram: float = 0.0,
+    uptime: str = "—",
+    restarts: int = 0,
+) -> str:
+    """Карточка проекта с мониторингом."""
+    from bot.utils.formatters import format_status
+    
+    status_emoji = {"running": "🟢", "stopped": "⚫", "error": "🔴"}.get(status, "⚪")
+    status_text = format_status(status)
+    
+    # Статистика только для запущенных проектов
+    stats_block = ""
+    if status == "running":
+        cpu_bar = _create_progress_bar(cpu, 100)
+        stats_block = f"""
+
+📊 <b>Мониторинг:</b>
+  ⚡ CPU: <b>{cpu:.1f}%</b>
+  {cpu_bar}
+  💾 RAM: <b>{ram:.1f} MB</b>
+  ⏱ Работает: <b>{uptime}</b>
+  🔄 Перезапусков: <b>{restarts}</b>"""
+    
+    return f"""<b>{status_emoji} {name}</b>
+
+Статус: {status_text}
+
+🐍 Python: <b>{python_version}</b>
+📄 Запуск: <code>{entry_point}</code>{stats_block}
+
+Что хочешь сделать?"""
+
+
+PROJECT_START_SUCCESS = "✅ <b>Проект запущен!</b>\n\nКонтейнер развернут и работает."
+PROJECT_START_ERROR = "❌ <b>Ошибка запуска</b>\n\nПроверь логи для подробностей."
+PROJECT_STOP_SUCCESS = "✅ <b>Проект остановлен</b>\n\nКонтейнер остановлен, данные сохранены."
+PROJECT_STOP_ERROR = "❌ <b>Ошибка остановки</b>\n\nПопробуй ещё раз."
+PROJECT_RESTART_SUCCESS = "🔄 <b>Проект перезапущен</b>\n\nКонтейнер перезагружен."
+PROJECT_RESTART_ERROR = "❌ <b>Ошибка перезапуска</b>\n\nПроверь статус проекта."
+
+
 # ─── BOT LOGS ───
 
 def bot_logs_text(name: str, logs: str) -> str:
