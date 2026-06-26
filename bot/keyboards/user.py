@@ -199,34 +199,86 @@ def get_logs_keyboard(bot_id: int) -> InlineKeyboardMarkup:
 
 
 def get_subscription_keyboard(is_premium: bool) -> InlineKeyboardMarkup:
+    """Клавиатура меню подписки."""
     builder = InlineKeyboardBuilder()
+    
+    if not is_premium:
+        builder.row(
+            InlineKeyboardButton(
+                text="💎 Обновить до Premium",
+                callback_data="subscription_info",
+            ),
+        )
+    
     builder.row(
         InlineKeyboardButton(
-            text="❓ Что дает подписка \"Premium\"?",
+            text="❓ Что даёт Premium?",
             callback_data="subscription_info",
         ),
     )
+    
+    if not is_premium:
+        builder.row(
+            InlineKeyboardButton(
+                text="💳 Купить подписку",
+                callback_data="subscription_buy",
+            ),
+        )
+    
     builder.row(
-        InlineKeyboardButton(
-            text="💳 Купить подписку",
-            callback_data="subscription_buy",
-        ),
-    )
-    builder.row(
-        InlineKeyboardButton(text="Назад", callback_data="control_panel"),
+        InlineKeyboardButton(text="⬅️ Назад", callback_data="control_panel"),
     )
     return builder.as_markup()
 
 
 def get_buy_subscription_keyboard() -> InlineKeyboardMarkup:
+    """Клавиатура выбора периода подписки."""
     from bot.config import settings
     builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(text=f"1 неделя ({settings.PREMIUM_PRICE_1W}₽)", callback_data="buy_1_week"))
-    builder.row(InlineKeyboardButton(text=f"1 месяц ({settings.PREMIUM_PRICE_1M}₽)", callback_data="buy_1_month"))
-    builder.row(InlineKeyboardButton(text=f"-10% | 3 месяца ({settings.PREMIUM_PRICE_3M}₽)", callback_data="buy_3_months"))
-    builder.row(InlineKeyboardButton(text=f"-15% | 6 месяцев ({settings.PREMIUM_PRICE_6M}₽)", callback_data="buy_6_months"))
-    builder.row(InlineKeyboardButton(text=f"-20% | 12 месяцев ({settings.PREMIUM_PRICE_12M}₽)", callback_data="buy_12_months"))
-    builder.row(InlineKeyboardButton(text="Назад", callback_data="subscription"))
+    
+    # 1 неделя - пробный период
+    builder.row(
+        InlineKeyboardButton(
+            text=f"🎁 1 неделя — {settings.PREMIUM_PRICE_1W}₽ (пробная)",
+            callback_data="buy_1_week"
+        )
+    )
+    
+    # 1 месяц
+    builder.row(
+        InlineKeyboardButton(
+            text=f"1 месяц — {settings.PREMIUM_PRICE_1M}₽",
+            callback_data="buy_1_month"
+        )
+    )
+    
+    # 3 месяца с экономией
+    builder.row(
+        InlineKeyboardButton(
+            text=f"💰 3 месяца — {settings.PREMIUM_PRICE_3M}₽ (экономия 10%)",
+            callback_data="buy_3_months"
+        )
+    )
+    
+    # 6 месяцев с экономией
+    builder.row(
+        InlineKeyboardButton(
+            text=f"💰 6 месяцев — {settings.PREMIUM_PRICE_6M}₽ (экономия 15%)",
+            callback_data="buy_6_months"
+        )
+    )
+    
+    # 12 месяцев - лучшее предложение
+    builder.row(
+        InlineKeyboardButton(
+            text=f"🔥 1 год — {settings.PREMIUM_PRICE_12M}₽ (экономия 20%)",
+            callback_data="buy_12_months"
+        )
+    )
+    
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Назад", callback_data="subscription")
+    )
     return builder.as_markup()
 
 

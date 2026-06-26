@@ -326,23 +326,41 @@ def bot_logs_text(name: str, logs: str) -> str:
 
 # ─── BOT FILES ───
 
-BOT_FILES_TEXT = """📁 <b>Файловый менеджер</b>
+def bot_files_text(project_name: str, path: str = "/app") -> str:
+    """Файловый менеджер проекта."""
+    return f"""📁 <b>Файлы: {project_name}</b>
 
-Здесь можно:
-  • 👁️ Просматривать файлы
-  • 💾 Скачивать
-  • 🗑️ Удалять
-  • ➕ Загружать новые
+📂 Текущая папка: <code>{path}</code>
 
-💡 <i>Просто перетащи файлы в чат для загрузки</i>"""
+Что можешь сделать:
+  👁️ Просмотреть содержимое
+  💾 Скачать файл
+  🗑️ Удалить
+  📤 Загрузить новые
+
+💡 <i>Просто перетащи файл в чат для загрузки</i>"""
+
+
+BOT_FILES_TEXT = bot_files_text("project", "/app")  # Для совместимости
+
 
 def bot_files_path_text(path: str) -> str:
-    return f"📁 <b>Рабочая область: {path}</b>"
+    return f"📁 <b>{path}</b>"
 
-BOT_FILE_DELETE_CONFIRM_TEXT = lambda file_path: f"🗑 Вы действительно хотите окончательно удалить объект <b>{file_path}</b>?"
-BOT_FILE_DELETED_TEXT = "Файл успешно удален из хранилища инстанса."
-BOT_FILE_DELETE_ERROR_TEXT = "Не удалось выполнить операцию удаления. Объект заблокирован процессом."
-BOT_FILE_NOT_FOUND_TEXT = "Запрошенный путь пуст или не существует в данной директории."
+
+def bot_file_delete_confirm(file_path: str) -> str:
+    return f"""🗑️ <b>Удалить файл?</b>
+
+<code>{file_path}</code>
+
+⚠️ <i>Это действие нельзя отменить!</i>"""
+
+
+BOT_FILE_DELETE_CONFIRM_TEXT = bot_file_delete_confirm  # Для совместимости
+
+BOT_FILE_DELETED_TEXT = "✅ Файл удалён"
+BOT_FILE_DELETE_ERROR_TEXT = "❌ Не удалось удалить файл. Возможно, он используется."
+BOT_FILE_NOT_FOUND_TEXT = "❌ Файл не найден"
 
 
 # ─── BOT LIBRARIES ───
@@ -370,48 +388,113 @@ BOT_LIB_ADD_TEXT = """📦 <b>Установка библиотеки</b>
 
 # ─── SUBSCRIPTION ───
 
-def subscription_text(is_premium: bool) -> str:
-    from models.subscription import get_free_features, get_premium_features
+def subscription_text(is_premium: bool, projects_count: int = 0, max_projects: int = 3) -> str:
+    """Экран подписки с персонализацией."""
+    tariff_emoji = "🆓" if not is_premium else "💎"
+    tariff_name = "Бесплатный" if not is_premium else "Premium"
+    
+    progress = _create_progress_bar(projects_count, max_projects)
+    
     if is_premium:
-        features = get_premium_features()
-        features_text = "\n".join(f"· {f}" for f in features)
-        return (
-            f"💳 <b>Аналитика тарифного плана</b>\n\n"
-            f"Текущий статус: {Emoji.CHECK} Premium Лицензия\n\n"
-            f"<b>Доступные расширенные лимиты:</b>\n{features_text}"
-        )
-    features = get_free_features()
-    features_text = "\n".join(f"· {f}" for f in features)
-    return (
-        f"💳 <b>Аналитика тарифного плана</b>\n\n"
-        f"Текущий статус: {Emoji.CHECK} Базовый доступ\n\n"
-        f"<b>Действующие ограничения аккаунта:</b>\n{features_text}"
-    )
+        features = """<b>Твои возможности:</b>
+  ✅ До 10 проектов одновременно
+  ✅ 512 MB памяти на проект
+  ✅ Приоритетная поддержка
+  ✅ Без рекламы"""
+        tip = "💜 <i>Спасибо за поддержку!</i>"
+    else:
+        features = f"""<b>Твои возможности:</b>
+  ✅ До {max_projects} проектов
+  ✅ 128 MB памяти на проект
+  ✅ Базовая поддержка
+  ⚠️ Ограниченные ресурсы
+
+<b>💎 Premium даёт:</b>
+  🚀 В 3 раза больше проектов
+  💪 В 4 раза больше памяти
+  ⚡ Приоритетные ресурсы"""
+        tip = "💡 <i>Обнови до Premium для больших возможностей</i>"
+    
+    return f"""💳 <b>Твоя подписка</b>
+
+{tariff_emoji} <b>Тариф:</b> {tariff_name}
+
+📦 <b>Проекты:</b> {projects_count} из {max_projects}
+{progress}
+
+{features}
+
+{tip}"""
+
 
 SUBSCRIPTION_INFO_TEXT = None
 
 
 def subscription_info_text() -> str:
-    from models.subscription import get_premium_features
-    features = get_premium_features()
-    features_text = "\n".join(f"· {f}" for f in features)
-    return (
-        f"💳 <b>Спецификация Premium-лицензии</b>\n\n"
-        f"<b>{Emoji.NOTIF} Преимущества коммерческого плана:</b>\n{features_text}"
-    )
+    """Информация о Premium."""
+    return """💎 <b>Обнови до Premium</b>
 
-SUBSCRIPTION_BUY_TEXT = (
-    f"💳 <b>Пролонгация и смена тарифа</b>\n\n"
-    f"Выберите необходимый расчетный период для активации облачных преимуществ:"
-)
+<b>Получи больше мощности для своих проектов:</b>
+
+🚀 <b>До 10 проектов</b>
+   Запускай сколько нужно
+
+💪 <b>512 MB памяти</b>
+   В 4 раза больше ресурсов
+
+⚡ <b>Приоритетный запуск</b>
+   Быстрее на 50%
+
+🎯 <b>Быстрая поддержка</b>
+   Ответим за 1 час
+
+🚫 <b>Без рекламы</b>
+   Чистый интерфейс
+
+<b>💰 Стоимость:</b>
+  • 1 месяц — 299₽
+  • 3 месяца — 799₽ <i>(экономия 100₽)</i>
+  • 6 месяцев — 1499₽ <i>(экономия 295₽)</i>
+  • 1 год — 2699₽ <i>(экономия 890₽)</i>
+
+🎁 <b>Первая неделя бесплатно!</b>
+Можешь отменить в любой момент."""
+
+
+SUBSCRIPTION_BUY_TEXT = """💳 <b>Выбери период подписки</b>
+
+Чем дольше период — тем больше экономия!
+
+💡 <i>После выбора покажем инструкцию по оплате</i>"""
+
 
 def subscription_buy_plan_text(plan_label: str, price: int) -> str:
-    return (
-        f"💳 <b>Оплата коммерческого плана</b>\n\n"
-        f"Конфигурация: <b>Premium {plan_label}</b>\n"
-        f"Итого к оплате: <b>{price}₽</b>\n\n"
-        f"Для выставления инвойса и проведения транзакции свяжитесь с биллинг-менеджером."
-    )
+    """Подтверждение покупки плана."""
+    savings_map = {
+        "1 месяц": 0,
+        "3 месяца": 100,
+        "6 месяцев": 295,
+        "1 год": 890
+    }
+    savings = savings_map.get(plan_label, 0)
+    savings_text = f"\n🎉 <b>Экономия: {savings}₽</b>" if savings > 0 else ""
+    
+    return f"""💎 <b>Premium {plan_label}</b>
+
+<b>Стоимость:</b> {price}₽{savings_text}
+
+<b>Что входит:</b>
+  • До 10 проектов
+  • 512 MB памяти на проект
+  • Приоритетная поддержка
+  • Без рекламы
+
+<b>Как оплатить:</b>
+  1. Напиши @support_username
+  2. Отправь: "Premium {plan_label}"
+  3. Получи реквизиты для оплаты
+
+<i>Подписка активируется автоматически после оплаты</i>"""
 
 
 # ─── BACKUPS ───
@@ -765,12 +848,64 @@ PROJECT_DELETE_ERROR = "Критический сбой API при попытк�
 
 # ─── PROFILE & SETTINGS ───
 
-SETTINGS_NOT_FOUND = "Конфигурационный профиль текущей сессии не обнаружен."
-SETTINGS_UNKNOWN = "Запрошен недокументированный или устаревший параметр."
-SETTINGS_CHANGED = "Системная конфигурация успешно обновлена."
+def profile_text(
+    username: str,
+    tariff: str,
+    projects_count: int,
+    max_projects: int,
+    balance: float,
+    referral_link: str,
+) -> str:
+    """Текст профиля пользователя."""
+    tariff_icon = "💎" if tariff == "premium" else "🆓"
+    tariff_name = "Premium" if tariff == "premium" else "Бесплатный"
+    
+    # Прогресс-бар для проектов
+    progress_bar = _create_progress_bar(projects_count, max_projects)
+    
+    return f"""👤 <b>Твой профиль</b>
+
+<b>@{username}</b>
+
+📦 <b>Проекты:</b> {projects_count} из {max_projects}
+{progress_bar}
+
+{tariff_icon} <b>Тариф:</b> {tariff_name}
+
+💰 <b>Баланс:</b> {balance:.2f}₽
+
+🔗 <b>Реферальная ссылка:</b>
+<code>{referral_link}</code>
+
+💡 <i>Приглашай друзей и получай бонусы!</i>"""
+
+
+SETTINGS_NOT_FOUND = "❌ Настройки не найдены"
+SETTINGS_UNKNOWN = "❌ Неизвестная настройка"
+SETTINGS_CHANGED = "✅ Настройка изменена"
+
 
 def notification_settings_text() -> str:
-    return f"{Emoji.NOTIF} <b>Конфигурация каналов push-оповещений и триггеров алертов</b>"
+    """Настройки уведомлений."""
+    return f"""🔔 <b>Уведомления</b>
+
+Выбери, о чём хочешь получать уведомления:
+
+<b>📊 Статус проектов:</b>
+  • Проект запущен
+  • Проект остановлен
+  • Ошибка запуска
+
+<b>⚠️ Проблемы:</b>
+  • Высокая нагрузка CPU
+  • Нехватка памяти
+  • Мало места на диске
+
+<b>📦 Бэкапы и обновления:</b>
+  • Бэкап создан
+  • Обновление установлено
+
+💡 <i>Нажми на кнопку чтобы включить/выключить</i>"""
 
 
 # ─── LOCATIONS ───
