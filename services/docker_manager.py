@@ -245,18 +245,27 @@ class DockerManager:
         return await asyncio.to_thread(_stats)
 
     async def get_container_logs(self, container_id: str, tail: int = 100) -> str:
+        """
+        Получение логов контейнера с фильтрацией служебных сообщений pip.
+        
+        Args:
+            container_id: ID Docker контейнера
+            tail: Количество последних строк для получения
+            
+        Returns:
+            Отфильтрованные логи или сообщение об ошибке
+        """
         def _logs() -> str:
             try:
                 container = self.client.containers.get(container_id)
-                container.reload()
                 
-                # Получаем логи напрямую без фильтрации по времени
-                # tail гарантирует что получим последние N строк
+                # Получаем только последние N строк логов
+                # НЕ используем since=, так как это вызывает ошибку типов
                 logs = container.logs(tail=tail, timestamps=False)
                 
                 if not logs:
                     logger.warning("No logs returned for container %s", container_id)
-                    return ""
+                    return "Логи пока отсутствуют"
                 
                 decoded_logs = logs.decode("utf-8", errors="replace")
                 
@@ -285,13 +294,16 @@ class DockerManager:
                 
                 result = "\n".join(filtered_lines).strip()
                 if not result:
-                    logger.warning("All logs were filtered out for container %s", container_id)
-                    return "Логи пусты или содержат только служебные сообщения"
+                    logger.info("All logs filtered out for container %s (only pip messages)", container_id)
+                    return "✅ Зависимости установлены\n\nЛоги приложения появятся после запуска"
                 
                 return result
-            except (NotFound, APIError) as e:
-                logger.error("Failed to get logs for %s: %s", container_id, e)
-                return f"Ошибка получения логов: {str(e)}"
+            except NotFound:
+                logger.error("Container not found: %s", container_id)
+                return "Контейнер не найден"
+            except APIError as e:
+                logger.error("Docker API error getting logs for %s: %s", container_id, e)
+                return f"Ошибка Docker API: {str(e)}"
             except Exception as e:
                 logger.error("Unexpected error getting logs for %s: %s", container_id, e, exc_info=True)
                 return f"Неожиданная ошибка: {str(e)}"
