@@ -151,8 +151,16 @@ class VPSAgent:
             from services.docker_manager import DockerManager
             dm = DockerManager()
             stats = await dm.get_container_stats(container_id)
+            logger.debug(
+                "Container stats for %s: cpu=%.2f%%, ram=%.2fMB, uptime=%ds",
+                container_id, 
+                stats.get("cpu_percent", 0),
+                stats.get("ram_mb", 0),
+                stats.get("uptime_seconds", 0)
+            )
             return web.json_response(stats)
         except Exception as e:
+            logger.error("Failed to get stats for container %s: %s", container_id, e)
             return web.json_response({"error": str(e)}, status=500)
 
     async def container_logs(self, request: web.Request) -> web.Response:
@@ -161,21 +169,35 @@ class VPSAgent:
         try:
             container_id = request.match_info["id"]
             tail = int(request.query.get("tail", 100))
+            
+            logger.info(
+                "Getting logs for container %s (tail=%d)",
+                container_id, tail
+            )
+            
             from services.docker_manager import DockerManager
             dm = DockerManager()
             logs = await dm.get_container_logs(container_id, tail)
+            
+            logger.info(
+                "Successfully retrieved logs for container %s: %d chars",
+                container_id, len(logs)
+            )
+            
             return web.json_response({"logs": logs})
         except Exception as e:
             import traceback
             logger.error(
                 "Failed to get logs for container %s:\n"
                 "Error: %s\n"
+                "Error Type: %s\n"
                 "Traceback:\n%s",
                 container_id,
                 str(e),
+                type(e).__name__,
                 traceback.format_exc()
             )
-            return web.json_response({"error": str(e)}, status=500)
+            return web.json_response({"error": str(e), "type": type(e).__name__}, status=500)
 
     async def run(self) -> None:
         runner = web.AppRunner(self.app)

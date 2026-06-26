@@ -199,6 +199,18 @@ class DockerManager:
         def _stats() -> dict[str, float]:
             try:
                 container = self.client.containers.get(container_id)
+                container.reload()
+                
+                # Получаем uptime
+                uptime_seconds = 0
+                started_at = container.attrs.get("State", {}).get("StartedAt")
+                if started_at:
+                    from dateutil import parser
+                    import datetime
+                    start_time = parser.parse(started_at)
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    uptime_seconds = int((now - start_time).total_seconds())
+                
                 stats = container.stats(stream=False)
 
                 cpu_delta = stats["cpu_stats"]["cpu_usage"]["total_usage"] - \
@@ -224,9 +236,11 @@ class DockerManager:
                     "cpu_percent": round(cpu_percent, 2),
                     "ram_mb": round(ram_mb, 2),
                     "disk_mb": round(disk_mb, 2),
+                    "uptime_seconds": uptime_seconds,
                 }
-            except (NotFound, APIError, KeyError):
-                return {"cpu_percent": 0.0, "ram_mb": 0.0, "disk_mb": 0.0}
+            except (NotFound, APIError, KeyError) as e:
+                logger.error("Failed to get stats for %s: %s", container_id, e)
+                return {"cpu_percent": 0.0, "ram_mb": 0.0, "disk_mb": 0.0, "uptime_seconds": 0}
 
         return await asyncio.to_thread(_stats)
 
@@ -234,49 +248,53 @@ class DockerManager:
         def _logs() -> str:
             try:
                 container = self.client.containers.get(container_id)
-                # Получаем время запуска контейнера
                 container.reload()
-                started_at = container.attrs.get("State", {}).get("StartedAt")
                 
-                # Получаем логи с момента запуска
-                if started_at:
-                    logs = container.logs(since=started_at, timestamps=False)
-                else:
-                    logs = container.logs(tail=tail, timestamps=False)
+                # Получаем логи напрямую без фильтрации по времени
+                # tail гарантирует что получим последние N строк
+                logs = container.logs(tail=tail, timestamps=False)
+                
+                if not logs:
+                    logger.warning("No logs returned for container %s", container_id)
+                    return ""
                 
                 decoded_logs = logs.decode("utf-8", errors="replace")
                 
-                # Фильтруем логи: убираем установку зависимостей
+                # Убираем служебные логи pip
                 lines = decoded_logs.split("\n")
                 filtered_lines = []
-                skip_pip = False
                 
                 for line in lines:
-                    # Начало установки pip
-                    if "Collecting" in line or "Downloading" in line or "Installing collected packages" in line:
-                        skip_pip = True
+                    line_stripped = line.strip()
+                    if not line_stripped:
                         continue
-                    # Конец установки pip
-                    if skip_pip and ("Successfully installed" in line or line.startswith("[")):
-                        skip_pip = False
-                        if "Successfully installed" in line:
-                            continue
-                    # Пропускаем строки установки
-                    if skip_pip:
+                    
+                    # Пропускаем pip служебные сообщения
+                    if any(keyword in line for keyword in [
+                        "Collecting", "Downloading", "Installing collected packages",
+                        "Requirement already satisfied", "[notice]"
+                    ]):
                         continue
-                    # Пропускаем pip notice
-                    if "[notice]" in line.lower() and "pip" in line.lower():
-                        continue
-                    # Пропускаем "Requirement already satisfied"
-                    if "Requirement already satisfied" in line:
+                    
+                    # Оставляем важные сообщения
+                    if "Successfully installed" in line:
+                        filtered_lines.append("✅ Зависимости установлены")
                         continue
                     
                     filtered_lines.append(line)
                 
-                return "\n".join(filtered_lines).strip()
+                result = "\n".join(filtered_lines).strip()
+                if not result:
+                    logger.warning("All logs were filtered out for container %s", container_id)
+                    return "Логи пусты или содержат только служебные сообщения"
+                
+                return result
             except (NotFound, APIError) as e:
                 logger.error("Failed to get logs for %s: %s", container_id, e)
-                return ""
+                return f"Ошибка получения логов: {str(e)}"
+            except Exception as e:
+                logger.error("Unexpected error getting logs for %s: %s", container_id, e, exc_info=True)
+                return f"Неожиданная ошибка: {str(e)}"
 
         return await asyncio.to_thread(_logs)
 

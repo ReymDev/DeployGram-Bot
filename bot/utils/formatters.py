@@ -16,14 +16,21 @@ def format_bytes(size_bytes: int) -> str:
 
 
 def format_uptime(seconds: int) -> str:
+    """Форматирует uptime в человекочитаемый вид."""
+    if seconds == 0:
+        return "только что"
+    
     days = seconds // 86400
     hours = (seconds % 86400) // 3600
     minutes = (seconds % 3600) // 60
+    
     if days > 0:
-        return f"{days}d {hours}h {minutes}m"
+        return f"{days}д {hours}ч"
     if hours > 0:
-        return f"{hours}h {minutes}m"
-    return f"{minutes}m"
+        return f"{hours}ч {minutes}м"
+    if minutes > 0:
+        return f"{minutes}м"
+    return "меньше минуты"
 
 
 def format_status(status: str) -> str:
