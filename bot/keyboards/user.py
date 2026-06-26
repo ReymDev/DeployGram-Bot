@@ -614,3 +614,144 @@ def get_libs_keyboard(bot_id: int, libs: list[str]) -> InlineKeyboardMarkup:
         InlineKeyboardButton(text="⬅️ Назад", callback_data=f"bot_settings_{bot_id}"),
     )
     return builder.as_markup()
+
+
+def get_settings_keyboard(
+    notify_container_stopped: bool,
+    notify_container_started: bool,
+    notify_error: bool,
+    notify_high_cpu: bool,
+    notify_high_ram: bool,
+    notify_low_disk: bool,
+    notify_backup_created: bool,
+    notify_update_done: bool,
+) -> InlineKeyboardMarkup:
+    """Клавиатура настроек уведомлений пользователя."""
+    builder = InlineKeyboardBuilder()
+    
+    def toggle_icon(enabled: bool) -> str:
+        return "🔔" if enabled else "🔕"
+    
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{toggle_icon(notify_container_stopped)} Остановка проекта",
+            callback_data="toggle_notify_container_stopped",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{toggle_icon(notify_container_started)} Запуск проекта",
+            callback_data="toggle_notify_container_started",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{toggle_icon(notify_error)} Ошибки",
+            callback_data="toggle_notify_error",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{toggle_icon(notify_high_cpu)} Высокая нагрузка CPU",
+            callback_data="toggle_notify_high_cpu",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{toggle_icon(notify_high_ram)} Высокая нагрузка RAM",
+            callback_data="toggle_notify_high_ram",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{toggle_icon(notify_low_disk)} Мало места на диске",
+            callback_data="toggle_notify_low_disk",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{toggle_icon(notify_backup_created)} Создание бэкапов",
+            callback_data="toggle_notify_backup_created",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{toggle_icon(notify_update_done)} Обновления",
+            callback_data="toggle_notify_update_done",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Назад", callback_data="profile"),
+    )
+    return builder.as_markup()
+
+
+def get_coowners_keyboard(project_id: int, coowners: list) -> InlineKeyboardMarkup:
+    """Клавиатура управления совладельцами проекта."""
+    builder = InlineKeyboardBuilder()
+    
+    for co in coowners:
+        builder.row(
+            InlineKeyboardButton(
+                text=f"👤 ID:{co.user_id} ({co.role})",
+                callback_data=f"coowner_edit_{project_id}_{co.id}",
+            ),
+            InlineKeyboardButton(
+                text="🗑️",
+                callback_data=f"coowner_remove_{project_id}_{co.id}",
+            ),
+        )
+    
+    builder.row(
+        InlineKeyboardButton(
+            text="➕ Добавить совладельца",
+            callback_data=f"coowner_add_{project_id}",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Назад", callback_data=f"bot_settings_{project_id}"),
+    )
+    return builder.as_markup()
+
+
+def get_coowner_permissions_keyboard(project_id: int, coowner_id: int, coowner) -> InlineKeyboardMarkup:
+    """Клавиатура настройки разрешений совладельца."""
+    builder = InlineKeyboardBuilder()
+    
+    def perm_icon(enabled: bool) -> str:
+        return "✅" if enabled else "❌"
+    
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{perm_icon(coowner.can_start_stop)} Запуск/остановка",
+            callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_start_stop",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{perm_icon(coowner.can_view_logs)} Просмотр логов",
+            callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_view_logs",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{perm_icon(coowner.can_edit_files)} Редактирование файлов",
+            callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_edit_files",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{perm_icon(coowner.can_manage_deps)} Управление зависимостями",
+            callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_manage_deps",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text=f"{perm_icon(coowner.can_view_settings)} Просмотр настроек",
+            callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_view_settings",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ К совладельцам", callback_data=f"bot_coowners_{project_id}"),
+    )
+    return builder.as_markup()

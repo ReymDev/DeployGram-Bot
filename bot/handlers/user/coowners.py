@@ -75,6 +75,72 @@ async def coowner_remove(callback: CallbackQuery, project_service, db_user, sess
     )
 
 
+@router.callback_query(F.data.startswith("coowner_edit_"))
+async def coowner_edit(callback: CallbackQuery, project_service, db_user, session):
+    """Редактирование разрешений совладельца."""
+    parts = callback.data.split("_")
+    project_id = int(parts[2])
+    coowner_id = int(parts[3])
+
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
+        return
+
+    from repositories.coowner import CoOwnerRepository
+    coowner_repo = CoOwnerRepository(session)
+    coowner = await coowner_repo.get_by_id(coowner_id)
+    
+    if coowner is None or coowner.project_id != project_id:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+
+    from bot.keyboards.user import get_coowner_permissions_keyboard
+    await callback.message.edit_text(
+        texts.coowner_permissions_text(coowner.user_id),
+        reply_markup=get_coowner_permissions_keyboard(project_id, coowner_id, coowner),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("coowner_perm_"))
+async def coowner_toggle_permission(callback: CallbackQuery, project_service, db_user, session):
+    """Переключение разрешения совладельца."""
+    parts = callback.data.split("_")
+    project_id = int(parts[2])
+    coowner_id = int(parts[3])
+    permission = "_".join(parts[4:])  # can_start_stop, can_view_logs, etc.
+
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
+        return
+
+    from repositories.coowner import CoOwnerRepository
+    coowner_repo = CoOwnerRepository(session)
+    coowner = await coowner_repo.get_by_id(coowner_id)
+    
+    if coowner is None or coowner.project_id != project_id:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+
+    # Переключаем разрешение
+    current_value = getattr(coowner, permission, False)
+    await coowner_repo.update(coowner_id, **{permission: not current_value})
+    
+    # Обновляем объект
+    coowner = await coowner_repo.get_by_id(coowner_id)
+    
+    await callback.answer(texts.SETTINGS_CHANGED)
+
+    # Обновляем клавиатуру
+    from bot.keyboards.user import get_coowner_permissions_keyboard
+    await callback.message.edit_reply_markup(
+        reply_markup=get_coowner_permissions_keyboard(project_id, coowner_id, coowner)
+    )
+
+
 @router.message(F.text, CoOwnerStates.waiting_id)
 async def coowner_id_received(message: Message, state: FSMContext, session, db_user):
     data = await state.get_data()

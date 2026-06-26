@@ -566,12 +566,26 @@ async def bot_libs(callback: CallbackQuery, project_service, db_user):
 
     # Получаем установленные пакеты через pip list
     libs = await project_service.get_installed_packages(project_id)
+    
+    # Также читаем requirements.txt для отображения всех зависимостей
+    try:
+        requirements_content = await project_service.read_file(project_id, "/app/requirements.txt")
+        if requirements_content:
+            requirements = [line.strip() for line in requirements_content.strip().split("\n") if line.strip()]
+        else:
+            requirements = []
+    except Exception:
+        requirements = []
+
+    # Объединяем списки - отдаем приоритет установленным пакетам
+    # Показываем установленные пакеты с версиями
+    all_libs = libs if libs else requirements
 
     await edit_photo_or_text(
         callback.message,
         texts.BOT_LIBS_TEXT,
         "library_manager",
-        reply_markup=get_libs_keyboard(project_id, libs),
+        reply_markup=get_libs_keyboard(project_id, all_libs),
     )
     await callback.answer()
 
