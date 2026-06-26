@@ -77,10 +77,10 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
     if nav_row:
         builder.row(*nav_row)
 
-    # Только кнопка создания проекта
+    # Только кнопка создания проекта - БЕЗ Подписки/Бэкапов/Промокода/Рефералов
     builder.row(
         InlineKeyboardButton(
-            text="✨ Новый проект",
+            text="✨ Создать проект",
             callback_data="create_project",
         ),
     )
