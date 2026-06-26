@@ -17,12 +17,6 @@ def get_welcome_keyboard() -> InlineKeyboardMarkup:
             callback_data="control_panel",
         ),
     )
-    builder.row(
-        InlineKeyboardButton(
-            text="✨ Создать проект",
-            callback_data="create_project",
-        ),
-    )
     
     # Дополнительные функции
     builder.row(
