@@ -32,6 +32,7 @@ async def coowners_menu(callback: CallbackQuery, project_service, db_user, sessi
     await callback.message.edit_text(
         texts.bot_coowners_text(project.name),
         reply_markup=get_coowners_keyboard(project_id, coowners),
+        parse_mode="HTML"
     )
     await callback.answer()
 
@@ -42,6 +43,7 @@ async def coowner_add(callback: CallbackQuery, state: FSMContext, db_user):
     await state.update_data(coowner_project_id=project_id)
     await callback.message.edit_text(
         texts.COOWNER_ENTER_ID,
+        parse_mode="HTML"
     )
     await state.set_state(CoOwnerStates.waiting_id)
     await callback.answer()
@@ -69,6 +71,7 @@ async def coowner_remove(callback: CallbackQuery, project_service, db_user, sess
     await callback.message.edit_text(
         texts.bot_coowners_text(project.name),
         reply_markup=get_coowners_keyboard(project_id, coowners),
+        parse_mode="HTML"
     )
 
 
@@ -80,11 +83,11 @@ async def coowner_id_received(message: Message, state: FSMContext, session, db_u
     try:
         target_telegram_id = int(message.text.strip())
     except ValueError:
-        await message.answer(texts.COOWNER_INVALID_ID)
+        await message.answer(texts.COOWNER_INVALID_ID, parse_mode="HTML")
         return
 
     if target_telegram_id == db_user.telegram_id:
-        await message.answer(texts.COOWNER_SELF_ADD)
+        await message.answer(texts.COOWNER_SELF_ADD, parse_mode="HTML")
         return
 
     from repositories.user import UserRepository
@@ -92,14 +95,14 @@ async def coowner_id_received(message: Message, state: FSMContext, session, db_u
     target_user = await user_repo.get_by_telegram_id(target_telegram_id)
 
     if target_user is None:
-        await message.answer(texts.COOWNER_USER_NOT_FOUND)
+        await message.answer(texts.COOWNER_USER_NOT_FOUND, parse_mode="HTML")
         return
 
     from repositories.coowner import CoOwnerRepository
     coowner_repo = CoOwnerRepository(session)
     existing = await coowner_repo.get_by_user_and_project(target_user.id, project_id)
     if existing:
-        await message.answer(texts.COOWNER_ALREADY_EXISTS)
+        await message.answer(texts.COOWNER_ALREADY_EXISTS, parse_mode="HTML")
         return
 
     await coowner_repo.create(
@@ -112,4 +115,5 @@ async def coowner_id_received(message: Message, state: FSMContext, session, db_u
     await message.answer(
         texts.coowner_added_text(target_user.username or str(target_telegram_id)),
         reply_markup=get_back_keyboard(f"project_coowners_{project_id}"),
+        parse_mode="HTML"
     )

@@ -23,6 +23,7 @@ async def project_logs_menu(callback: CallbackQuery, project_service, db_user):
     await callback.message.edit_text(
         texts.project_logs_menu_text(project.name),
         reply_markup=get_logs_keyboard(project_id),
+        parse_mode=ParseMode.HTML
     )
     await callback.answer()
 
@@ -62,8 +63,12 @@ async def logs_download(callback: CallbackQuery, project_service, db_user):
     log_bytes = logs.encode("utf-8")
     file = BufferedInputFile(log_bytes, filename=f"{project.name}_logs.txt")
 
-    await callback.message.answer_document(file, caption=texts.project_logs_file_caption(project.name))
-    await callback.answer()
+    await callback.message.answer_document(
+        file, 
+        caption=texts.project_logs_file_caption(project.name),
+        parse_mode=ParseMode.HTML
+    )
+    await callback.answer("✅ Файл готов")
 
 
 @router.callback_query(F.data.startswith("logs_clear_"))
