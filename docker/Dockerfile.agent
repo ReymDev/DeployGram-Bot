@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir \
     aiohttp \
     docker \
-    psutil
+    psutil \
+    python-dateutil
 
 COPY agent/ .
 COPY services/docker_manager.py ./services/docker_manager.py
