@@ -367,19 +367,27 @@ async def bot_rename(callback: CallbackQuery, state: FSMContext, project_service
 @router.message(F.text, BotRenameStates.waiting_name)
 async def bot_rename_received(message: Message, state: FSMContext, project_service, db_user):
     import re
+    import logging
+    logger = logging.getLogger(__name__)
+    
     name = message.text.strip()
+    logger.info(f"[RENAME] User {db_user.telegram_id} trying to rename to: {name}")
+    
     if not re.match(r"^[a-zA-Z0-9_-]{1,50}$", name):
         await message.answer(texts.ERROR_INVALID_NAME, parse_mode="HTML")
         return
 
     data = await state.get_data()
     project_id = data.get("rename_project_id")
+    
+    logger.info(f"[RENAME] Project ID: {project_id}, New name: {name}")
 
     from repositories.project import ProjectRepository
     from db.engine import async_session_factory
     async with async_session_factory() as session:
         project_repo = ProjectRepository(session)
         await project_repo.update(project_id, name=name)
+        logger.info(f"[RENAME] Project {project_id} renamed to {name} in DB")
 
     await state.clear()
     await message.answer(
