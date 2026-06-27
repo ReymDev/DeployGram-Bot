@@ -40,6 +40,7 @@ class BaseRepository(Generic[ModelT]):
         for key, value in kwargs.items():
             setattr(obj, key, value)
         await self.session.flush()
+        await self.session.commit()
         await self.session.refresh(obj)
         return obj
 
