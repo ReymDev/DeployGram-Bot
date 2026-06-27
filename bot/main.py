@@ -17,7 +17,11 @@ from bot.middlewares.rate_limit import RateLimitMiddleware
 from bot.middlewares.operation_limit import OperationRateLimitMiddleware
 from bot.handlers.user.start import router as start_router
 from bot.handlers.user.bot_create import router as create_router
+from bot.handlers.user.project_create import router as project_create_router
 from bot.handlers.user.bot_manage import router as manage_router
+from bot.handlers.user.profile import router as profile_router
+from bot.handlers.user.coowners import router as coowners_router
+from bot.handlers.user.referrals import router as referrals_router
 from bot.handlers.user.project_files import router as files_router
 from bot.handlers.user.subscription import router as subscription_router
 from bot.handlers.user.backups import router as backups_router
@@ -57,6 +61,10 @@ def setup_dispatcher() -> Dispatcher:
     dp.callback_query.middleware(OperationRateLimitMiddleware())
 
     dp.include_router(start_router)
+    dp.include_router(project_create_router)
+    dp.include_router(profile_router)
+    dp.include_router(coowners_router)
+    dp.include_router(referrals_router)
     dp.include_router(create_router)
     dp.include_router(manage_router)
     dp.include_router(files_router)
