@@ -443,7 +443,7 @@ BOT_LIB_ADD_TEXT = """📦 <b>Установка библиотеки</b>
 
 # ─── SUBSCRIPTION ───
 
-def subscription_text(is_premium: bool, projects_count: int = 0, max_projects: int = 3) -> str:
+def subscription_text(is_premium: bool, projects_count: int = 0, max_projects: int = 1) -> str:
     """Экран подписки с персонализацией."""
     tariff_emoji = "🆓" if not is_premium else "💎"
     tariff_name = "Бесплатный" if not is_premium else "Premium"
@@ -452,23 +452,23 @@ def subscription_text(is_premium: bool, projects_count: int = 0, max_projects: i
     
     if is_premium:
         features = """<b>Твои возможности:</b>
-  ✅ До 6 проектов одновременно
-  ✅ 1 GB ОЗУ на проект
+  ✅ 5 проектов
+  ✅ 1024 MB ОЗУ
   ✅ 1.0 CPU на все проекты
   ✅ Приоритетная поддержка
   ✅ Автобэкапы каждый час"""
         tip = "💜 <i>Спасибо за поддержку!</i>"
     else:
         features = f"""<b>Твои возможности:</b>
-  ✅ {max_projects} проект
+  ✅ 1 проект
   ✅ 256 MB ОЗУ
   ✅ 0.3 CPU на все проекты
   ✅ Базовая поддержка
 
 <b>💎 Premium даёт:</b>
-  🚀 В 6 раз больше проектов
-  💪 В 4 раза больше ОЗУ
-  ⚡ В 3 раза больше CPU
+  🚀 5 проектов
+  💪 1024 MB ОЗУ
+  ⚡ 1.0 CPU
   💾 Автобэкапы каждый час"""
         tip = "💡 <i>Обнови до Premium для больших возможностей</i>"
     
@@ -493,14 +493,14 @@ def subscription_info_text() -> str:
 
 <b>Получи больше мощности для своих проектов:</b>
 
-🚀 <b>До 6 проектов</b>
+🚀 <b>5 проектов</b>
    Запускай сколько нужно
 
-💪 <b>1 GB ОЗУ</b>
-   В 4 раза больше ресурсов
+💪 <b>1024 MB ОЗУ</b>
+   На каждый проект
 
 ⚡ <b>1.0 CPU</b>
-   В 3 раза быстрее
+   На все проекты
 
 💾 <b>Автобэкапы</b>
    Каждый час
@@ -543,8 +543,8 @@ def subscription_buy_plan_text(plan_label: str, price: int) -> str:
 <b>Стоимость:</b> {price}₽{savings_text}
 
 <b>Что входит:</b>
-  • До 6 проектов
-  • 1 GB ОЗУ на проект
+  • 5 проектов
+  • 1024 MB ОЗУ на проект
   • 1.0 CPU
   • Приоритетная поддержка
   • Автобэкапы каждый час
