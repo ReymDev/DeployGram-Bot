@@ -18,7 +18,7 @@ async def subscription_menu(callback: CallbackQuery, db_user, project_service):
     # Получаем количество проектов пользователя
     projects = await project_service.get_user_projects(db_user.id)
     projects_count = len(projects)
-    max_projects = 10 if is_premium else 3
+    max_projects = 5 if is_premium else 1
     
     text = texts.subscription_text(is_premium, projects_count, max_projects)
 
