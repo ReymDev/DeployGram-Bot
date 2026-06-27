@@ -85,6 +85,11 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
         ),
     )
     
+    # Кнопка "Назад" в главное меню
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Назад", callback_data="main_menu"),
+    )
+    
     return builder.as_markup()
 
 
@@ -227,7 +232,7 @@ def get_subscription_keyboard(is_premium: bool) -> InlineKeyboardMarkup:
         )
     
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="control_panel"),
+        InlineKeyboardButton(text="⬅️ Назад", callback_data="main_menu"),
     )
     return builder.as_markup()
 
@@ -590,7 +595,7 @@ def get_backups_list_keyboard(bots: list) -> InlineKeyboardMarkup:
             )
         )
     builder.row(
-        InlineKeyboardButton(text="Назад", callback_data="control_panel"),
+        InlineKeyboardButton(text="⬅️ Назад", callback_data="main_menu"),
     )
     return builder.as_markup()
 

@@ -21,7 +21,7 @@ async def backups_list(callback: CallbackQuery, db_user, project_service):
             callback.message,
             text,
             "backups",
-            reply_markup=get_back_keyboard("control_panel"),
+            reply_markup=get_back_keyboard("main_menu"),
         )
     else:
         text = texts.BACKUPS_LIST_TEXT
