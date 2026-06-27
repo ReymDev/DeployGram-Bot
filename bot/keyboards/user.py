@@ -77,22 +77,12 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
     if nav_row:
         builder.row(*nav_row)
 
-    # Действия
+    # Только кнопка создания проекта
     builder.row(
         InlineKeyboardButton(
             text="✨ Создать проект",
             callback_data="create_project",
         ),
-    )
-    
-    # Дополнительные функции
-    builder.row(
-        InlineKeyboardButton(text="💳 Подписка", callback_data="subscription"),
-        InlineKeyboardButton(text="💾 Бэкапы", callback_data="backups_list"),
-    )
-    builder.row(
-        InlineKeyboardButton(text="🎁 Промокод", callback_data="promo_activate"),
-        InlineKeyboardButton(text="🔗 Рефералы", callback_data="referrals"),
     )
     
     return builder.as_markup()
