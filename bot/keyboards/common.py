@@ -32,20 +32,11 @@ def get_welcome_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_control_panel_keyboard(has_bots: bool = False) -> InlineKeyboardMarkup:
-    """Клавиатура когда нет проектов."""
+    """Клавиатура когда нет проектов - только кнопка Создать проект."""
     builder = InlineKeyboardBuilder()
     
     builder.row(
         InlineKeyboardButton(text="✨ Создать проект", callback_data="create_project"),
-    )
-    
-    builder.row(
-        InlineKeyboardButton(text="💳 Подписка", callback_data="subscription"),
-        InlineKeyboardButton(text="💾 Бэкапы", callback_data="backups_list"),
-    )
-    builder.row(
-        InlineKeyboardButton(text="🎁 Промокод", callback_data="promo_activate"),
-        InlineKeyboardButton(text="🔗 Рефералы", callback_data="referrals"),
     )
     
     return builder.as_markup()

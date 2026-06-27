@@ -20,9 +20,20 @@ router = Router()
 
 
 @router.callback_query(F.data == "create_project")
-async def create_project_start(callback: CallbackQuery, user_service, db_user, state: FSMContext):
+async def create_project_start(callback: CallbackQuery, user_service, db_user, project_service, state: FSMContext):
     from bot import texts
+    
+    # Проверка лимита проектов
     max_projects = await user_service.get_max_projects(db_user.tariff)
+    current_count = await project_service.count_user_projects(db_user.id)
+    
+    if current_count >= max_projects:
+        await callback.answer(
+            f"⚠️ Достигнут лимит проектов ({max_projects})\n\n"
+            f"Обнови подписку для больших возможностей!",
+            show_alert=True,
+        )
+        return
 
     await callback.message.edit_text(
         texts.ADD_BOT_SOURCE_TEXT,

@@ -300,19 +300,61 @@ def get_source_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="📦 Загрузить ZIP",
-            callback_data="create_source_zip",
+            callback_data="create_type_zip",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text="🔗 Из GitHub",
-            callback_data="create_source_github",
+            callback_data="create_type_github",
         ),
     )
     builder.row(
         InlineKeyboardButton(text="❌ Отмена", callback_data="control_panel"),
     )
     return builder.as_markup()
+
+
+def get_create_project_step1_keyboard() -> InlineKeyboardMarkup:
+    """Шаг 1: выбор источника кода (алиас для get_source_keyboard)."""
+    return get_source_keyboard()
+
+
+def get_entry_type_keyboard() -> InlineKeyboardMarkup:
+    """Выбор типа точки входа."""
+    builder = InlineKeyboardBuilder()
+    
+    builder.row(
+        InlineKeyboardButton(
+            text="📄 Скрипт (python file.py)",
+            callback_data="create_entry_script",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="📦 Модуль (python -m)",
+            callback_data="create_entry_module",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(text="⬅️ Назад", callback_data="create_project"),
+    )
+    return builder.as_markup()
+
+
+def get_confirm_start_keyboard() -> InlineKeyboardMarkup:
+    """Подтверждение создания проекта."""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="✅ Создать", callback_data="create_confirm"),
+        InlineKeyboardButton(text="❌ Отмена", callback_data="main_menu"),
+    )
+    return builder.as_markup()
+
+
+def get_project_manage_keyboard(project_id: int, status: str) -> InlineKeyboardMarkup:
+    """Клавиатура управления проектом (после создания)."""
+    return get_bot_control_keyboard(project_id, status)
 
 
 def get_python_version_keyboard(step: str = "", current: str = "") -> InlineKeyboardMarkup:

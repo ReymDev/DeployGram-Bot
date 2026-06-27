@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     FREE_TARIFF_CPU: float = 0.3
     FREE_TARIFF_DISK: int = 100
 
-    PREMIUM_TARIFF_PROJECTS: int = 6
+    PREMIUM_TARIFF_PROJECTS: int = 5
     PREMIUM_TARIFF_RAM: int = 1024
     PREMIUM_TARIFF_CPU: float = 1.0
     PREMIUM_TARIFF_DISK: int = 500
