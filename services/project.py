@@ -325,15 +325,43 @@ class ProjectService:
                     base_url=f"http://{server.ip}:{server.port}",
                     api_key=server.api_key or "",
                 )
+                logger.info(f"Stopping container {project.docker_container_id} on VPS {server.ip}")
                 await client.stop_container(project.docker_container_id)
+                
+                # Verify container stopped
+                try:
+                    import asyncio
+                    await asyncio.sleep(2)  # Wait for container to stop
+                    status = await client.get_container_status(project.docker_container_id)
+                    if status.get("running"):
+                        logger.error(f"Container {project.docker_container_id} still running after stop command")
+                        return False, "Ошибка остановки: контейнер все еще работает"
+                except Exception as e:
+                    logger.warning(f"Could not verify container status: {e}")
+                
                 await self.project_repo.update(project_id, status="stopped")
+                logger.info(f"Project {project_id} stopped successfully")
                 return True, "Проект остановлен"
 
         if not self.docker:
             return False, "Docker недоступен"
 
+        logger.info(f"Stopping local container {project.docker_container_id}")
         await self.docker.stop_container(project.docker_container_id)
+        
+        # Verify container stopped
+        try:
+            import asyncio
+            await asyncio.sleep(2)  # Wait for container to stop
+            status = await self.docker.get_container_status(project.docker_container_id)
+            if status.get("running"):
+                logger.error(f"Container {project.docker_container_id} still running after stop command")
+                return False, "Ошибка остановки: контейнер все еще работает"
+        except Exception as e:
+            logger.warning(f"Could not verify container status: {e}")
+        
         await self.project_repo.update(project_id, status="stopped")
+        logger.info(f"Project {project_id} stopped successfully")
         return True, "Проект остановлен"
 
     async def restart_project(self, project_id: int) -> tuple[bool, str]:
