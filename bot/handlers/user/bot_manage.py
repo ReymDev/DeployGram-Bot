@@ -158,44 +158,53 @@ async def bot_start(callback: CallbackQuery, project_service, db_user, session):
         return
 
     success, msg = await project_service.start_project(project_id)
+    
+    # Show notification in alert
+    await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
+    
+    # Refresh project view with full info
     project = await project_service.get_project(project_id)
     if project:
+        monitoring = await project_service.get_monitoring(project_id)
+
+        from repositories.server import ServerRepository
+        from db.engine import async_session_factory
+        server_text = ""
+        async with async_session_factory() as new_session:
+            server_repo = ServerRepository(new_session)
+            server = await server_repo.get_by_id(project.server_id) if project.server_id else None
+            if server:
+                from bot.keyboards.user import get_flag
+                flag = get_flag(server.country)
+                server_text = f"{flag} Сервер: #{server.id}"
+
+        status = monitoring.get("status", project.status)
+        status_text = format_status(status)
+        uptime_seconds = monitoring.get("uptime", 0)
+        uptime = format_uptime(uptime_seconds) if uptime_seconds else "—"
+        cpu = monitoring.get("cpu", 0)
+        ram = monitoring.get("ram", 0)
+
+        text = texts.bot_control_text(
+            project.name,
+            server_text,
+            status_text,
+            uptime,
+            cpu,
+            ram
+        )
+
         try:
             await callback.message.edit_text(
-                f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
-                reply_markup=get_bot_control_keyboard(project_id, project.status),
+                text,
+                reply_markup=get_bot_control_keyboard(project_id, status),
             )
         except TelegramBadRequest as e:
-            if "message is not modified" in str(e).lower():
-                logger.warning(
-                    f"[bot_start] Message not modified error ignored.\n"
-                    f"File: {__file__}\n"
-                    f"Function: bot_start\n"
-                    f"Project ID: {project_id}\n"
-                    f"User: {db_user.telegram_id}\n"
-                    f"Error: {str(e)}"
-                )
-            else:
+            if "message is not modified" not in str(e).lower():
                 logger.error(
-                    f"[bot_start] Telegram error occurred.\n"
-                    f"File: {__file__}\n"
-                    f"Function: bot_start\n"
-                    f"Project ID: {project_id}\n"
-                    f"User: {db_user.telegram_id}\n"
-                    f"Error: {str(e)}\n"
+                    f"[bot_start] Failed to update view: {e}\n"
                     f"Traceback:\n{traceback.format_exc()}"
                 )
-        except Exception as e:
-            logger.error(
-                f"[bot_start] Unexpected error occurred.\n"
-                f"File: {__file__}\n"
-                f"Function: bot_start\n"
-                f"Project ID: {project_id}\n"
-                f"User: {db_user.telegram_id}\n"
-                f"Error: {str(e)}\n"
-                f"Traceback:\n{traceback.format_exc()}"
-            )
-    await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
 
 
 @router.callback_query(F.data.startswith("bot_stop_"))
@@ -220,44 +229,53 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
         return
 
     success, msg = await project_service.stop_project(project_id)
+    
+    # Show notification in alert
+    await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
+    
+    # Refresh project view with full info
     project = await project_service.get_project(project_id)
     if project:
+        monitoring = await project_service.get_monitoring(project_id)
+
+        from repositories.server import ServerRepository
+        from db.engine import async_session_factory
+        server_text = ""
+        async with async_session_factory() as new_session:
+            server_repo = ServerRepository(new_session)
+            server = await server_repo.get_by_id(project.server_id) if project.server_id else None
+            if server:
+                from bot.keyboards.user import get_flag
+                flag = get_flag(server.country)
+                server_text = f"{flag} Сервер: #{server.id}"
+
+        status = monitoring.get("status", project.status)
+        status_text = format_status(status)
+        uptime_seconds = monitoring.get("uptime", 0)
+        uptime = format_uptime(uptime_seconds) if uptime_seconds else "—"
+        cpu = monitoring.get("cpu", 0)
+        ram = monitoring.get("ram", 0)
+
+        text = texts.bot_control_text(
+            project.name,
+            server_text,
+            status_text,
+            uptime,
+            cpu,
+            ram
+        )
+
         try:
             await callback.message.edit_text(
-                f"{Emoji.CHECK if success else Emoji.CROSS} {msg}",
-                reply_markup=get_bot_control_keyboard(project_id, project.status),
+                text,
+                reply_markup=get_bot_control_keyboard(project_id, status),
             )
         except TelegramBadRequest as e:
-            if "message is not modified" in str(e).lower():
-                logger.warning(
-                    f"[bot_stop] Message not modified error ignored.\n"
-                    f"File: {__file__}\n"
-                    f"Function: bot_stop\n"
-                    f"Project ID: {project_id}\n"
-                    f"User: {db_user.telegram_id}\n"
-                    f"Error: {str(e)}"
-                )
-            else:
+            if "message is not modified" not in str(e).lower():
                 logger.error(
-                    f"[bot_stop] Telegram error occurred.\n"
-                    f"File: {__file__}\n"
-                    f"Function: bot_stop\n"
-                    f"Project ID: {project_id}\n"
-                    f"User: {db_user.telegram_id}\n"
-                    f"Error: {str(e)}\n"
+                    f"[bot_stop] Failed to update view: {e}\n"
                     f"Traceback:\n{traceback.format_exc()}"
                 )
-        except Exception as e:
-            logger.error(
-                f"[bot_stop] Unexpected error occurred.\n"
-                f"File: {__file__}\n"
-                f"Function: bot_stop\n"
-                f"Project ID: {project_id}\n"
-                f"User: {db_user.telegram_id}\n"
-                f"Error: {str(e)}\n"
-                f"Traceback:\n{traceback.format_exc()}"
-            )
-    await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
 
 
 @router.callback_query(F.data.startswith("bot_logs_"))
