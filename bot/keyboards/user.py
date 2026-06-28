@@ -425,7 +425,7 @@ def get_confirm_entry_keyboard() -> InlineKeyboardMarkup:
 def get_file_manager_keyboard(
     bot_id: int, files: list[str], current_path: str
 ) -> InlineKeyboardMarkup:
-    """Файловый браузер с иконками типов."""
+    """Старая версия файлового браузера - оставлена для совместимости."""
     builder = InlineKeyboardBuilder()
 
     # Кнопка "Назад" если не в корне
@@ -487,6 +487,169 @@ def get_file_manager_keyboard(
     )
     builder.row(
         InlineKeyboardButton(text="⬅️ К проекту", callback_data=f"bot_view_{bot_id}"),
+    )
+    return builder.as_markup()
+
+
+def get_files_main_menu_keyboard(project_id: int) -> InlineKeyboardMarkup:
+    """Главное меню файлового менеджера."""
+    builder = InlineKeyboardBuilder()
+    
+    builder.row(
+        InlineKeyboardButton(
+            text="👁️ Просмотр",
+            callback_data=f"files_browse_{project_id}",
+        ),
+        InlineKeyboardButton(
+            text="📤 Загрузка",
+            callback_data=f"files_upload_{project_id}",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="⬅️ К проекту",
+            callback_data=f"bot_view_{project_id}",
+        ),
+    )
+    return builder.as_markup()
+
+
+def get_file_browser_keyboard(
+    project_id: int, files: list[str], current_path: str
+) -> InlineKeyboardMarkup:
+    """Браузер файлов в режиме просмотра."""
+    builder = InlineKeyboardBuilder()
+
+    # Кнопка вверх если не в корне
+    if current_path != "/app":
+        parent = "/".join(current_path.rstrip("/").split("/")[:-1]) or "/app"
+        builder.row(
+            InlineKeyboardButton(
+                text="🔼 Вверх",
+                callback_data=f"fbrowse_nav_{project_id}_{parent}",
+            )
+        )
+
+    # Показываем папки и файлы
+    for f in files[:15]:
+        is_dir = "/" in f or f.endswith("/") or "." not in f
+        
+        if is_dir:
+            # Папки - открываются по клику
+            folder_name = f.rstrip("/")
+            icon = "📁"
+            callback = f"fbrowse_nav_{project_id}_{current_path.rstrip('/')}/{folder_name}"
+            builder.row(
+                InlineKeyboardButton(
+                    text=f"{icon} {folder_name[:35]}",
+                    callback_data=callback,
+                )
+            )
+        else:
+            # Файлы - открывают меню действий
+            if f.endswith(".py"):
+                icon = "🐍"
+            elif f.endswith((".txt", ".md", ".log")):
+                icon = "📄"
+            elif f.endswith((".json", ".yaml", ".yml", ".toml")):
+                icon = "⚙️"
+            elif f.endswith((".zip", ".tar", ".gz")):
+                icon = "📦"
+            elif f.endswith((".jpg", ".png", ".gif")):
+                icon = "🖼️"
+            else:
+                icon = "📄"
+            
+            file_path = f"{current_path.rstrip('/')}/{f}"
+            builder.row(
+                InlineKeyboardButton(
+                    text=f"{icon} {f[:35]}",
+                    callback_data=f"file_action_{project_id}_{file_path}",
+                )
+            )
+
+    # Кнопки навигации
+    builder.row(
+        InlineKeyboardButton(
+            text="⬅️ Назад",
+            callback_data=f"bot_files_{project_id}",
+        ),
+    )
+    return builder.as_markup()
+
+
+def get_file_upload_browser_keyboard(
+    project_id: int, files: list[str], current_path: str
+) -> InlineKeyboardMarkup:
+    """Браузер файлов в режиме загрузки."""
+    builder = InlineKeyboardBuilder()
+
+    # Кнопка загрузки в текущую директорию
+    builder.row(
+        InlineKeyboardButton(
+            text="📤 Загрузить сюда",
+            callback_data=f"upload_here_{project_id}_{current_path}",
+        )
+    )
+
+    # Кнопка вверх если не в корне
+    if current_path != "/app":
+        parent = "/".join(current_path.rstrip("/").split("/")[:-1]) or "/app"
+        builder.row(
+            InlineKeyboardButton(
+                text="🔼 Вверх",
+                callback_data=f"fupload_nav_{project_id}_{parent}",
+            )
+        )
+
+    # Показываем только папки
+    for f in files[:15]:
+        is_dir = "/" in f or f.endswith("/") or "." not in f
+        
+        if is_dir:
+            folder_name = f.rstrip("/")
+            callback = f"fupload_nav_{project_id}_{current_path.rstrip('/')}/{folder_name}"
+            builder.row(
+                InlineKeyboardButton(
+                    text=f"📁 {folder_name[:35]}",
+                    callback_data=callback,
+                )
+            )
+
+    # Кнопки навигации
+    builder.row(
+        InlineKeyboardButton(
+            text="⬅️ Назад",
+            callback_data=f"bot_files_{project_id}",
+        ),
+    )
+    return builder.as_markup()
+
+
+def get_file_action_keyboard(project_id: int, file_path: str) -> InlineKeyboardMarkup:
+    """Меню действий с файлом."""
+    builder = InlineKeyboardBuilder()
+    
+    builder.row(
+        InlineKeyboardButton(
+            text="💾 Скачать",
+            callback_data=f"file_download_{project_id}_{file_path}",
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="🗑️ Удалить",
+            callback_data=f"file_delete_{project_id}_{file_path}",
+        ),
+    )
+    
+    # Кнопка назад - возврат в браузер в ту же папку
+    parent = "/".join(file_path.rstrip("/").split("/")[:-1]) or "/app"
+    builder.row(
+        InlineKeyboardButton(
+            text="⬅️ Назад",
+            callback_data=f"fbrowse_nav_{project_id}_{parent}",
+        ),
     )
     return builder.as_markup()
 
