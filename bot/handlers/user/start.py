@@ -64,22 +64,16 @@ async def control_panel(callback: CallbackQuery, db_user, project_service):
 
 @router.callback_query(F.data == "main_menu")
 async def main_menu(callback: CallbackQuery, db_user, project_service):
-    from bot.keyboards.user import get_bot_list_keyboard
+    # Получаем количество проектов для персонализации приветствия
     projects = await project_service.get_user_projects(db_user.id)
-
-    if projects:
-        await edit_photo_or_text(
-            callback.message,
-            texts.CONTROL_PANEL_TEXT,
-            "control_panel",
-            reply_markup=get_bot_list_keyboard(projects),
-        )
-    else:
-        # Если проектов нет - показываем дружелюбное сообщение
-        await edit_photo_or_text(
-            callback.message,
-            texts.EMPTY_PROJECTS,
-            "control_panel",
-            reply_markup=get_control_panel_keyboard(),
-        )
+    
+    await edit_photo_or_text(
+        callback.message,
+        texts.welcome_text(
+            callback.from_user.first_name or "друг",
+            len(projects)
+        ),
+        "welcome",
+        reply_markup=get_welcome_keyboard(),
+    )
     await callback.answer()
