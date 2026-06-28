@@ -80,13 +80,13 @@ async def _check_owner(callback: CallbackQuery, project_service, db_user, projec
 @router.callback_query(F.data.startswith("bots_page_"))
 async def bots_page(callback: CallbackQuery, db_user, project_service):
     page = int(callback.data.split("_")[-1])
-    projects = await project_service.get_user_projects(db_user.id)
+    projects_with_flags = await project_service.get_all_user_projects(db_user.id)
     from bot.keyboards.user import get_bot_list_keyboard
     await edit_photo_or_text(
         callback.message,
         texts.CONTROL_PANEL_TEXT,
         "control_panel",
-        reply_markup=get_bot_list_keyboard(projects, page),
+        reply_markup=get_bot_list_keyboard(projects_with_flags, page),
     )
     await callback.answer()
 

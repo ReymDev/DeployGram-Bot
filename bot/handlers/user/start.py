@@ -42,14 +42,14 @@ async def cmd_start(message: Message, session, db_user, user_service, project_se
 @router.callback_query(F.data == "control_panel")
 async def control_panel(callback: CallbackQuery, db_user, project_service):
     from bot.keyboards.user import get_bot_list_keyboard
-    projects = await project_service.get_user_projects(db_user.id)
+    projects_with_flags = await project_service.get_all_user_projects(db_user.id)
 
-    if projects:
+    if projects_with_flags:
         await edit_photo_or_text(
             callback.message,
             texts.CONTROL_PANEL_TEXT,
             "control_panel",
-            reply_markup=get_bot_list_keyboard(projects),
+            reply_markup=get_bot_list_keyboard(projects_with_flags),
         )
     else:
         # Если проектов нет - показываем дружелюбное сообщение

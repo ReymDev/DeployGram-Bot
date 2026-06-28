@@ -35,7 +35,14 @@ def get_flag(country: str) -> str:
 
 
 def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> InlineKeyboardMarkup:
-    """Список проектов в карточном стиле - 2 в ряд для лучшей читаемости."""
+    """
+    Список проектов в карточном стиле - 2 в ряд для лучшей читаемости.
+    
+    Args:
+        bots: список проектов или список кортежей (project, is_coowner)
+        page: номер страницы
+        per_page: количество на странице
+    """
     builder = InlineKeyboardBuilder()
     start = page * per_page
     end = start + per_page
@@ -46,7 +53,14 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
         row_bots = page_bots[i:i+2]
         row_buttons = []
         
-        for b in row_bots:
+        for item in row_bots:
+            # Проверяем формат данных - это может быть Project или (Project, is_coowner)
+            if isinstance(item, tuple):
+                b, is_coowner = item
+            else:
+                b = item
+                is_coowner = False
+            
             # Иконка статуса
             if b.status == "running":
                 icon = "🟢"
@@ -55,9 +69,12 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
             else:
                 icon = "⚫"
             
+            # Добавляем тег совладельца
+            coowner_tag = " 👥" if is_coowner else ""
+            
             row_buttons.append(
                 InlineKeyboardButton(
-                    text=f"{icon} {b.name[:12]}",  # Ограничение длины
+                    text=f"{icon} {b.name[:10]}{coowner_tag}",  # Укорочено для тега
                     callback_data=f"bot_view_{b.id}",
                 )
             )

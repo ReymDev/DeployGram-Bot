@@ -11,17 +11,17 @@ router = Router()
 
 @router.callback_query(F.data == "my_projects")
 async def my_projects(callback: CallbackQuery, db_user, project_service):
-    projects = await project_service.get_user_projects(db_user.id)
+    projects_with_flags = await project_service.get_all_user_projects(db_user.id)
 
-    if not projects:
+    if not projects_with_flags:
         await callback.message.edit_text(
             "📦 У вас пока нет проектов.\n\nНажмите «Создать проект» чтобы начать.",
             reply_markup=get_bot_list_keyboard([]),
         )
     else:
         await callback.message.edit_text(
-            f"📦 <b>Ваши проекты</b> ({len(projects)})",
-            reply_markup=get_bot_list_keyboard(projects),
+            f"📦 <b>Ваши проекты</b> ({len(projects_with_flags)})",
+            reply_markup=get_bot_list_keyboard(projects_with_flags),
         )
     await callback.answer()
 
@@ -29,9 +29,9 @@ async def my_projects(callback: CallbackQuery, db_user, project_service):
 @router.callback_query(F.data.startswith("projects_page_"))
 async def projects_page(callback: CallbackQuery, db_user, project_service):
     page = int(callback.data.split("_")[-1])
-    projects = await project_service.get_user_projects(db_user.id)
+    projects_with_flags = await project_service.get_all_user_projects(db_user.id)
     await callback.message.edit_text(
-        f"📦 <b>Ваши проекты</b> ({len(projects)})",
-        reply_markup=get_bot_list_keyboard(projects, page),
+        f"📦 <b>Ваши проекты</b> ({len(projects_with_flags)})",
+        reply_markup=get_bot_list_keyboard(projects_with_flags, page),
     )
     await callback.answer()

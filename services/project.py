@@ -157,6 +157,13 @@ class ProjectService:
     async def get_user_projects(self, user_id: int) -> list[Project]:
         return await self.project_repo.get_by_user_id(user_id)
 
+    async def get_all_user_projects(self, user_id: int) -> list[tuple[Project, bool]]:
+        """
+        Get all projects accessible by user (owned + coowned).
+        Returns list of tuples (project, is_coowner).
+        """
+        return await self.project_repo.get_all_user_projects(user_id)
+
     async def get_project(self, project_id: int) -> Project | None:
         return await self.project_repo.get_by_id(project_id)
 

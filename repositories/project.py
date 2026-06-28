@@ -17,6 +17,36 @@ class ProjectRepository(BaseRepository[Project]):
         )
         return list(result.scalars().all())
 
+    async def get_coowned_projects(self, user_id: int) -> list[Project]:
+        """Get projects where user is a coowner."""
+        from models.coowner import CoOwner
+        result = await self.session.execute(
+            select(Project)
+            .join(CoOwner, CoOwner.project_id == Project.id)
+            .where(CoOwner.user_id == user_id)
+            .order_by(Project.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    async def get_all_user_projects(self, user_id: int) -> list[tuple[Project, bool]]:
+        """
+        Get all projects accessible by user (owned + coowned).
+        Returns list of tuples (project, is_coowner).
+        """
+        # Get owned projects
+        owned = await self.get_by_user_id(user_id)
+        owned_with_flag = [(p, False) for p in owned]
+        
+        # Get coowned projects
+        coowned = await self.get_coowned_projects(user_id)
+        coowned_with_flag = [(p, True) for p in coowned]
+        
+        # Combine and sort by created_at
+        all_projects = owned_with_flag + coowned_with_flag
+        all_projects.sort(key=lambda x: x[0].created_at, reverse=True)
+        
+        return all_projects
+
     async def get_running_projects(self) -> list[Project]:
         result = await self.session.execute(
             select(Project).where(Project.status == "running")
