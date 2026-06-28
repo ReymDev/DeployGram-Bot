@@ -71,6 +71,11 @@ async def files_browse(callback: CallbackQuery, project_service, db_user, sessio
 
     from bot.keyboards.user import get_file_browser_keyboard
     files = await project_service.list_files(project_id, "/app")
+    
+    # Логируем для отладки
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"[FILES_BROWSE] Project: {project.name}, Files count: {len(files)}, Files: {files}")
 
     text = f"""📂 <b>Просмотр файлов</b>
 
