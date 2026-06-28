@@ -116,11 +116,14 @@ class VPSClient:
             ) as resp:
                 return await resp.json()
 
-    async def read_file(self, project_id: int, file_path: str) -> dict:
+    async def read_file(self, project_id: int, file_path: str, container_id: str = "") -> dict:
         async with aiohttp.ClientSession(timeout=self.timeout) as session:
+            params = {"path": file_path}
+            if container_id:
+                params["container_id"] = container_id
             async with session.get(
                 f"{self.base_url}/project/{project_id}/file",
-                params={"path": file_path},
+                params=params,
                 headers=self._headers(),
             ) as resp:
                 return await resp.json()

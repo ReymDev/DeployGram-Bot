@@ -616,7 +616,11 @@ class ProjectService:
                     api_key=server.api_key or "",
                 )
                 try:
-                    result = await client.read_file(project_id, safe_path)
+                    result = await client.read_file(
+                        project_id, 
+                        safe_path,
+                        container_id=project.docker_container_id or ""
+                    )
                     return result.get("content", "")
                 except Exception:
                     return ""

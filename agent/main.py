@@ -315,17 +315,37 @@ class VPSAgent:
             return web.json_response({"error": "unauthorized"}, status=401)
         try:
             project_id = request.match_info["id"]
-            project_dir = self._get_project_dir(project_id)
             file_path = request.query.get("path", "")
-
-            full_path = os.path.join(project_dir, file_path.lstrip("/"))
-            if not os.path.exists(full_path):
+            container_id = request.query.get("container_id")
+            
+            logger.info("[AGENT_READ_FILE] Project: %s, Path: %s", project_id, file_path)
+            
+            if not container_id:
+                # Пробуем найти контейнер по имени проекта
+                import docker
+                client = docker.from_env()
+                try:
+                    containers = client.containers.list(filters={"name": f"deploygram_{project_id}_"})
+                    if containers:
+                        container_id = containers[0].id
+                except Exception as e:
+                    logger.error("[AGENT_READ_FILE] Failed to find container: %s", e)
+                    return web.json_response({"error": "container not found"}, status=404)
+            
+            if not container_id:
+                return web.json_response({"error": "container not found"}, status=404)
+            
+            # Читаем файл из контейнера
+            from services.docker_manager import DockerManager
+            dm = DockerManager()
+            content = await dm.read_file(container_id, file_path)
+            
+            if not content:
                 return web.json_response({"error": "file not found"}, status=404)
-
-            with open(full_path, "r", errors="replace") as f:
-                content = f.read()
+            
             return web.json_response({"content": content})
         except Exception as e:
+            logger.error("[AGENT_READ_FILE] Error: %s", e)
             return web.json_response({"error": str(e)}, status=500)
 
     async def write_file(self, request: web.Request) -> web.Response:
