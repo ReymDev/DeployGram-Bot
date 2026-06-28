@@ -532,7 +532,8 @@ def get_file_browser_keyboard(
 
     # Показываем папки и файлы
     for f in files[:15]:
-        is_dir = "/" in f or f.endswith("/") or "." not in f
+        # Папки имеют / в конце (благодаря ls -1p)
+        is_dir = f.endswith("/")
         
         if is_dir:
             # Папки - открываются по клику
@@ -604,7 +605,8 @@ def get_file_upload_browser_keyboard(
 
     # Показываем только папки
     for f in files[:15]:
-        is_dir = "/" in f or f.endswith("/") or "." not in f
+        # Папки имеют / в конце (благодаря ls -1p)
+        is_dir = f.endswith("/")
         
         if is_dir:
             folder_name = f.rstrip("/")

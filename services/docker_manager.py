@@ -404,10 +404,13 @@ class DockerManager:
         def _list() -> list[str]:
             try:
                 container = self.client.containers.get(container_id)
-                exit_code, output = container.exec_run(["ls", "-1", path])
+                # Используем ls -1p чтобы папки отображались со слешем
+                exit_code, output = container.exec_run(["ls", "-1p", path])
                 if exit_code != 0:
                     return []
-                return output.decode("utf-8", errors="replace").strip().split("\n")
+                result = output.decode("utf-8", errors="replace").strip().split("\n")
+                # Фильтруем пустые строки
+                return [f for f in result if f]
             except (NotFound, APIError) as e:
                 logger.error("Failed to list files in %s: %s", container_id, e)
                 return []
