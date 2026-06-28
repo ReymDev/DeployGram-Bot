@@ -406,11 +406,15 @@ class DockerManager:
                 container = self.client.containers.get(container_id)
                 # Используем ls -1p чтобы папки отображались со слешем
                 exit_code, output = container.exec_run(["ls", "-1p", path])
+                logger.info(f"[LIST_FILES] Container: {container_id}, Path: {path}, Exit code: {exit_code}")
                 if exit_code != 0:
+                    logger.error(f"[LIST_FILES] ls command failed with exit code {exit_code}")
                     return []
                 result = output.decode("utf-8", errors="replace").strip().split("\n")
                 # Фильтруем пустые строки
-                return [f for f in result if f]
+                filtered = [f for f in result if f]
+                logger.info(f"[LIST_FILES] Found {len(filtered)} items: {filtered[:5]}")  # Первые 5
+                return filtered
             except (NotFound, APIError) as e:
                 logger.error("Failed to list files in %s: %s", container_id, e)
                 return []
