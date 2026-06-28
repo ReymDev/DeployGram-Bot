@@ -66,6 +66,10 @@ class VPSClient:
             ) as resp:
                 return await resp.json()
 
+    async def get_container_status(self, container_id: str) -> dict:
+        """Alias for get_status for compatibility."""
+        return await self.get_status(container_id)
+
     async def get_stats(self, container_id: str) -> dict:
         async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(
