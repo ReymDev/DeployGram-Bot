@@ -547,24 +547,6 @@ async def entry_module_received(message: Message, state: FSMContext):
     )
 
 
-@router.callback_query(F.data.startswith("bot_files_"))
-async def bot_files(callback: CallbackQuery, project_service, db_user):
-    project_id = int(callback.data.replace("bot_files_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
-    if project is None:
-        return
-
-    files = await project_service.list_files(project_id, "/app")
-
-    await edit_photo_or_text(
-        callback.message,
-        texts.BOT_FILES_TEXT,
-        "file_manager",
-        reply_markup=get_file_manager_keyboard(project_id, files, "/app"),
-    )
-    await callback.answer()
-
-
 @router.callback_query(F.data.startswith("bot_libs_"))
 async def bot_libs(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.replace("bot_libs_", ""))
