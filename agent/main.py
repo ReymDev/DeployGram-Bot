@@ -275,18 +275,39 @@ class VPSAgent:
             return web.json_response({"error": "unauthorized"}, status=401)
         try:
             project_id = request.match_info["id"]
-            project_dir = self._get_project_dir(project_id)
-            path = request.query.get("path", "/")
-
-            full_path = os.path.join(project_dir, path.lstrip("/"))
-            if not os.path.exists(full_path):
+            path = request.query.get("path", "/app")
+            
+            logger.info("[AGENT_LIST_FILES] Project: %s, Path: %s", project_id, path)
+            
+            # Получаем container_id из query параметра или ищем по имени
+            container_id = request.query.get("container_id")
+            
+            if not container_id:
+                # Пробуем найти контейнер по имени проекта
+                import docker
+                client = docker.from_env()
+                try:
+                    containers = client.containers.list(filters={"name": f"deploygram_{project_id}_"})
+                    if containers:
+                        container_id = containers[0].id
+                        logger.info("[AGENT_LIST_FILES] Found container: %s", container_id[:12])
+                except Exception as e:
+                    logger.error("[AGENT_LIST_FILES] Failed to find container: %s", e)
+                    return web.json_response({"files": []})
+            
+            if not container_id:
+                logger.warning("[AGENT_LIST_FILES] No container found for project %s", project_id)
                 return web.json_response({"files": []})
-
-            files = []
-            for name in os.listdir(full_path):
-                files.append(name)
+            
+            # Используем DockerManager для получения списка файлов из контейнера
+            from services.docker_manager import DockerManager
+            dm = DockerManager()
+            files = await dm.list_files(container_id, path)
+            
+            logger.info("[AGENT_LIST_FILES] Found %d files/dirs", len(files))
             return web.json_response({"files": files})
         except Exception as e:
+            logger.error("[AGENT_LIST_FILES] Error: %s", e)
             return web.json_response({"error": str(e)}, status=500)
 
     async def read_file(self, request: web.Request) -> web.Response:

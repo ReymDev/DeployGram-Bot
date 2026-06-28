@@ -579,7 +579,11 @@ class ProjectService:
                     api_key=server.api_key or "",
                 )
                 try:
-                    result = await client.list_files(project_id, safe_path)
+                    result = await client.list_files(
+                        project_id, 
+                        safe_path,
+                        container_id=project.docker_container_id or ""
+                    )
                     return result.get("files", [])
                 except Exception:
                     return []
