@@ -13,11 +13,18 @@ router = Router()
 
 
 @router.callback_query(F.data.startswith("project_logs_"))
-async def project_logs_menu(callback: CallbackQuery, project_service, db_user):
+async def project_logs_menu(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
+    if project is None:
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_view_logs")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на просмотр логов", show_alert=True)
         return
 
     await callback.message.edit_text(
@@ -29,11 +36,18 @@ async def project_logs_menu(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("logs_view_"))
-async def logs_view(callback: CallbackQuery, project_service, db_user):
+async def logs_view(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
-        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
+    if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_view_logs")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на просмотр логов", show_alert=True)
         return
 
     logs = await project_service.get_logs(project_id, tail=100)
@@ -50,11 +64,18 @@ async def logs_view(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("logs_download_"))
-async def logs_download(callback: CallbackQuery, project_service, db_user):
+async def logs_download(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
-        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
+    if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_view_logs")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на просмотр логов", show_alert=True)
         return
 
     logs = await project_service.get_logs(project_id, tail=1000)
@@ -72,11 +93,16 @@ async def logs_download(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("logs_clear_"))
-async def logs_clear(callback: CallbackQuery, project_service, db_user):
+async def logs_clear(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.split("_")[-1])
     project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
-        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
+    if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Only owner can clear logs
+    if project.user_id != db_user.id:
+        await callback.answer("⛔ Только владелец может очищать логи", show_alert=True)
         return
 
     success = await project_service.clear_logs(project_id)

@@ -15,8 +15,8 @@ class FileUploadStates(StatesGroup):
     waiting_file = State()
 
 
-async def _check_file_access(callback: CallbackQuery, project_service, db_user, project_id: int, session=None):
-    """Check if user has access to project files (owner or coowner)."""
+async def _check_file_access(callback: CallbackQuery, project_service, db_user, project_id: int, session=None, permission: str = "can_edit_files"):
+    """Check if user has access to project files (owner or coowner with permission)."""
     project = await project_service.get_project(project_id)
     if project is None:
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
@@ -26,23 +26,41 @@ async def _check_file_access(callback: CallbackQuery, project_service, db_user, 
     if project.user_id == db_user.id:
         return project
     
-    # Check coowner access if session provided
+    # Check coowner permission if session provided
     if session is not None:
-        from bot.utils.access import check_project_access
-        has_access = await check_project_access(project, db_user, session)
-        if has_access:
+        from bot.utils.access import check_permission
+        has_perm, _ = await check_permission(project, db_user, session, permission)
+        if has_perm:
             return project
     
-    await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
+    await callback.answer("⛔ У вас нет прав на редактирование файлов", show_alert=True)
     return None
 
 
 @router.callback_query(F.data.startswith("bot_files_"))
+async def bot_files_redirect(callback: CallbackQuery, project_service, db_user, session):
+    """Редирект с bot_files_ на files_main_menu_."""
+    project_id = int(callback.data.split("_")[-1])
+    # Перенаправляем на новый хендлер
+    callback.data = f"files_main_menu_{project_id}"
+    await files_main_menu(callback, project_service, db_user, session)
+
+
+@router.callback_query(F.data.startswith("files_main_menu_"))
 async def files_main_menu(callback: CallbackQuery, project_service, db_user, session):
     """Главное меню файлового менеджера - выбор режима."""
     project_id = int(callback.data.split("_")[-1])
-    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    # For main menu, only need basic access
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check basic access (owner or coowner)
+    from bot.utils.access import check_project_access
+    has_access = await check_project_access(project, db_user, session)
+    if not has_access:
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     from bot.keyboards.user import get_files_main_menu_keyboard
@@ -65,8 +83,17 @@ async def files_main_menu(callback: CallbackQuery, project_service, db_user, ses
 async def files_browse(callback: CallbackQuery, project_service, db_user, session):
     """Режим просмотра файлов."""
     project_id = int(callback.data.split("_")[-1])
-    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    # For browsing, only need basic access - view permission not required
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check basic access (owner or coowner)
+    from bot.utils.access import check_project_access
+    has_access = await check_project_access(project, db_user, session)
+    if not has_access:
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     from bot.keyboards.user import get_file_browser_keyboard
@@ -95,8 +122,17 @@ async def files_browse(callback: CallbackQuery, project_service, db_user, sessio
 async def files_upload_mode(callback: CallbackQuery, project_service, db_user, session):
     """Режим загрузки файлов."""
     project_id = int(callback.data.split("_")[-1])
-    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    # Uploading requires edit_files permission
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check edit permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_edit_files")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на редактирование файлов", show_alert=True)
         return
 
     from bot.keyboards.user import get_file_upload_browser_keyboard
@@ -129,8 +165,17 @@ def _parse_file_callback(data: str, prefix: str) -> tuple[int, str]:
 async def file_browse_nav(callback: CallbackQuery, project_service, db_user, session):
     """Навигация по папкам в режиме просмотра."""
     project_id, path = _parse_file_callback(callback.data, "fbrowse_nav")
-    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    # For browsing, only need basic access
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check basic access (owner or coowner)
+    from bot.utils.access import check_project_access
+    has_access = await check_project_access(project, db_user, session)
+    if not has_access:
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     from bot.keyboards.user import get_file_browser_keyboard
@@ -154,8 +199,17 @@ async def file_browse_nav(callback: CallbackQuery, project_service, db_user, ses
 async def file_upload_nav(callback: CallbackQuery, project_service, db_user, session):
     """Навигация по папкам в режиме загрузки."""
     project_id, path = _parse_file_callback(callback.data, "fupload_nav")
-    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    # For upload navigation, check edit permission
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check edit permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_edit_files")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на редактирование файлов", show_alert=True)
         return
 
     from bot.keyboards.user import get_file_upload_browser_keyboard
@@ -179,8 +233,17 @@ async def file_upload_nav(callback: CallbackQuery, project_service, db_user, ses
 async def file_action_menu(callback: CallbackQuery, project_service, db_user, session):
     """Меню действий с файлом."""
     project_id, file_path = _parse_file_callback(callback.data, "file_action")
-    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    # For action menu, only need basic access
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check basic access (owner or coowner)
+    from bot.utils.access import check_project_access
+    has_access = await check_project_access(project, db_user, session)
+    if not has_access:
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     from bot.keyboards.user import get_file_action_keyboard
@@ -205,8 +268,17 @@ async def file_action_menu(callback: CallbackQuery, project_service, db_user, se
 async def file_download(callback: CallbackQuery, project_service, db_user, session):
     """Скачать файл."""
     project_id, file_path = _parse_file_callback(callback.data, "file_download")
-    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    # Downloading only requires basic access
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check basic access (owner or coowner)
+    from bot.utils.access import check_project_access
+    has_access = await check_project_access(project, db_user, session)
+    if not has_access:
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     content = await project_service.read_file(project_id, file_path)
@@ -232,7 +304,8 @@ async def file_download(callback: CallbackQuery, project_service, db_user, sessi
 async def file_delete(callback: CallbackQuery, project_service, db_user, session):
     """Подтверждение удаления файла."""
     project_id, file_path = _parse_file_callback(callback.data, "file_delete")
-    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    # Deleting requires edit_files permission
+    project = await _check_file_access(callback, project_service, db_user, project_id, session, "can_edit_files")
     if project is None:
         return
 
@@ -274,7 +347,8 @@ async def file_delete(callback: CallbackQuery, project_service, db_user, session
 async def file_delete_confirm(callback: CallbackQuery, project_service, db_user, session):
     """Удалить файл."""
     project_id, file_path = _parse_file_callback(callback.data, "file_del_confirm")
-    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    # Deleting requires edit_files permission
+    project = await _check_file_access(callback, project_service, db_user, project_id, session, "can_edit_files")
     if project is None:
         return
 
@@ -306,7 +380,8 @@ async def file_delete_confirm(callback: CallbackQuery, project_service, db_user,
 async def upload_here(callback: CallbackQuery, state: FSMContext, project_service, db_user, session):
     """Начать загрузку файла в текущую директорию."""
     project_id, path = _parse_file_callback(callback.data, "upload_here")
-    project = await _check_file_access(callback, project_service, db_user, project_id, session)
+    # Uploading requires edit_files permission
+    project = await _check_file_access(callback, project_service, db_user, project_id, session, "can_edit_files")
     if project is None:
         return
 

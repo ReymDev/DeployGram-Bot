@@ -145,8 +145,16 @@ async def bot_start(callback: CallbackQuery, project_service, db_user, session):
     logger = logging.getLogger(__name__)
     
     project_id = int(callback.data.replace("bot_start_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id, session)
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_start_stop")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на запуск/остановку проекта", show_alert=True)
         return
 
     success, msg = await project_service.start_project(project_id)
@@ -199,8 +207,16 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
     logger = logging.getLogger(__name__)
     
     project_id = int(callback.data.replace("bot_stop_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id, session)
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_start_stop")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на запуск/остановку проекта", show_alert=True)
         return
 
     success, msg = await project_service.stop_project(project_id)
@@ -247,8 +263,16 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
 @router.callback_query(F.data.startswith("bot_logs_"))
 async def bot_logs(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("bot_logs_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id, session)
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_view_logs")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на просмотр логов", show_alert=True)
         return
 
     logs = await project_service.get_logs(project_id, tail=100)
@@ -303,10 +327,18 @@ async def bot_logs(callback: CallbackQuery, project_service, db_user, session):
 
 
 @router.callback_query(F.data.startswith("logs_file_"))
-async def logs_file(callback: CallbackQuery, project_service, db_user):
+async def logs_file(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("logs_file_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_view_logs")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на просмотр логов", show_alert=True)
         return
 
     logs = await project_service.get_logs(project_id, tail=1000)
@@ -322,13 +354,16 @@ async def logs_file(callback: CallbackQuery, project_service, db_user):
 @router.callback_query(F.data.startswith("bot_settings_"))
 async def bot_settings(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("bot_settings_", ""))
-    # Settings require owner access
     project = await project_service.get_project(project_id)
     if project is None:
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
-    if project.user_id != db_user.id:
-        await callback.answer("⛔ Только владелец может изменять настройки", show_alert=True)
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_view_settings")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на просмотр настроек", show_alert=True)
         return
 
     from bot.keyboards.user import get_bot_settings_keyboard
@@ -548,10 +583,18 @@ async def entry_module_received(message: Message, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith("bot_libs_"))
-async def bot_libs(callback: CallbackQuery, project_service, db_user):
+async def bot_libs(callback: CallbackQuery, project_service, db_user, session):
     project_id = int(callback.data.replace("bot_libs_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_manage_deps")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на управление зависимостями", show_alert=True)
         return
 
     # Получаем установленные пакеты через pip list
@@ -581,8 +624,20 @@ async def bot_libs(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("lib_add_"))
-async def lib_add(callback: CallbackQuery, state: FSMContext):
+async def lib_add(callback: CallbackQuery, state: FSMContext, project_service, db_user, session):
     project_id = int(callback.data.replace("lib_add_", ""))
+    project = await project_service.get_project(project_id)
+    if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_manage_deps")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на управление зависимостями", show_alert=True)
+        return
+    
     await state.update_data(lib_project_id=project_id)
 
     await callback.message.edit_text(
@@ -626,13 +681,21 @@ async def lib_add_received(message: Message, state: FSMContext, project_service,
 
 
 @router.callback_query(F.data.startswith("lib_del_"))
-async def lib_del(callback: CallbackQuery, project_service, db_user):
+async def lib_del(callback: CallbackQuery, project_service, db_user, session):
     parts = callback.data.replace("lib_del_", "").split("_", 1)
     project_id = int(parts[0])
     lib_name = parts[1] if len(parts) > 1 else ""
 
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    
+    # Check permission
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_manage_deps")
+    if not has_perm:
+        await callback.answer("⛔ У вас нет прав на управление зависимостями", show_alert=True)
         return
 
     try:

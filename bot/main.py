@@ -107,6 +107,7 @@ async def main() -> None:
     scheduler.add_job(scheduler_service.check_auto_sleep, "interval", minutes=1)
     scheduler.add_job(scheduler_service.cleanup_inactive_projects, "interval", hours=1)
     scheduler.add_job(scheduler_service.auto_backup, "interval", hours=settings.BACKUP_INTERVAL_HOURS)
+    scheduler.add_job(scheduler_service.check_resource_alerts, "interval", minutes=10)
 
     scheduler.start()
     logger.info("Scheduler started")
