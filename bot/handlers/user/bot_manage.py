@@ -121,7 +121,7 @@ async def bot_view(callback: CallbackQuery, project_service, db_user, session):
     text = texts.bot_control_text(
         project.name,
         server_text,
-        status_text,
+        status,  # Передаем сырой статус
         uptime,
         cpu,
         ram
@@ -188,7 +188,7 @@ async def bot_start(callback: CallbackQuery, project_service, db_user, session):
         text = texts.bot_control_text(
             project.name,
             server_text,
-            status_text,
+            status,  # Передаем сырой статус
             uptime,
             cpu,
             ram
@@ -259,7 +259,7 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
         text = texts.bot_control_text(
             project.name,
             server_text,
-            status_text,
+            status,  # Передаем сырой статус
             uptime,
             cpu,
             ram

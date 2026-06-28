@@ -188,13 +188,18 @@ ADD_BOT_SUCCESS_TEXT = (
 
 # ─── BOT CONTROL ───
 
-def bot_control_text(name: str, server_text: str, status_text: str, uptime: str, cpu: float, ram: float) -> str:
+def bot_control_text(name: str, server_text: str, status: str, uptime: str, cpu: float, ram: float) -> str:
     """Карточка проекта в новом стиле."""
     # Прогресс-бар для CPU
     cpu_bar = _create_progress_bar(cpu, 100)
     
-    # Извлекаем только иконку статуса
-    status_icon = "🟢" if "running" in status_text.lower() else ("🔴" if "error" in status_text.lower() else "⚫")
+    # Иконка статуса на основе сырого статуса
+    if status == "running":
+        status_icon = "🟢"
+    elif status in ("error", "stopped"):
+        status_icon = "🔴" if status == "error" else "⚫"
+    else:
+        status_icon = "⚫"
     
     return f"""{status_icon} <b>{name}</b>
 
