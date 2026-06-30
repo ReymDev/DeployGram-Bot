@@ -19,8 +19,10 @@ class PromoStates(StatesGroup):
 
 @router.callback_query(F.data == "promo_activate")
 async def promo_menu(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         "🎁 <b>Активация промокода</b>\n\nВведи код:",
+        "control_panel",
         reply_markup=get_back_keyboard("control_panel"),
     )
     await state.set_state(PromoStates.waiting_code)
@@ -76,8 +78,10 @@ async def referrals_menu(callback: CallbackQuery, db_user, session):
         f"Поделись ссылкой с друзьями!"
     )
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "control_panel",
         reply_markup=get_back_keyboard("control_panel"),
     )
     await callback.answer()
