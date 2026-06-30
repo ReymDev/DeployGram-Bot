@@ -72,12 +72,15 @@ async def edit_photo_or_text(
     if photo_file_id:
         # Есть фото для этого ключа
         if message.photo:
-            # Сообщение уже содержит фото - редактируем caption
+            # Сообщение уже содержит фото - меняем фото и caption
             try:
-                return await message.edit_caption(
-                    caption=text,
+                return await message.edit_media(
+                    media=InputMediaPhoto(
+                        media=photo_file_id,
+                        caption=text,
+                        parse_mode=parse_mode,
+                    ),
                     reply_markup=reply_markup,
-                    parse_mode=parse_mode,
                 )
             except TelegramBadRequest as e:
                 if "message is not modified" in str(e).lower():
