@@ -58,6 +58,15 @@ class VPSClient:
             ) as resp:
                 return await resp.json()
 
+    async def restart_container(self, container_id: str) -> dict:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
+            async with session.post(
+                f"{self.base_url}/container/restart",
+                json={"container_id": container_id},
+                headers=self._headers(),
+            ) as resp:
+                return await resp.json()
+
     async def get_status(self, container_id: str) -> dict:
         async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(
@@ -65,10 +74,6 @@ class VPSClient:
                 headers=self._headers(),
             ) as resp:
                 return await resp.json()
-
-    async def get_container_status(self, container_id: str) -> dict:
-        """Alias for get_status for compatibility."""
-        return await self.get_status(container_id)
 
     async def get_stats(self, container_id: str) -> dict:
         async with aiohttp.ClientSession(timeout=self.timeout) as session:
@@ -87,10 +92,28 @@ class VPSClient:
             ) as resp:
                 return await resp.json()
 
+    async def get_packages(self, container_id: str) -> dict:
+        """Список установленных пакетов из контейнера."""
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
+            async with session.get(
+                f"{self.base_url}/container/{container_id}/packages",
+                headers=self._headers(),
+            ) as resp:
+                return await resp.json()
+
     async def get_server_stats(self) -> dict:
         async with aiohttp.ClientSession(timeout=self.timeout) as session:
             async with session.get(
                 f"{self.base_url}/stats",
+                headers=self._headers(),
+            ) as resp:
+                return await resp.json()
+
+    async def get_server_info(self) -> dict:
+        """Информация о сервере (CPU/RAM/Disk) из агента."""
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
+            async with session.get(
+                f"{self.base_url}/server/info",
                 headers=self._headers(),
             ) as resp:
                 return await resp.json()
@@ -146,6 +169,15 @@ class VPSClient:
             async with session.post(
                 f"{self.base_url}/project/{project_id}/file/delete",
                 json={"path": file_path},
+                headers=self._headers(),
+            ) as resp:
+                return await resp.json()
+
+    async def create_directory(self, project_id: int, dir_path: str) -> dict:
+        async with aiohttp.ClientSession(timeout=self.timeout) as session:
+            async with session.post(
+                f"{self.base_url}/project/{project_id}/file/mkdir",
+                json={"path": dir_path},
                 headers=self._headers(),
             ) as resp:
                 return await resp.json()

@@ -41,6 +41,25 @@ class ProjectService:
         project_dir.mkdir(parents=True, exist_ok=True)
         return project_dir
 
+    async def _get_vps_client(self, project: Project):
+        """
+        Возвращает (VPSClient, server) для серверного проекта либо (None, None).
+        Устраняет дублирование кода создания клиента по всем методам.
+        """
+        if not project.server_id:
+            return None, None
+        from repositories.server import ServerRepository
+        from services.vps_agent import VPSClient
+        server_repo = ServerRepository(self.session)
+        server = await server_repo.get_by_id(project.server_id)
+        if server is None:
+            return None, None
+        client = VPSClient(
+            base_url=f"http://{server.ip}:{server.port}",
+            api_key=server.api_key or "",
+        )
+        return client, server
+
     def _get_single_top_dir(self, project_dir: Path) -> str | None:
         dirs = [
             p
@@ -171,8 +190,17 @@ class ProjectService:
         project = await self.project_repo.get_by_id(project_id)
         if project is None:
             return False
-        if project.docker_container_id and self.docker:
-            await self.docker.remove_container(project.docker_container_id)
+        if project.docker_container_id:
+            # VPS-проект — удаляем контейнер через агента
+            if project.server_id:
+                client, _ = await self._get_vps_client(project)
+                if client is not None:
+                    try:
+                        await client.remove_container(project.docker_container_id)
+                    except Exception as e:
+                        logger.error("Failed to remove VPS container for project %d: %s", project_id, e)
+            elif self.docker:
+                await self.docker.remove_container(project.docker_container_id)
         return await self.project_repo.delete(project_id)
 
     async def start_project(self, project_id: int) -> tuple[bool, str]:
@@ -332,7 +360,7 @@ class ProjectService:
                 try:
                     import asyncio
                     await asyncio.sleep(2)  # Wait for container to stop
-                    status = await client.get_container_status(project.docker_container_id)
+                    status = await client.get_status(project.docker_container_id)
                     if status.get("running"):
                         logger.error(f"Container {project.docker_container_id} still running after stop command")
                         return False, "Ошибка остановки: контейнер все еще работает"
@@ -369,6 +397,28 @@ class ProjectService:
         if project is None:
             return False, "Проект не найден"
 
+        # VPS-проект — используем restart-эндпоинт агента
+        if project.server_id:
+            client, _ = await self._get_vps_client(project)
+            if client is None:
+                # Сервер недоступен — пробуем полный пересоздание через start_project
+                success, msg = await self.start_project(project_id)
+                if success:
+                    await self.project_repo.update(
+                        project_id, restart_count=project.restart_count + 1
+                    )
+                return success, msg
+            try:
+                await client.restart_container(project.docker_container_id)
+                await self.project_repo.update(
+                    project_id, restart_count=project.restart_count + 1, status="running"
+                )
+                return True, "Проект перезапущен"
+            except Exception as e:
+                logger.error("Failed to restart VPS project %d: %s", project_id, e)
+                return False, f"Ошибка перезапуска: {e}"
+
+        # Локальный проект — остановить, удалить и запустить заново
         if project.docker_container_id and self.docker:
             await self.docker.stop_container(project.docker_container_id)
             await self.docker.remove_container(project.docker_container_id)
@@ -748,6 +798,19 @@ class ProjectService:
         project = await self.project_repo.get_by_id(project_id)
         if not project or not project.docker_container_id:
             return False
+
+        # VPS-проект — создаём директорию через агента
+        if project.server_id:
+            client, _ = await self._get_vps_client(project)
+            if client is None:
+                return False
+            try:
+                result = await client.create_directory(project_id, dir_path)
+                return result.get("status") == "ok"
+            except Exception as e:
+                logger.error("Failed to create dir on VPS for project %d: %s", project_id, e)
+                return False
+
         if not self.docker:
             return False
         return await self.docker.create_dir(project.docker_container_id, dir_path)
@@ -756,6 +819,19 @@ class ProjectService:
         project = await self.project_repo.get_by_id(project_id)
         if not project or not project.docker_container_id:
             return False
+
+        # VPS-проект — очищаем логи через рестарт контейнера на агенте
+        if project.server_id:
+            client, _ = await self._get_vps_client(project)
+            if client is None:
+                return False
+            try:
+                await client.restart_container(project.docker_container_id)
+                return True
+            except Exception as e:
+                logger.error("Failed to clear logs on VPS for project %d: %s", project_id, e)
+                return False
+
         if not self.docker:
             return False
         return await self.docker.clear_logs(project.docker_container_id)
@@ -766,9 +842,17 @@ class ProjectService:
         if not project or not project.docker_container_id:
             return []
 
-        # TODO: VPS support for get_installed_packages
-        # if project.server_id:
-        #     Add VPS Agent API endpoint for pip list
+        # VPS-проект — получаем список пакетов через агента
+        if project.server_id:
+            client, _ = await self._get_vps_client(project)
+            if client is None:
+                return []
+            try:
+                result = await client.get_packages(project.docker_container_id)
+                return result.get("packages", [])
+            except Exception as e:
+                logger.error("Failed to get packages from VPS for project %d: %s", project_id, e)
+                return []
 
         if not self.docker:
             return []
