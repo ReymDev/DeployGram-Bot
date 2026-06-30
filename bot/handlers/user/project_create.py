@@ -14,6 +14,7 @@ from bot.keyboards.user import (
 from bot.keyboards.common import get_back_keyboard
 from bot.states.project import ProjectCreateStates
 from bot.utils.emojis import Emoji
+from bot.utils.media import edit_photo_or_text
 from services.github import GitHubService
 
 router = Router()
@@ -35,8 +36,10 @@ async def create_project_start(callback: CallbackQuery, user_service, db_user, p
         )
         return
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.ADD_BOT_SOURCE_TEXT,
+        "upload_source",
         reply_markup=get_create_project_step1_keyboard(),
         parse_mode="HTML"
     )
@@ -51,15 +54,19 @@ async def create_type_selected(callback: CallbackQuery, state: FSMContext):
     await state.update_data(source_type=source_type)
 
     if source_type == "github":
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             texts.ADD_BOT_GITHUB_TEXT,
+            "github_repos",
             reply_markup=get_back_keyboard("create_project"),
             parse_mode="HTML"
         )
         await state.set_state(ProjectCreateStates.waiting_github_url)
     else:
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             texts.ADD_BOT_ZIP_TEXT,
+            "file_upload",
             reply_markup=get_back_keyboard("create_project"),
             parse_mode="HTML"
         )
@@ -148,9 +155,11 @@ async def python_selected(callback: CallbackQuery, state: FSMContext):
     version = callback.data.replace("create_python_", "")
     await state.update_data(python_version=version)
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         f"✅ <b>Python {version}</b>\n\n"
         f"{texts.ADD_BOT_ENTRY_TEXT}",
+        "entry_point",
         reply_markup=get_entry_type_keyboard(),
         parse_mode="HTML"
     )
@@ -163,8 +172,10 @@ async def entry_script(callback: CallbackQuery, state: FSMContext):
     from bot import texts
     await state.update_data(entry_type="script")
     
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.add_bot_entry_script_text(),
+        "entry_point_script",
         reply_markup=get_back_keyboard("create_project"),
         parse_mode="HTML"
     )
@@ -177,8 +188,10 @@ async def entry_module(callback: CallbackQuery, state: FSMContext):
     from bot import texts
     await state.update_data(entry_type="module")
     
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.ADD_BOT_ENTRY_MODULE_TEXT,
+        "entry_point_module",
         reply_markup=get_back_keyboard("create_project"),
         parse_mode="HTML"
     )
@@ -378,10 +391,12 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
     await state.clear()
 
     from bot.keyboards.user import get_project_manage_keyboard
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         f"🎉 <b>Проект создан!</b>\n\n"
         f"<b>{project.name}</b> готов к запуску.\n\n"
         f"Нажми <b>\"Запустить\"</b> чтобы развернуть его в облаке.",
+        "bot_ready",
         reply_markup=get_project_manage_keyboard(project.id, project.status),
         parse_mode="HTML"
     )

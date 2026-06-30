@@ -5,6 +5,7 @@ from aiogram.types import CallbackQuery
 
 from bot.keyboards.user import get_bot_list_keyboard
 from bot.utils.text import start_text
+from bot.utils.media import edit_photo_or_text
 
 router = Router()
 
@@ -14,13 +15,17 @@ async def my_projects(callback: CallbackQuery, db_user, project_service):
     projects_with_flags = await project_service.get_all_user_projects(db_user.id)
 
     if not projects_with_flags:
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             "📦 У вас пока нет проектов.\n\nНажмите «Создать проект» чтобы начать.",
+            "control_panel",
             reply_markup=get_bot_list_keyboard([]),
         )
     else:
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             f"📦 <b>Ваши проекты</b> ({len(projects_with_flags)})",
+            "control_panel",
             reply_markup=get_bot_list_keyboard(projects_with_flags),
         )
     await callback.answer()
@@ -30,8 +35,10 @@ async def my_projects(callback: CallbackQuery, db_user, project_service):
 async def projects_page(callback: CallbackQuery, db_user, project_service):
     page = int(callback.data.split("_")[-1])
     projects_with_flags = await project_service.get_all_user_projects(db_user.id)
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         f"📦 <b>Ваши проекты</b> ({len(projects_with_flags)})",
+        "control_panel",
         reply_markup=get_bot_list_keyboard(projects_with_flags, page),
     )
     await callback.answer()
