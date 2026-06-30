@@ -10,6 +10,42 @@ from aiogram.types import (
 from bot.config_photos import get_photo
 
 
+async def smart_edit(
+    target,
+    text: str,
+    photo_key: str | None = None,
+    reply_markup: InlineKeyboardMarkup | None = None,
+    parse_mode: str = "HTML",
+) -> Message | None:
+    """
+    Универсальная функция для редактирования сообщений.
+    Автоматически определяет тип target (CallbackQuery или Message)
+    и выбирает правильный метод редактирования.
+    
+    Args:
+        target: CallbackQuery или Message
+        text: Текст сообщения
+        photo_key: Ключ фото из config_photos (опционально)
+        reply_markup: Клавиатура
+        parse_mode: Режим парсинга (по умолчанию HTML)
+    
+    Returns:
+        Отредактированное или новое сообщение
+    """
+    if isinstance(target, CallbackQuery):
+        message = target.message
+    else:
+        message = target
+    
+    return await edit_photo_or_text(
+        message=message,
+        text=text,
+        photo_key=photo_key or "control_panel",  # Дефолтный ключ
+        reply_markup=reply_markup,
+        parse_mode=parse_mode,
+    )
+
+
 async def send_photo_or_text(
     target,
     text: str,

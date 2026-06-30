@@ -7,6 +7,7 @@ from bot.config import settings
 from bot.keyboards.user import get_settings_keyboard
 from bot.keyboards.common import get_back_keyboard
 from bot.utils.emojis import Emoji
+from bot.utils.media import edit_photo_or_text
 from bot import texts
 
 router = Router()
@@ -33,8 +34,10 @@ async def profile(callback: CallbackQuery, db_user, user_service, session):
         referral_link=referral_link,
     )
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "control_panel",
         reply_markup=get_back_keyboard("main_menu"),
         parse_mode="HTML"
     )
@@ -59,8 +62,10 @@ async def settings_page(callback: CallbackQuery, user_service, db_user):
         s.notify_update_done,
     )
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.notification_settings_text(),
+        "control_panel",
         reply_markup=keyboard,
         parse_mode="HTML"
     )
