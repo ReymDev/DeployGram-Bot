@@ -195,8 +195,10 @@ async def bot_start(callback: CallbackQuery, project_service, db_user, session):
         )
 
         try:
-            await callback.message.edit_text(
+            await edit_photo_or_text(
+                callback.message,
                 text,
+                "bot_control",
                 reply_markup=get_bot_control_keyboard(project_id, status),
             )
         except TelegramBadRequest as e:
@@ -266,8 +268,10 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
         )
 
         try:
-            await callback.message.edit_text(
+            await edit_photo_or_text(
+                callback.message,
                 text,
+                "bot_control",
                 reply_markup=get_bot_control_keyboard(project_id, status),
             )
         except TelegramBadRequest as e:
@@ -303,8 +307,10 @@ async def bot_logs(callback: CallbackQuery, project_service, db_user, session):
     )
 
     try:
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             text,
+            "logs",
             reply_markup=get_logs_keyboard(project_id),
         )
     except Exception as e:
