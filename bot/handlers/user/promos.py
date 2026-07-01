@@ -7,6 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 from bot.keyboards.common import get_back_keyboard
 from bot.utils.emojis import Emoji
+from bot.utils.media import edit_photo_or_text
 
 router = Router()
 
@@ -17,9 +18,11 @@ class PromoStates(StatesGroup):
 
 @router.callback_query(F.data == "promo_activate")
 async def promo_menu(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         f"{Emoji.GIFT} <b>Активация промокода</b>\n\n"
         f"Введите код:",
+        "control_panel",
         reply_markup=get_back_keyboard("main_menu"),
     )
     await state.set_state(PromoStates.waiting_code)

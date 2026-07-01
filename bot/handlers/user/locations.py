@@ -4,6 +4,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from bot.utils.emojis import Emoji, EmojiID
+from bot.utils.media import edit_photo_or_text
 from bot import texts
 
 router = Router()
@@ -17,8 +18,10 @@ async def locations_menu(callback: CallbackQuery, session):
     servers = await server_repo.get_online_servers()
 
     if not servers:
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             texts.LOCATIONS_NO_SERVERS,
+            "control_panel",
         )
         await callback.answer()
         return
@@ -42,8 +45,10 @@ async def locations_menu(callback: CallbackQuery, session):
         InlineKeyboardButton(text="◁ Меню", callback_data="main_menu"),
     )
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.LOCATIONS_SERVERS_TEXT,
+        "server_selection",
         reply_markup=builder.as_markup(),
     )
     await callback.answer()
@@ -74,5 +79,10 @@ async def location_view(callback: CallbackQuery, session):
     )
 
     from bot.keyboards.common import get_back_keyboard
-    await callback.message.edit_text(text, reply_markup=get_back_keyboard("locations"))
+    await edit_photo_or_text(
+        callback.message,
+        text,
+        "server_selection",
+        reply_markup=get_back_keyboard("locations")
+    )
     await callback.answer()

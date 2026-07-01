@@ -7,6 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 from bot.utils.emojis import Emoji, EmojiID
 from bot.keyboards.common import get_back_keyboard
+from bot.utils.media import edit_photo_or_text
 from bot import texts
 
 router = Router()
@@ -29,8 +30,10 @@ async def coowners_menu(callback: CallbackQuery, project_service, db_user, sessi
     coowners = await coowner_repo.get_by_project_id(project_id)
 
     from bot.keyboards.user import get_coowners_keyboard
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.bot_coowners_text(project.name),
+        "bot_control",
         reply_markup=get_coowners_keyboard(project_id, coowners),
         parse_mode="HTML"
     )
@@ -41,8 +44,10 @@ async def coowners_menu(callback: CallbackQuery, project_service, db_user, sessi
 async def coowner_add(callback: CallbackQuery, state: FSMContext, db_user):
     project_id = int(callback.data.split("_")[-1])
     await state.update_data(coowner_project_id=project_id)
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.COOWNER_ENTER_ID,
+        "bot_control",
         parse_mode="HTML"
     )
     await state.set_state(CoOwnerStates.waiting_id)
@@ -68,8 +73,10 @@ async def coowner_remove(callback: CallbackQuery, project_service, db_user, sess
 
     coowners = await coowner_repo.get_by_project_id(project_id)
     from bot.keyboards.user import get_coowners_keyboard
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.bot_coowners_text(project.name),
+        "bot_control",
         reply_markup=get_coowners_keyboard(project_id, coowners),
         parse_mode="HTML"
     )
@@ -96,8 +103,10 @@ async def coowner_edit(callback: CallbackQuery, project_service, db_user, sessio
         return
 
     from bot.keyboards.user import get_coowner_permissions_keyboard
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.coowner_permissions_text(coowner.user_id),
+        "bot_control",
         reply_markup=get_coowner_permissions_keyboard(project_id, coowner_id, coowner),
         parse_mode="HTML"
     )

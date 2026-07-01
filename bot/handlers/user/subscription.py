@@ -70,8 +70,10 @@ async def buy_selected(callback: CallbackQuery, db_user):
 
     text = texts.subscription_buy_plan_text(plan['label'], plan['price'])
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "buy_subscription",
         reply_markup=get_back_keyboard("subscription_buy"),
         parse_mode="HTML"
     )
