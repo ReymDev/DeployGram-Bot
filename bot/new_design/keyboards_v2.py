@@ -127,7 +127,7 @@ def project_control(project_id: int, status: str, is_owner: bool = True) -> Inli
         )
     else:
         builder.row(
-            InlineKeyboardButton(text="▶️ Запустить", style="primary", callback_data=f"proj:{project_id}:start")
+            InlineKeyboardButton(text="▶️ Запустить", style="success", callback_data=f"proj:{project_id}:start")
         )
     
     # Информация и мониторинг
@@ -443,9 +443,6 @@ def subscription_menu() -> InlineKeyboardMarkup:
     """
     builder = InlineKeyboardBuilder()
     
-    builder.row(
-        InlineKeyboardButton(text="💎 Обновить до Premium", callback_data="subscription:upgrade")
-    )
     builder.row(
         InlineKeyboardButton(text="🎁 Промокод", callback_data="subscription:promo"),
         InlineKeyboardButton(text="📜 История", callback_data="subscription:history")

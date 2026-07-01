@@ -129,7 +129,7 @@ def get_bot_control_keyboard(bot_id: int, status: str) -> InlineKeyboardMarkup:
         builder.row(
             InlineKeyboardButton(
                 text="▶️ Запустить",
-                style="primary",
+                style="success",
                 callback_data=f"bot_start_{bot_id}",
             ),
         )
@@ -222,14 +222,6 @@ def get_logs_keyboard(bot_id: int) -> InlineKeyboardMarkup:
 def get_subscription_keyboard(is_premium: bool) -> InlineKeyboardMarkup:
     """Клавиатура меню подписки."""
     builder = InlineKeyboardBuilder()
-    
-    if not is_premium:
-        builder.row(
-            InlineKeyboardButton(
-                text="💎 Обновить до Premium",
-                callback_data="subscription_info",
-            ),
-        )
     
     builder.row(
         InlineKeyboardButton(
