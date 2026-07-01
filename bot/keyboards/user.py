@@ -773,6 +773,7 @@ def get_backups_list_keyboard(bots: list) -> InlineKeyboardMarkup:
         builder.row(
             InlineKeyboardButton(
                 text=f"☁ {b.name}",
+                style="primary",
                 callback_data=f"backups_bot_{b.id}",
             )
         )
