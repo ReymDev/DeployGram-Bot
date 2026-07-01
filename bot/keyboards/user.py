@@ -75,6 +75,7 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
             row_buttons.append(
                 InlineKeyboardButton(
                     text=f"{icon} {b.name[:10]}{coowner_tag}",  # Укорочено для тега
+                    style="primary",
                     callback_data=f"bot_view_{b.id}",
                 )
             )

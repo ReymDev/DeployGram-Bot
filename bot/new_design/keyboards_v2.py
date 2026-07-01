@@ -79,6 +79,7 @@ def projects_list(projects: list, page: int = 0, items_per_page: int = 6) -> Inl
             row_buttons.append(
                 InlineKeyboardButton(
                     text=f"{icon} {proj.name[:12]}",  # Ограничение длины
+                    style="primary",
                     callback_data=f"proj:{proj.id}"
                 )
             )
