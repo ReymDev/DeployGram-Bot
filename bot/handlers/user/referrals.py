@@ -4,6 +4,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from bot.utils.emojis import Emoji
+from bot.utils.media import edit_photo_or_text
 
 router = Router()
 
@@ -29,5 +30,10 @@ async def referrals_menu(callback: CallbackQuery, db_user, session):
         InlineKeyboardButton(text="◁ Меню", callback_data="main_menu"),
     )
 
-    await callback.message.edit_text(text, reply_markup=builder.as_markup())
+    await edit_photo_or_text(
+        callback.message,
+        text,
+        "control_panel",
+        reply_markup=builder.as_markup()
+    )
     await callback.answer()
