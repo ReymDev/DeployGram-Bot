@@ -42,7 +42,7 @@ async def locations_menu(callback: CallbackQuery, session):
         InlineKeyboardButton(text="🔄 Обновить", callback_data="locations"),
     )
     builder.row(
-        InlineKeyboardButton(text="◁ Меню", callback_data="main_menu"),
+        InlineKeyboardButton(text="◁ Меню", style="danger", callback_data="main_menu"),
     )
 
     await edit_photo_or_text(

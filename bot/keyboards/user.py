@@ -790,6 +790,7 @@ def get_backups_keyboard(bot_id: int, backups: list) -> InlineKeyboardMarkup:
         builder.row(
             InlineKeyboardButton(
                 text=f"☁ {b.created_at.strftime('%d.%m %H:%M')}",
+                style='primary',
                 callback_data=f"backup_view_{bot_id}_{b.id}",
             )
         )

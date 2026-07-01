@@ -27,7 +27,7 @@ async def referrals_menu(callback: CallbackQuery, db_user, session):
     from aiogram.types import InlineKeyboardButton
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="◁ Меню", callback_data="main_menu"),
+        InlineKeyboardButton(text="◁ Меню", style="danger", callback_data="main_menu"),
     )
 
     await edit_photo_or_text(
