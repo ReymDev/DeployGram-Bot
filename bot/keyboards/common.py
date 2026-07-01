@@ -22,7 +22,7 @@ def get_welcome_keyboard() -> InlineKeyboardMarkup:
     # Дополнительные функции
     builder.row(
         InlineKeyboardButton(text="💳 Подписка", style="primary", callback_data="subscription"),
-        InlineKeyboardButton(text="💾 Бэкапы", callback_data="backups_list"),
+        InlineKeyboardButton(text="💾 Бэкапы", style="primary", callback_data="backups_list"),
     )
     builder.row(
         InlineKeyboardButton(text="🎁 Промокод", style="primary", callback_data="promo_activate"),
