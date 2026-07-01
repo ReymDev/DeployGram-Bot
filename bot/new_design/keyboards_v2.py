@@ -126,7 +126,7 @@ def project_control(project_id: int, status: str, is_owner: bool = True) -> Inli
         )
     else:
         builder.row(
-            InlineKeyboardButton(text="▶️ Запустить", callback_data=f"proj:{project_id}:start")
+            InlineKeyboardButton(text="▶️ Запустить", style="primary", callback_data=f"proj:{project_id}:start")
         )
     
     # Информация и мониторинг

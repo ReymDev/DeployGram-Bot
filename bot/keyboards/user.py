@@ -128,7 +128,7 @@ def get_bot_control_keyboard(bot_id: int, status: str) -> InlineKeyboardMarkup:
         builder.row(
             InlineKeyboardButton(
                 text="▶️ Запустить",
-                style="success",
+                style="primary",
                 callback_data=f"bot_start_{bot_id}",
             ),
         )
