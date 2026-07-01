@@ -98,6 +98,7 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
     builder.row(
         InlineKeyboardButton(
             text="✨ Создать проект",
+            style="success",
             callback_data="create_project",
         ),
     )

@@ -27,7 +27,7 @@ def home_menu(has_projects: bool = False) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="📱 Мои проекты", callback_data="my_projects")
         )
         builder.row(
-            InlineKeyboardButton(text="✨ Создать проект", callback_data="create_new")
+            InlineKeyboardButton(text="✨ Создать проект", style="success", callback_data="create_new")
         )
     else:
         # Для новых пользователей - призыв к действию
