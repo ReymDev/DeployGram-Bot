@@ -122,12 +122,6 @@ def get_bot_control_keyboard(bot_id: int, status: str) -> InlineKeyboardMarkup:
                 callback_data=f"bot_stop_{bot_id}",
             ),
         )
-        builder.row(
-            InlineKeyboardButton(
-                text="🔄 Перезапустить",
-                callback_data=f"bot_restart_{bot_id}",
-            ),
-        )
     else:
         builder.row(
             InlineKeyboardButton(

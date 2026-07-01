@@ -41,8 +41,6 @@ class OperationRateLimitMiddleware(BaseMiddleware):
             return "start_project"
         elif data.startswith("bot_stop_") or data.startswith("project_stop_"):
             return "stop_project"
-        elif data.startswith("bot_restart_") or data.startswith("project_restart_"):
-            return "restart_project"
         elif data.startswith("bot_del_confirm_") or data.startswith("project_del_confirm_"):
             return "delete_project"
         return None

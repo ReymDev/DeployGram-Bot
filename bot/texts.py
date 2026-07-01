@@ -365,8 +365,6 @@ PROJECT_START_SUCCESS = "✅ <b>Проект запущен!</b>\n\nКонтей
 PROJECT_START_ERROR = "❌ <b>Ошибка запуска</b>\n\nПроверь логи для подробностей."
 PROJECT_STOP_SUCCESS = "✅ <b>Проект остановлен</b>\n\nКонтейнер остановлен, данные сохранены."
 PROJECT_STOP_ERROR = "❌ <b>Ошибка остановки</b>\n\nПопробуй ещё раз."
-PROJECT_RESTART_SUCCESS = "🔄 <b>Проект перезапущен</b>\n\nКонтейнер перезагружен."
-PROJECT_RESTART_ERROR = "❌ <b>Ошибка перезапуска</b>\n\nПроверь статус проекта."
 
 
 # ─── BOT LOGS ───

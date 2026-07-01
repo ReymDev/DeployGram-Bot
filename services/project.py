@@ -392,44 +392,6 @@ class ProjectService:
         logger.info(f"Project {project_id} stopped successfully")
         return True, "Проект остановлен"
 
-    async def restart_project(self, project_id: int) -> tuple[bool, str]:
-        project = await self.project_repo.get_by_id(project_id)
-        if project is None:
-            return False, "Проект не найден"
-
-        # VPS-проект — используем restart-эндпоинт агента
-        if project.server_id:
-            client, _ = await self._get_vps_client(project)
-            if client is None:
-                # Сервер недоступен — пробуем полный пересоздание через start_project
-                success, msg = await self.start_project(project_id)
-                if success:
-                    await self.project_repo.update(
-                        project_id, restart_count=project.restart_count + 1
-                    )
-                return success, msg
-            try:
-                await client.restart_container(project.docker_container_id)
-                await self.project_repo.update(
-                    project_id, restart_count=project.restart_count + 1, status="running"
-                )
-                return True, "Проект перезапущен"
-            except Exception as e:
-                logger.error("Failed to restart VPS project %d: %s", project_id, e)
-                return False, f"Ошибка перезапуска: {e}"
-
-        # Локальный проект — остановить, удалить и запустить заново
-        if project.docker_container_id and self.docker:
-            await self.docker.stop_container(project.docker_container_id)
-            await self.docker.remove_container(project.docker_container_id)
-
-        success, msg = await self.start_project(project_id)
-        if success:
-            await self.project_repo.update(
-                project_id, restart_count=project.restart_count + 1
-            )
-        return success, msg
-
     async def get_monitoring(self, project_id: int) -> dict:
         project = await self.project_repo.get_by_id(project_id)
         if project is None or not project.docker_container_id:

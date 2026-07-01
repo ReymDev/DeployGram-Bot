@@ -97,30 +97,6 @@ async def project_stop(callback: CallbackQuery, project_service, db_user):
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("project_restart_"))
-async def project_restart(callback: CallbackQuery, project_service, db_user):
-    project_id = int(callback.data.split("_")[-1])
-    project = await _check_owner(callback, project_service, db_user, project_id)
-    if project is None:
-        return
-
-    success, msg = await project_service.restart_project(project_id)
-    project = await project_service.get_project(project_id)
-    
-    if project:
-        if success:
-            text = texts.PROJECT_RESTART_SUCCESS
-        else:
-            text = f"{texts.PROJECT_RESTART_ERROR}\n\n<i>{msg}</i>"
-        
-        await callback.message.edit_text(
-            text,
-            reply_markup=get_project_manage_keyboard(project_id, project.status),
-            parse_mode="HTML"
-        )
-    await callback.answer()
-
-
 @router.callback_query(F.data.startswith("project_delete_"))
 async def project_delete(callback: CallbackQuery, project_service, db_user):
     project_id = int(callback.data.replace("project_delete_", ""))
