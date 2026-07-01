@@ -4,6 +4,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from bot.keyboards.user import get_project_manage_keyboard, get_project_list_keyboard
+from bot.utils.media import edit_photo_or_text
 from bot import texts
 
 router = Router()
@@ -41,8 +42,10 @@ async def project_view(callback: CallbackQuery, project_service, db_user):
         restarts=monitoring.get("restarts", 0),
     )
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "bot_control",
         reply_markup=get_project_manage_keyboard(project_id, project.status),
         parse_mode="HTML"
     )
@@ -65,8 +68,10 @@ async def project_start(callback: CallbackQuery, project_service, db_user):
         else:
             text = f"{texts.PROJECT_START_ERROR}\n\n<i>{msg}</i>"
         
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             text,
+            "bot_control",
             reply_markup=get_project_manage_keyboard(project_id, project.status),
             parse_mode="HTML"
         )
@@ -89,8 +94,10 @@ async def project_stop(callback: CallbackQuery, project_service, db_user):
         else:
             text = f"{texts.PROJECT_STOP_ERROR}\n\n<i>{msg}</i>"
         
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             text,
+            "bot_control",
             reply_markup=get_project_manage_keyboard(project_id, project.status),
             parse_mode="HTML"
         )
@@ -120,8 +127,10 @@ async def project_delete(callback: CallbackQuery, project_service, db_user):
     )
 
     try:
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             texts.project_delete_confirm_text(project.name),
+            "delete_bot",
             reply_markup=builder.as_markup(),
         )
     except Exception:
@@ -146,8 +155,10 @@ async def project_delete_confirm(callback: CallbackQuery, project_service, db_us
     if success:
         projects = await project_service.get_user_projects(db_user.id)
         try:
-            await callback.message.edit_text(
+            await edit_photo_or_text(
+                callback.message,
                 texts.PROJECT_DELETED_TEXT,
+                "bot_deleted",
                 reply_markup=get_project_list_keyboard(projects),
             )
         except Exception:

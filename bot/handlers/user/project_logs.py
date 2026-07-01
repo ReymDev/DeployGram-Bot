@@ -7,6 +7,7 @@ from aiogram.enums import ParseMode
 from bot.keyboards.user import get_logs_keyboard
 from bot.utils.emojis import Emoji
 from bot.utils.formatters import truncate_text
+from bot.utils.media import edit_photo_or_text
 from bot import texts
 
 router = Router()
@@ -27,8 +28,10 @@ async def project_logs_menu(callback: CallbackQuery, project_service, db_user, s
         await callback.answer("⛔ У вас нет прав на просмотр логов", show_alert=True)
         return
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.project_logs_menu_text(project.name),
+        "logs",
         reply_markup=get_logs_keyboard(project_id),
         parse_mode=ParseMode.HTML
     )
@@ -55,8 +58,10 @@ async def logs_view(callback: CallbackQuery, project_service, db_user, session):
     from html import escape
     escaped_logs = escape(truncated)
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.project_logs_view_text(escaped_logs),
+        "logs",
         reply_markup=get_logs_keyboard(project_id),
         parse_mode=ParseMode.HTML,
     )
