@@ -226,6 +226,7 @@ def get_subscription_keyboard(is_premium: bool) -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="❓ Что даёт Premium?",
+            style="primary",
             callback_data="subscription_info",
         ),
     )
@@ -234,6 +235,7 @@ def get_subscription_keyboard(is_premium: bool) -> InlineKeyboardMarkup:
         builder.row(
             InlineKeyboardButton(
                 text="💳 Купить подписку",
+                style="success",
                 callback_data="subscription_buy",
             ),
         )
@@ -253,6 +255,7 @@ def get_buy_subscription_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text=f"🎁 1 неделя — {settings.PREMIUM_PRICE_1W}₽ (пробная)",
+            style="success",
             callback_data="buy_1_week"
         )
     )
@@ -261,6 +264,7 @@ def get_buy_subscription_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text=f"1 месяц — {settings.PREMIUM_PRICE_1M}₽",
+            style="success",
             callback_data="buy_1_month"
         )
     )
@@ -269,6 +273,7 @@ def get_buy_subscription_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text=f"💰 3 месяца — {settings.PREMIUM_PRICE_3M}₽ (экономия 10%)",
+            style="success",
             callback_data="buy_3_months"
         )
     )
@@ -277,6 +282,7 @@ def get_buy_subscription_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text=f"💰 6 месяцев — {settings.PREMIUM_PRICE_6M}₽ (экономия 15%)",
+            style="success",
             callback_data="buy_6_months"
         )
     )
@@ -285,6 +291,7 @@ def get_buy_subscription_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text=f"🔥 1 год — {settings.PREMIUM_PRICE_12M}₽ (экономия 20%)",
+            style="success",
             callback_data="buy_12_months"
         )
     )
@@ -790,7 +797,7 @@ def get_backups_keyboard(bot_id: int, backups: list) -> InlineKeyboardMarkup:
         InlineKeyboardButton(
             text="➕ Создать бэкап",
             callback_data=f"backup_create_{bot_id}",
-            style="primary",
+            style="success",
         ),
     )
     builder.row(
