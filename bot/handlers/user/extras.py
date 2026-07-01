@@ -23,7 +23,7 @@ async def promo_menu(callback: CallbackQuery, state: FSMContext):
         callback.message,
         "🎁 <b>Активация промокода</b>\n\nВведи код:",
         "control_panel",
-        reply_markup=get_back_keyboard("control_panel"),
+        reply_markup=get_back_keyboard("main_menu"),
     )
     await state.set_state(PromoStates.waiting_code)
     await callback.answer()
@@ -53,12 +53,12 @@ async def promo_code_received(message: Message, state: FSMContext, db_user, sess
 
         await message.answer(
             f"🎉 {msg}",
-            reply_markup=get_back_keyboard("control_panel"),
+            reply_markup=get_back_keyboard("main_menu"),
         )
     else:
         await message.answer(
             f"❌ {msg}",
-            reply_markup=get_back_keyboard("control_panel"),
+            reply_markup=get_back_keyboard("main_menu"),
         )
 
 
@@ -82,6 +82,6 @@ async def referrals_menu(callback: CallbackQuery, db_user, session):
         callback.message,
         text,
         "control_panel",
-        reply_markup=get_back_keyboard("control_panel"),
+        reply_markup=get_back_keyboard("main_menu"),
     )
     await callback.answer()
