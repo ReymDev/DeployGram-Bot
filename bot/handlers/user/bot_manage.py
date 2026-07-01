@@ -764,7 +764,7 @@ async def bot_coowners(callback: CallbackQuery, project_service, db_user, sessio
         InlineKeyboardButton(text="➕ Добавить", callback_data=f"coowner_add_{project_id}", style="primary"),
     )
     builder.row(
-        InlineKeyboardButton(text="Назад", callback_data=f"bot_settings_{project_id}"),
+        InlineKeyboardButton(text="Назад", style="danger", callback_data=f"bot_settings_{project_id}"),
     )
 
     await callback.message.edit_text(
@@ -981,7 +981,7 @@ async def bot_graphs(callback: CallbackQuery, project_service, db_user, session)
             InlineKeyboardButton(text=f"📊 {label}", callback_data=f"bot_graphs_{project_id}_{h}")
         )
     builder.row(
-        InlineKeyboardButton(text="Назад", callback_data=f"bot_view_{project_id}"),
+        InlineKeyboardButton(text="Назад", style="danger", callback_data=f"bot_view_{project_id}"),
     )
 
     await callback.message.edit_text(
@@ -1027,7 +1027,7 @@ async def bot_notify(callback: CallbackQuery, user_service, db_user):
         )
 
     builder.row(
-        InlineKeyboardButton(text="Назад", callback_data=f"bot_settings_{project_id}"),
+        InlineKeyboardButton(text="Назад", style="danger", callback_data=f"bot_settings_{project_id}"),
     )
 
     await callback.message.edit_text(
@@ -1077,7 +1077,7 @@ async def toggle_notification(callback: CallbackQuery, user_service, db_user):
 
         project_id = int(callback.data.split("_")[-1]) if callback.data.split("_")[-1].isdigit() else 0
         builder.row(
-            InlineKeyboardButton(text="Назад", callback_data=f"bot_settings_{project_id}"),
+            InlineKeyboardButton(text="Назад", style="danger", callback_data=f"bot_settings_{project_id}"),
         )
 
         try:

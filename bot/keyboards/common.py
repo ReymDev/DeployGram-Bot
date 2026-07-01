@@ -14,18 +14,19 @@ def get_welcome_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="📱 Мои проекты",
+            style="success",
             callback_data="control_panel",
         ),
     )
     
     # Дополнительные функции
     builder.row(
-        InlineKeyboardButton(text="💳 Подписка", callback_data="subscription"),
+        InlineKeyboardButton(text="💳 Подписка", style="primary", callback_data="subscription"),
         InlineKeyboardButton(text="💾 Бэкапы", callback_data="backups_list"),
     )
     builder.row(
-        InlineKeyboardButton(text="🎁 Промокод", callback_data="promo_activate"),
-        InlineKeyboardButton(text="🔗 Рефералы", callback_data="referrals"),
+        InlineKeyboardButton(text="🎁 Промокод", style="primary", callback_data="promo_activate"),
+        InlineKeyboardButton(text="🔗 Рефералы", style="primary", callback_data="referrals"),
     )
     
     return builder.as_markup()
@@ -36,7 +37,7 @@ def get_control_panel_keyboard(has_bots: bool = False) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="✨ Создать проект", callback_data="create_project"),
+        InlineKeyboardButton(text="✨ Создать проект", style="success", callback_data="create_project"),
     )
     
     return builder.as_markup()
@@ -51,6 +52,7 @@ def get_back_keyboard(callback_data: str = "control_panel") -> InlineKeyboardMar
     builder.row(
         InlineKeyboardButton(
             text="Назад",
+            style="danger",
             callback_data=callback_data,
         ),
     )

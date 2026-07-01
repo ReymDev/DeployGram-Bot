@@ -49,7 +49,7 @@ async def admin_photos_menu(callback: CallbackQuery):
         )
 
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", callback_data="admin_panel"),
+        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data="admin_panel"),
     )
 
     await callback.message.edit_text(

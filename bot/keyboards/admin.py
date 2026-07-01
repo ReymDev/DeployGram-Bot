@@ -114,7 +114,7 @@ def get_admin_users_keyboard(users: list, page: int = 0, per_page: int = 5) -> I
         builder.row(*nav_row)
 
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", callback_data="admin_panel"),
+        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data="admin_panel"),
     )
     return builder.as_markup()
 
@@ -154,7 +154,7 @@ def get_admin_user_detail_keyboard(user_id: int, is_banned: bool) -> InlineKeybo
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", callback_data="admin_users"),
+        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data="admin_users"),
     )
     return builder.as_markup()
 
@@ -182,7 +182,7 @@ def get_admin_servers_keyboard(servers: list) -> InlineKeyboardMarkup:
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", callback_data="admin_panel"),
+        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data="admin_panel"),
     )
     return builder.as_markup()
 
@@ -208,7 +208,7 @@ def get_admin_promos_keyboard(promos: list) -> InlineKeyboardMarkup:
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", callback_data="admin_panel"),
+        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data="admin_panel"),
     )
     return builder.as_markup()
 
@@ -231,6 +231,6 @@ def get_admin_settings_keyboard(auto_sleep: int) -> InlineKeyboardMarkup:
         )
 
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", callback_data="admin_panel"),
+        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data="admin_panel"),
     )
     return builder.as_markup()

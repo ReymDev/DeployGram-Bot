@@ -85,7 +85,7 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
     nav_row = []
     if page > 0:
         nav_row.append(
-            InlineKeyboardButton(text="⬅️ Назад", callback_data=f"bots_page_{page - 1}")
+            InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"bots_page_{page - 1}")
         )
     if end < len(bots):
         nav_row.append(
@@ -104,7 +104,7 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
     
     # Кнопка "Назад" в главное меню
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="main_menu"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="main_menu"),
     )
     
     return builder.as_markup()
@@ -245,7 +245,7 @@ def get_subscription_keyboard(is_premium: bool) -> InlineKeyboardMarkup:
         )
     
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="main_menu"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="main_menu"),
     )
     return builder.as_markup()
 
@@ -296,7 +296,7 @@ def get_buy_subscription_keyboard() -> InlineKeyboardMarkup:
     )
     
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="subscription")
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="subscription")
     )
     return builder.as_markup()
 
@@ -345,7 +345,7 @@ def get_entry_type_keyboard() -> InlineKeyboardMarkup:
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="create_project"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="create_project"),
     )
     return builder.as_markup()
 
@@ -386,7 +386,7 @@ def get_python_version_keyboard(step: str = "", current: str = "") -> InlineKeyb
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="create_back"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="create_back"),
     )
     return builder.as_markup()
 
@@ -412,7 +412,7 @@ def get_entry_mode_keyboard() -> InlineKeyboardMarkup:
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="create_back"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="create_back"),
     )
     return builder.as_markup()
 
@@ -586,6 +586,7 @@ def get_file_browser_keyboard(
     builder.row(
         InlineKeyboardButton(
             text="⬅️ Назад",
+            style="danger",
             callback_data=f"bot_files_{project_id}",
         ),
     )
@@ -635,6 +636,7 @@ def get_file_upload_browser_keyboard(
     builder.row(
         InlineKeyboardButton(
             text="⬅️ Назад",
+            style="danger",
             callback_data=f"bot_files_{project_id}",
         ),
     )
@@ -663,6 +665,7 @@ def get_file_action_keyboard(project_id: int, file_path: str) -> InlineKeyboardM
     builder.row(
         InlineKeyboardButton(
             text="⬅️ Назад",
+            style="danger",
             callback_data=f"fbrowse_nav_{project_id}_{parent}",
         ),
     )
@@ -690,7 +693,7 @@ def get_python_change_keyboard(bot_id: int, current: str) -> InlineKeyboardMarku
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data=f"bot_settings_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"bot_settings_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -710,7 +713,7 @@ def get_entry_change_keyboard(bot_id: int, entry_type: str, entry_point: str) ->
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data=f"bot_settings_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"bot_settings_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -758,7 +761,7 @@ def get_server_select_keyboard(servers: list, tariff: str = "free") -> InlineKey
         )
 
     builder.row(
-        InlineKeyboardButton(text="Назад", callback_data="create_back"),
+        InlineKeyboardButton(text="Назад", style="danger", callback_data="create_back"),
     )
     return builder.as_markup()
 
@@ -773,7 +776,7 @@ def get_backups_list_keyboard(bots: list) -> InlineKeyboardMarkup:
             )
         )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="main_menu"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="main_menu"),
     )
     return builder.as_markup()
 
@@ -797,7 +800,7 @@ def get_backups_keyboard(bot_id: int, backups: list) -> InlineKeyboardMarkup:
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="Назад к списку", callback_data="backups_list"),
+        InlineKeyboardButton(text="Назад к списку", style="danger", callback_data="backups_list"),
     )
     return builder.as_markup()
 
@@ -826,7 +829,7 @@ def get_libs_keyboard(bot_id: int, libs: list[str]) -> InlineKeyboardMarkup:
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data=f"bot_settings_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"bot_settings_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -896,7 +899,7 @@ def get_settings_keyboard(
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="profile"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="profile"),
     )
     return builder.as_markup()
 
@@ -924,7 +927,7 @@ def get_coowners_keyboard(project_id: int, coowners: list) -> InlineKeyboardMark
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data=f"bot_settings_{project_id}"),
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"bot_settings_{project_id}"),
     )
     return builder.as_markup()
 

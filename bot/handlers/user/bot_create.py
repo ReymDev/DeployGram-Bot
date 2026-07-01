@@ -100,7 +100,7 @@ def _get_entry_keyboard(tmpdir: str, current_path: str, project_id: int = 0) -> 
         )
 
     builder.row(
-        InlineKeyboardButton(text="Назад", callback_data="create_back"),
+        InlineKeyboardButton(text="Назад", style="danger", callback_data="create_back"),
     )
     return builder.as_markup()
 
@@ -179,7 +179,7 @@ async def source_github(callback: CallbackQuery, state: FSMContext):
         InlineKeyboardButton(text="🔄 Обновить", callback_data="github_refresh"),
     )
     builder.row(
-        InlineKeyboardButton(text="Назад", callback_data="create_back"),
+        InlineKeyboardButton(text="Назад", style="danger", callback_data="create_back"),
     )
 
     await edit_photo_or_text(

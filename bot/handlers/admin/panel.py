@@ -213,7 +213,7 @@ def get_admin_user_tariff_keyboard(user_id: int):
         InlineKeyboardButton(text="💎 Premium", callback_data=f"admin_set_tariff_{user_id}_premium", style="success"),
     )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", callback_data=f"admin_user_view_{user_id}"),
+        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data=f"admin_user_view_{user_id}"),
     )
     return builder.as_markup()
 
@@ -388,7 +388,7 @@ async def admin_server_view(callback: CallbackQuery, session):
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", callback_data="admin_locations"),
+        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data="admin_locations"),
     )
 
     await callback.message.edit_text(text, reply_markup=builder.as_markup())

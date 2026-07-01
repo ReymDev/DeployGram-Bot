@@ -89,7 +89,7 @@ def projects_list(projects: list, page: int = 0, items_per_page: int = 6) -> Inl
     nav_buttons = []
     if page > 0:
         nav_buttons.append(
-            InlineKeyboardButton(text="⬅️ Назад", callback_data=f"projects:page:{page-1}")
+            InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"projects:page:{page-1}")
         )
     if end_idx < len(projects):
         nav_buttons.append(
@@ -198,7 +198,7 @@ def python_version_selector() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text="Python 3.10", callback_data="create:python:3.10")
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="create:back:upload")
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="create:back:upload")
     )
     
     return builder.as_markup()
@@ -217,7 +217,7 @@ def entry_point_method() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text="📝 Указать файл", callback_data="create:entry:manual")
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="create:back:python")
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="create:back:python")
     )
     
     return builder.as_markup()
@@ -239,7 +239,7 @@ def entry_point_files(files: list[str], project_id: int = 0) -> InlineKeyboardMa
         InlineKeyboardButton(text="✏️ Ввести вручную", callback_data="create:entry:manual")
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="create:back:python")
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="create:back:python")
     )
     
     return builder.as_markup()
@@ -337,7 +337,7 @@ def file_actions(project_id: int, file_path: str) -> InlineKeyboardMarkup:
         InlineKeyboardButton(text="🗑️ Удалить", callback_data=f"files:{project_id}:delete:{file_path}")
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data=f"files:{project_id}:back")
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"files:{project_id}:back")
     )
     
     return builder.as_markup()
@@ -563,7 +563,7 @@ def back_button(callback_data: str) -> InlineKeyboardMarkup:
     """
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", callback_data=callback_data)
+        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=callback_data)
     )
     return builder.as_markup()
 
