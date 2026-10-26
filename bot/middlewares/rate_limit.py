@@ -27,6 +27,11 @@ class RateLimitMiddleware(BaseMiddleware):
 
         if user_id:
             now = time.time()
+            if len(self.last_call) > 10_000:
+                cutoff = now - 300
+                self.last_call = {
+                    uid: ts for uid, ts in self.last_call.items() if ts >= cutoff
+                }
             last = self.last_call.get(user_id, 0)
             if now - last < self.limit:
                 if isinstance(event, CallbackQuery):

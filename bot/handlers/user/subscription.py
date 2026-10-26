@@ -7,6 +7,7 @@ from bot.keyboards.user import get_subscription_keyboard, get_buy_subscription_k
 from bot.keyboards.common import get_back_keyboard
 from bot.utils.media import edit_photo_or_text
 from bot import texts
+from bot.config import settings
 
 router = Router()
 
@@ -18,7 +19,7 @@ async def subscription_menu(callback: CallbackQuery, db_user, project_service):
     # Получаем количество проектов пользователя
     projects = await project_service.get_user_projects(db_user.id)
     projects_count = len(projects)
-    max_projects = 5 if is_premium else 1
+    max_projects = settings.PREMIUM_TARIFF_PROJECTS if is_premium else settings.FREE_TARIFF_PROJECTS
     
     text = texts.subscription_text(is_premium, projects_count, max_projects)
 

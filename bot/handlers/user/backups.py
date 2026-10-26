@@ -71,9 +71,13 @@ async def backup_create(callback: CallbackQuery, project_service, db_user, sessi
 
     from services.backup import BackupService
     backup_svc = BackupService(session)
-    await backup_svc.create_backup(project_id, size=0)
+    backup = await backup_svc.create_backup(project_id, size=0)
+    if backup is None:
+        await callback.answer(texts.BACKUP_CREATE_ERROR, show_alert=True)
+        return
 
-    await callback.answer(texts.SUCCESS_BACKUP_CREATED, show_alert=True)
+    from bot.utils.text import plain_text
+    await callback.answer(plain_text(texts.SUCCESS_BACKUP_CREATED), show_alert=True)
 
 
 @router.callback_query(F.data.startswith("backup_view_"))

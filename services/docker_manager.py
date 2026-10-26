@@ -4,6 +4,8 @@ import asyncio
 import json
 import logging
 import os
+import posixpath
+import re
 import shlex
 from typing import Any
 
@@ -11,13 +13,36 @@ import docker
 from docker.errors import APIError, ImageNotFound, NotFound
 from docker.models.containers import Container
 
+from services.archive import ArchiveError, safe_extract_zip
+
 logger = logging.getLogger(__name__)
+
+CONTAINER_NAME_RE = re.compile(r"[^a-zA-Z0-9_.-]+")
+MODULE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
+SCRIPT_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_./-]{0,510}$")
 
 PYTHON_IMAGES = {
     "3.10": "python:3.10-slim",
     "3.11": "python:3.11-slim",
     "3.12": "python:3.12-slim",
 }
+
+
+def _container_name(project_id: int, project_name: str) -> str:
+    slug = CONTAINER_NAME_RE.sub("-", str(project_name)).strip("-_.")[:48] or "project"
+    return f"deploygram_{int(project_id)}_{slug}"
+
+
+def _validate_entry(entry_point: str, entry_type: str) -> str:
+    entry = (entry_point or "").replace("\\", "/").strip()
+    if not entry or entry.startswith("/") or ".." in entry.split("/"):
+        raise ValueError("Некорректная точка входа")
+    if entry_type == "module":
+        if not MODULE_RE.fullmatch(entry):
+            raise ValueError("Некорректное имя модуля")
+    elif not SCRIPT_RE.fullmatch(entry):
+        raise ValueError("Некорректный путь точки входа")
+    return entry
 
 
 def _get_limits(tariff: str) -> dict[str, Any]:
@@ -53,8 +78,9 @@ class DockerManager:
         def _create() -> str:
             image = PYTHON_IMAGES.get(python_version, PYTHON_IMAGES["3.12"])
             limits = _get_limits(tariff)
+            entry_type = entry_type if entry_type in ("script", "module") else "script"
 
-            entry_point_norm = entry_point.replace("\\", "/")
+            entry_point_norm = _validate_entry(entry_point, entry_type)
             entry_point_quoted = shlex.quote(entry_point_norm)
             entry_dir = entry_point_norm.rsplit("/", 1)[0] if "/" in entry_point_norm else ""
 
@@ -89,7 +115,7 @@ class DockerManager:
                     project_dir, project_id
                 )
 
-            container_name = f"deploygram_{project_id}_{project_name}"
+            container_name = _container_name(project_id, project_name)
 
             try:
                 old = self.client.containers.get(container_name)
@@ -118,9 +144,12 @@ class DockerManager:
                 environment=env_list,
                 cpu_quota=limits["cpu_quota"],
                 mem_limit=limits["mem_limit"],
+                memswap_limit=limits["mem_limit"],
+                pids_limit=256,
                 storage_opt=limits.get("storage_opt", {}),
                 read_only=False,
                 network_disabled=False,
+                security_opt=["no-new-privileges"],
                 user="1000:1000",
                 labels={
                     "deploygram": "true",
@@ -258,9 +287,7 @@ class DockerManager:
         def _logs() -> str:
             try:
                 container = self.client.containers.get(container_id)
-                
-                # Получаем только последние N строк логов
-                # НЕ используем since=, так как это вызывает ошибку типов
+                tail = max(1, min(int(tail), 10000))
                 logs = container.logs(tail=tail, timestamps=False)
                 
                 if not logs:
@@ -322,16 +349,17 @@ class DockerManager:
             import zipfile
 
             with tempfile.TemporaryDirectory() as tmpdir:
-                with zipfile.ZipFile(project_files, "r") as zf:
-                    for member in zf.infolist():
-                        target = os.path.realpath(os.path.join(tmpdir, member.filename))
-                        if not target.startswith(os.path.realpath(tmpdir)):
-                            return False, "zip slip detected"
-                    zf.extractall(tmpdir)
+                try:
+                    safe_extract_zip(project_files, tmpdir)
+                except ArchiveError as exc:
+                    return False, str(exc)
 
                 image = PYTHON_IMAGES.get(python_version, PYTHON_IMAGES["3.12"])
 
-                entry_point_norm = entry_point.replace("\\", "/")
+                try:
+                    entry_point_norm = _validate_entry(entry_point, entry_type)
+                except ValueError as exc:
+                    return False, str(exc)
                 entry_point_quoted = shlex.quote(entry_point_norm)
                 entry_dir = entry_point_norm.rsplit("/", 1)[0] if "/" in entry_point_norm else ""
 
@@ -361,6 +389,7 @@ class DockerManager:
 
                 full_cmd = f"python -m venv /tmp/venv && {req_install} && exec {python_cmd} 2>&1"
 
+                container = None
                 try:
                     container = self.client.containers.run(
                         image=image,
@@ -368,7 +397,10 @@ class DockerManager:
                         detach=True,
                         working_dir="/app",
                         volumes={tmpdir: {"bind": "/app", "mode": "ro"}},
-                        remove=True,
+                        mem_limit="512m",
+                        pids_limit=128,
+                        security_opt=["no-new-privileges"],
+                        remove=False,
                     )
 
                     result = container.wait(timeout=60)
@@ -380,6 +412,12 @@ class DockerManager:
                     return True, logs[-2000:]
                 except Exception as e:
                     return False, str(e)
+                finally:
+                    if container is not None:
+                        try:
+                            container.remove(force=True)
+                        except Exception:
+                            pass
 
         return await asyncio.to_thread(_test)
 
@@ -426,7 +464,7 @@ class DockerManager:
             try:
                 container = self.client.containers.get(container_id)
                 exit_code, output = container.exec_run(["cat", file_path])
-                if exit_code != 0:
+                if exit_code != 0 or len(output) > 5 * 1024 * 1024:
                     return ""
                 return output.decode("utf-8", errors="replace")
             except (NotFound, APIError) as e:
@@ -438,19 +476,24 @@ class DockerManager:
     async def write_file(self, container_id: str, file_path: str, content: str) -> bool:
         def _write() -> bool:
             try:
+                if not file_path.startswith("/app/"):
+                    return False
                 container = self.client.containers.get(container_id)
                 import tarfile
                 import io as _io
                 tar_buffer = _io.BytesIO()
                 with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
                     data = content.encode("utf-8")
-                    info = tarfile.TarInfo(name=os.path.basename(file_path))
+                    info = tarfile.TarInfo(name=posixpath.basename(file_path))
                     info.size = len(data)
+                    info.uid = 1000
+                    info.gid = 1000
+                    info.mode = 0o644
                     tar.addfile(info, _io.BytesIO(data))
                 tar_buffer.seek(0)
-                container.put_archive(os.path.dirname(file_path), tar_buffer)
+                container.put_archive(posixpath.dirname(file_path) or "/", tar_buffer)
                 return True
-            except (NotFound, APIError) as e:
+            except (NotFound, APIError, OSError) as e:
                 logger.error("Failed to write file %s: %s", file_path, e)
                 return False
 
@@ -459,8 +502,10 @@ class DockerManager:
     async def delete_file(self, container_id: str, file_path: str) -> bool:
         def _delete() -> bool:
             try:
+                if not file_path.startswith("/app/") or file_path == "/app":
+                    return False
                 container = self.client.containers.get(container_id)
-                exit_code, _ = container.exec_run(["rm", "-f", file_path])
+                exit_code, _ = container.exec_run(["rm", "-rf", "--", file_path])
                 return exit_code == 0
             except (NotFound, APIError) as e:
                 logger.error("Failed to delete file %s: %s", file_path, e)
@@ -471,8 +516,10 @@ class DockerManager:
     async def create_dir(self, container_id: str, dir_path: str) -> bool:
         def _mkdir() -> bool:
             try:
+                if not dir_path.startswith("/app/") or dir_path == "/app":
+                    return False
                 container = self.client.containers.get(container_id)
-                exit_code, _ = container.exec_run(["mkdir", "-p", dir_path])
+                exit_code, _ = container.exec_run(["mkdir", "-p", "--", dir_path])
                 return exit_code == 0
             except (NotFound, APIError) as e:
                 logger.error("Failed to create dir %s: %s", dir_path, e)

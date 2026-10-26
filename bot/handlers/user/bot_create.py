@@ -17,6 +17,7 @@ from bot.keyboards.user import (
     get_python_version_keyboard,
 )
 from bot.keyboards.common import get_back_keyboard
+from bot.utils.callbacks import decode_path, encode_path
 from bot.utils.emojis import Emoji
 from bot.utils.media import edit_photo_or_text
 from services.github import GitHubService
@@ -44,9 +45,15 @@ STEP_SERVER = "(4/4) Сервер"
 
 
 def _extract_zip_to_temp(files_zip: bytes) -> str:
+    from services.archive import safe_extract_zip
+
     tmpdir = tempfile.mkdtemp(prefix="dg_")
-    with zipfile.ZipFile(io.BytesIO(files_zip)) as zf:
-        zf.extractall(tmpdir)
+    try:
+        safe_extract_zip(files_zip, tmpdir)
+    except Exception:
+        import shutil
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        raise
     return tmpdir
 
 
@@ -74,7 +81,7 @@ def _get_entry_keyboard(tmpdir: str, current_path: str, project_id: int = 0) -> 
     if current_path != "/":
         parent = "/".join(current_path.strip("/").split("/")[:-1]) or "/"
         builder.row(
-            InlineKeyboardButton(text="⬆ ..", callback_data=f"create_nav_{parent}"),
+            InlineKeyboardButton(text="⬆ ..", callback_data=f"create_nav_{encode_path(parent)}"),
         )
 
     items = _list_dir(full_current)
@@ -84,14 +91,14 @@ def _get_entry_keyboard(tmpdir: str, current_path: str, project_id: int = 0) -> 
     for d in dirs:
         rel = os.path.relpath(d["path"], tmpdir).replace("\\", "/")
         builder.row(
-            InlineKeyboardButton(text=f"📁 {d['name']}", callback_data=f"create_nav_{rel}"),
+            InlineKeyboardButton(text=f"📁 {d['name']}", callback_data=f"create_nav_{encode_path(rel)}"),
         )
 
     py_files = [f for f in files if f["name"].endswith(".py")]
     for f in py_files[:15]:
         rel = os.path.relpath(f["path"], tmpdir).replace("\\", "/")
         builder.row(
-            InlineKeyboardButton(text=f"📄 {f['name']}", callback_data=f"create_select_{rel}"),
+            InlineKeyboardButton(text=f"📄 {f['name']}", callback_data=f"create_select_{encode_path(rel)}"),
         )
 
     if not py_files and not dirs:
@@ -100,7 +107,7 @@ def _get_entry_keyboard(tmpdir: str, current_path: str, project_id: int = 0) -> 
         )
 
     builder.row(
-        InlineKeyboardButton(text="Назад", style="danger", callback_data="create_back"),
+        InlineKeyboardButton(text="Назад", style="primary", callback_data="create_back"),
     )
     return builder.as_markup()
 
@@ -138,15 +145,22 @@ async def source_zip(callback: CallbackQuery, state: FSMContext):
 
 @router.message(F.document, CreateStates.waiting_zip)
 async def zip_received(message: Message, state: FSMContext):
-    if not message.document or not message.document.file_name.endswith(".zip"):
+    if not message.document or not (message.document.file_name or "").lower().endswith(".zip"):
         await message.answer(texts.BOT_CREATE_INVALID_ZIP)
         return
 
     file = await message.bot.get_file(message.document.file_id)
     content = await message.bot.download_file(file.file_path)
     files_zip = content.read()
+    if len(files_zip) > 100 * 1024 * 1024:
+        await message.answer(texts.BOT_CREATE_INVALID_ZIP)
+        return
 
-    tmpdir = _extract_zip_to_temp(files_zip)
+    try:
+        tmpdir = _extract_zip_to_temp(files_zip)
+    except Exception:
+        await message.answer("❌ Не удалось распаковать ZIP-архив. Проверь файл.")
+        return
 
     await state.update_data(
         zip_file_id=message.document.file_id,
@@ -171,7 +185,7 @@ async def source_github(callback: CallbackQuery, state: FSMContext):
     builder.row(
         InlineKeyboardButton(
             text="➕ Подключить Github",
-            url="https://github.com/login/oauth/authorize?client_id=YOUR_CLIENT_ID&scope=repo",
+            url="https://github.com/new",
             style="primary",
         ),
     )
@@ -179,7 +193,7 @@ async def source_github(callback: CallbackQuery, state: FSMContext):
         InlineKeyboardButton(text="🔄 Обновить", callback_data="github_refresh"),
     )
     builder.row(
-        InlineKeyboardButton(text="Назад", style="danger", callback_data="create_back"),
+        InlineKeyboardButton(text="Назад", style="primary", callback_data="create_back"),
     )
 
     await edit_photo_or_text(
@@ -239,12 +253,18 @@ async def python_selected(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("create_nav_"), CreateStates.waiting_entry)
 async def create_nav(callback: CallbackQuery, state: FSMContext):
-    path = callback.data.replace("create_nav_", "")
+    path = decode_path(callback.data.replace("create_nav_", "")) or "/"
     data = await state.get_data()
     tmpdir = data.get("tmpdir")
 
     if not tmpdir or not os.path.exists(tmpdir):
         await callback.answer(texts.BOT_CREATE_ARCHIVE_NOT_FOUND, show_alert=True)
+        return
+
+    base = os.path.realpath(tmpdir)
+    target = os.path.realpath(os.path.join(base, path.lstrip("/")))
+    if os.path.commonpath([base, target]) != base:
+        await callback.answer("❌ Некорректный путь", show_alert=True)
         return
 
     text = texts.add_bot_entry_script_text()
@@ -258,7 +278,10 @@ async def create_nav(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("create_select_"), CreateStates.waiting_entry)
 async def create_select_file(callback: CallbackQuery, state: FSMContext):
-    entry = callback.data.replace("create_select_", "")
+    entry = decode_path(callback.data.replace("create_select_", "")) or ""
+    if not entry:
+        await callback.answer(texts.BOT_CREATE_ARCHIVE_NOT_FOUND, show_alert=True)
+        return
     await state.update_data(entry_point=entry, entry_type="script")
 
     text = texts.bot_create_entry_confirm_text(entry)
@@ -275,6 +298,34 @@ async def create_select_file(callback: CallbackQuery, state: FSMContext):
 
     await callback.message.edit_text(text, reply_markup=builder.as_markup())
     await callback.answer()
+
+
+@router.callback_query(F.data == "create_entry_auto", CreateStates.waiting_entry)
+async def create_entry_auto(callback: CallbackQuery, state: FSMContext):
+    await state.update_data(entry_point="main.py", entry_type="script")
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    from aiogram.types import InlineKeyboardButton
+
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="? ???????????", callback_data="create_confirmed_entry", style="success"),
+    )
+    builder.row(
+        InlineKeyboardButton(text="?? ?????", style="primary", callback_data="create_entry_script"),
+    )
+    await callback.message.edit_text(
+        texts.bot_create_entry_confirm_text("main.py"),
+        reply_markup=builder.as_markup(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "github_refresh")
+async def github_refresh(callback: CallbackQuery):
+    await callback.answer(
+        "??????? ?????? ?? GitHub-??????????? ??????????.", show_alert=True
+    )
 
 
 @router.callback_query(F.data == "create_manual_entry", CreateStates.waiting_entry)
@@ -396,7 +447,7 @@ async def name_received(message: Message, state: FSMContext):
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text="✅ Создать", callback_data="create_final", style="success"),
-        InlineKeyboardButton(text="❌ Отмена", callback_data="control_panel", style="danger"),
+        InlineKeyboardButton(text="❌ Отмена", callback_data="control_panel", style="primary"),
     )
 
     await message.answer(text, reply_markup=builder.as_markup())
@@ -424,18 +475,32 @@ async def create_final(callback: CallbackQuery, state: FSMContext, db_user, proj
             except Exception as e:
                 await callback.answer(texts.BOT_CREATE_DOWNLOAD_ERROR(e), show_alert=True)
                 return
+    elif source_type == "github":
+        try:
+            files_zip = await GitHubService().download_zip(
+                data.get("source_owner", ""), data.get("source_repo", "")
+            )
+        except Exception:
+            files_zip = None
+        if not files_zip:
+            await callback.answer(texts.BOT_CREATE_REPO_NOT_FOUND, show_alert=True)
+            return
 
-    project = await project_service.create_project(
-        user_id=db_user.id,
-        name=data.get("name", "my_bot"),
-        source_type=source_type,
-        source_url=data.get("source_url"),
-        python_version=data.get("python_version", "3.12"),
-        entry_point=data.get("entry_point", "main.py"),
-        entry_type=data.get("entry_type", "script"),
-        server_id=data.get("server_id"),
-        files_zip=files_zip,
-    )
+    try:
+        project = await project_service.create_project(
+            user_id=db_user.id,
+            name=data.get("name", "my_bot"),
+            source_type=source_type,
+            source_url=data.get("source_url"),
+            python_version=data.get("python_version", "3.12"),
+            entry_point=data.get("entry_point", "main.py"),
+            entry_type=data.get("entry_type", "script"),
+            server_id=data.get("server_id"),
+            files_zip=files_zip,
+        )
+    except ValueError as e:
+        await callback.answer(f"❌ {e}", show_alert=True)
+        return
 
     tmpdir = data.get("tmpdir")
     if tmpdir and os.path.exists(tmpdir):

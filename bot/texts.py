@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import html
+
 from bot.utils.emojis import Emoji
 
 
@@ -8,7 +10,7 @@ from bot.utils.emojis import Emoji
 def welcome_text(username: str, projects_count: int = 0) -> str:
     """Приветственный экран с персонализацией."""
     greeting = "Привет" if projects_count == 0 else "С возвращением"
-    
+
     stats_text = ""
     if projects_count == 0:
         stats_text = "📦 У тебя пока нет проектов"
@@ -16,94 +18,94 @@ def welcome_text(username: str, projects_count: int = 0) -> str:
         stats_text = "📦 У тебя <b>1</b> проект"
     else:
         stats_text = f"📦 У тебя <b>{projects_count}</b> проектов"
-    
-    return f"""🚀 <b>DeployGram</b>
 
-{greeting}, <b>{username}</b>!
+    return f"""<b>🚀 DeployGram</b>
 
-Здесь ты можешь запустить свой Python проект в облаке за пару минут — без настройки серверов и сложных команд.
+<blockquote>{greeting}, <b>{html.escape(str(username))}</b>!
+Здесь ты можешь запустить свой Python-проект в облаке за пару минут — без настройки серверов и сложных команд.</blockquote>
 
 {stats_text}
 
-💡 <i>Загрузи код, нажми "Запустить" — и готово!</i>"""
+<i>💡 Загрузи код, нажми «Запустить» — и готово!</i>"""
 
 
-CONTROL_PANEL_TEXT = """📱 <b>Мои проекты</b>
+CONTROL_PANEL_TEXT = """<b>📱 Мои проекты</b>
 
-Выбери проект для управления:"""
+<i>Выбери проект для управления:</i>"""
 
 
-EMPTY_PROJECTS = """📭 <b>Пока пусто</b>
+EMPTY_PROJECTS = """<b>📭 Пока пусто</b>
 
-Создай свой первый проект прямо сейчас!
+Создай свой первый проект прямо сейчас — это займёт всего пару минут.
 
-Это займёт всего 2 минуты:
-  ① Загрузи код
-  ② Выбери Python версию
-  ③ Запусти
+<blockquote><b>1.</b> Загрузи код
+<b>2.</b> Выбери версию Python
+<b>3.</b> Настрой запуск и нажми «Старт»</blockquote>
 
 <i>Не волнуйся — мы поможем на каждом шаге 😊</i>"""
 
 
 # ─── ADD BOT: SOURCE ───
 
-ADD_BOT_SOURCE_TEXT = """✨ <b>Новый проект</b>
+ADD_BOT_SOURCE_TEXT = """<b>✨ Новый проект</b>
 
-Запусти свой Python проект в 3 шага:
+Запусти свой Python-проект в три шага:
 
-<b>Шаг 1</b> → Загрузи код
-<b>Шаг 2</b> → Настрой запуск  
-<b>Шаг 3</b> → Готово! 🚀
+<blockquote><b>1.</b> Загрузи код
+<b>2.</b> Настрой запуск
+<b>3.</b> Готово! 🚀</blockquote>
 
-Начнём с загрузки кода. Выбери удобный способ:"""
+<i>Начнём с загрузки кода. Выбери удобный способ:</i>"""
 
-ADD_BOT_ZIP_TEXT = """📦 <b>Шаг 1: Загрузка кода</b>
+ADD_BOT_ZIP_TEXT = """<b>📦 Шаг 1: Загрузка кода</b>
 
 Отправь ZIP-архив со своим проектом.
 
-<b>Что должно быть внутри:</b>
-  ✓ Файлы Python (*.py)
-  ✓ requirements.txt с зависимостями
-  ✓ Другие файлы проекта
+<blockquote><b>Что должно быть внутри:</b>
+✓ Python-файлы (<code>*.py</code>)
+✓ <code>requirements.txt</code> с зависимостями
+✓ любые другие файлы проекта</blockquote>
 
-<b>Ограничения:</b>
-  • Максимум 100 МБ
-  • Формат: только .zip
+<b>Ограничения:</b> до 100 МБ, только <code>.zip</code>.
 
-💡 <i>Не знаешь как упаковать? Просто выдели все файлы проекта → ПКМ → "Отправить" → "Сжатая ZIP-папка"</i>"""
+<i>💡 Не знаешь, как упаковать? Выдели файлы проекта → ПКМ → «Отправить» → «Сжатая ZIP-папка».</i>"""
 
-ADD_BOT_GITHUB_TEXT = """🔗 <b>Шаг 1: GitHub репозиторий</b>
+ADD_BOT_GITHUB_TEXT = """<b>🔗 Шаг 1: GitHub-репозиторий</b>
 
-Вставь ссылку на публичный GitHub репозиторий.
+Вставь ссылку на публичный репозиторий GitHub.
 
-<b>Формат:</b>
-<code>https://github.com/username/project</code>
+<blockquote><b>Формат:</b>
+<code>https://github.com/username/project</code></blockquote>
 
-Мы автоматически склонируем код и развернём его.
+Мы автоматически скачаем код из ветки <code>main</code> или <code>master</code> и развернём его.
 
-💡 <i>Репозиторий должен быть публичным или у нас должен быть доступ</i>"""
+<i>💡 Репозиторий должен быть публичным.</i>"""
 
 
 # ─── ADD BOT: PYTHON VERSION ───
 
 def add_bot_python_text(uploaded_file: str = "") -> str:
     """Выбор версии Python."""
-    file_text = f"✅ Код загружен: <code>{uploaded_file}</code>\n\n" if uploaded_file else ""
+    file_text = (
+        f"✅ Код загружен: <code>{html.escape(str(uploaded_file))}</code>\n\n"
+        if uploaded_file
+        else ""
+    )
     
-    return f"""🐍 <b>Шаг 2: Версия Python</b>
+    return f"""<b>🐍 Шаг 2: Версия Python</b>
 
-{file_text}Теперь выбери версию Python для запуска:
+{file_text}Выбери версию Python для запуска:
 
-<b>🔥 Рекомендуем Python 3.12</b>
-  • Самая быстрая версия
-  • Последние обновления
-  • Лучшая безопасность
+<blockquote><b>🔥 Рекомендуем Python 3.12</b>
+• самая быстрая версия
+• последние обновления
+• лучшая безопасность
 
 <b>Другие версии:</b>
-  • Python 3.11 — стабильная
-  • Python 3.10 — для старых проектов
+• Python 3.11 — стабильная
+• Python 3.10 — для старых проектов</blockquote>
 
-💡 <i>Не уверен? Выбирай 3.12 — она подходит для 99% проектов</i>"""
+<i>💡 Не уверен? Выбирай 3.12 — она подходит для 99% проектов.</i>"""
 
 ADD_BOT_PYTHON_TEXT = add_bot_python_text()
 
@@ -146,9 +148,9 @@ ADD_BOT_ENTRY_MANUAL_TEXT = (
 
 def add_bot_entry_confirm_text(entry: str) -> str:
     return (
-        f"📄 <b>Этап 4/4: Проверка деплоя</b>\n\n"
-        f"Назначенный триггер: <code>{entry}</code>\n\n"
-        f"Утвердите выбранный параметр. Изменение структуры доступно в настройках рантайма."
+        f"<b>📄 Шаг 4/4: Проверка</b>\n\n"
+        f"<blockquote>Точка входа: <code>{html.escape(str(entry))}</code></blockquote>\n\n"
+        f"<i>Проверь параметры и подтверди создание проекта.</i>"
     )
 
 
@@ -166,14 +168,14 @@ ADD_BOT_SERVER_POOL_TEXT = "[ Общие вычислительные ресур
 
 def add_bot_confirm_text(name: str, python_version: str, entry_point: str) -> str:
     return (
-        f"{Emoji.CHECK} <b>Финальная спецификация сборки</b>\n\n"
-        f"📝 Идентификатор: <b>{name}</b>\n"
-        f"🐍 Окружение: Python {python_version}\n"
-        f"📄 Вызов процесса: <code>{entry_point}</code>\n\n"
-        f"Запустить процедуру оркестрации и создания контейнера?"
+        f"{Emoji.CHECK} <b>Всё готово?</b>\n\n"
+        f"<blockquote>📝 Название: <b>{html.escape(str(name))}</b>\n"
+        f"🐍 Python: <b>{html.escape(str(python_version))}</b>\n"
+        f"📄 Точка входа: <code>{html.escape(str(entry_point))}</code></blockquote>\n\n"
+        f"<i>Проверь параметры и создай проект.</i>"
     )
 
-ADD_BOT_NAME_TEXT = "📝 Задайте уникальный системный ID проекта (до 50 символов: a-z, 0-9, символы дефиса и подчеркивания):"
+ADD_BOT_NAME_TEXT = "📝 Отправь название проекта (до 50 символов: латиница, цифры, дефис и подчёркивание):"
 
 
 # ─── ADD BOT: SUCCESS ───
@@ -201,16 +203,15 @@ def bot_control_text(name: str, server_text: str, status: str, uptime: str, cpu:
     else:
         status_icon = "⚫"
     
-    return f"""{status_icon} <b>{name}</b>
+    return f"""{status_icon} <b>{html.escape(str(name))}</b>
 
-{server_text if server_text else '📍 Локальный сервер'}
+{html.escape(server_text) if server_text else '📍 Локальный сервер'}
 
-📊 <b>Статистика</b>
-
-⏱ Работает: {uptime}
+<blockquote><b>📊 Статистика</b>
+⏱ Работает: <b>{uptime}</b>
 💾 RAM: <b>{ram:.0f} MB</b>
 ⚡ CPU: <b>{cpu:.1f}%</b>
-{cpu_bar}
+{cpu_bar}</blockquote>
 
 <i>Выбери действие:</i>"""
 
@@ -232,38 +233,40 @@ def _create_progress_bar(value: float, max_value: float, length: int = 10) -> st
 
 # ─── BOT SETTINGS ───
 
-BOT_SETTINGS_TEXT = """⚙️ <b>Настройки проекта</b>
+BOT_SETTINGS_TEXT = """<b>⚙️ Настройки проекта</b>
 
-Выбери, что хочешь настроить:"""
+<i>Выбери, что хочешь изменить:</i>"""
 
-BOT_RENAME_TEXT = """📝 <b>Переименовать проект</b>
+BOT_RENAME_TEXT = """<b>📝 Переименовать проект</b>
 
-Введи новое название проекта:
+Отправь новое название:
 
-<b>Правила:</b>
-  • Только латиница, цифры, _ и -
-  • От 1 до 50 символов
+<blockquote><b>Правила:</b>
+• латиница, цифры, <code>_</code> и <code>-</code>
+• от 1 до 50 символов</blockquote>
 
 <b>Пример:</b> <code>my-telegram-bot</code>"""
 
 BOT_DELETE_TEXT = (
-    f"🗑 <b>Удаление ресурсов</b>\n\n"
-    f"Внимание: данное действие полностью уничтожит выделенный контейнер. "
-    f"Данные из локального хранилища будут удалены безвозвратно."
+    "<b>🗑 Удаление проекта</b>\n\n"
+    "Контейнер будет остановлен, файлы и резервные копии — удалены.\n\n"
+    "<blockquote>⚠️ <b>Это действие нельзя отменить.</b></blockquote>"
 )
 
 def bot_deleted_text(name: str) -> str:
     return (
-        f"🗑 <b>Проект деинсталлирован</b>\n\n"
-        f"Инфраструктура инстанса <b>{name}</b> успешно ликвидирована, слоты памяти освобождены."
+        f"<b>🗑 Проект удалён</b>\n\n"
+        f"Проект <b>{html.escape(str(name))}</b> остановлен, а его файлы удалены.\n\n"
+        "<i>Слот освобождён — можно создавать новый проект.</i>"
     )
 
 
 # ─── BOT PYTHON VERSION ───
 
 BOT_PYTHON_TEXT = (
-    f"🐍 <b>Смена версии интерпретатора</b>\n\n"
-    f"После сохранения изменений проект выполнит автоматическую перезагрузку для применения нового рантайма."
+    "<b>🐍 Версия Python</b>\n\n"
+    "После смены версии проект перезапустится и заново установит зависимости.\n\n"
+    "<i>💡 Для новых проектов лучше выбирать Python 3.12.</i>"
 )
 
 
@@ -271,19 +274,21 @@ BOT_PYTHON_TEXT = (
 
 def bot_entry_text(entry_type: str, entry_point: str) -> str:
     return (
-        f"📄 <b>Корневой вектор выполнения</b>\n\n"
-        f"Доступные архитектурные режимы:\n"
-        f"• <b>Скрипт</b> — вызов одиночного файла (<code>python file.py</code>)\n"
-        f"• <b>Модуль</b> — запуск изолированного пакета (<code>python -m</code>)\n\n"
-        f"Активный режим: <b>{entry_type}</b>\n"
-        f"Текущий путь: <code>{entry_point}</code>"
+        "<b>📄 Точка входа</b>\n\n"
+        "Выбери способ запуска:\n\n"
+        "<blockquote><b>Скрипт</b> — обычный файл\n"
+        "<code>python main.py</code>\n\n"
+        "<b>Модуль</b> — Python-пакет\n"
+        "<code>python -m app.pkg.main</code></blockquote>\n\n"
+        f"Сейчас: <b>{html.escape(str(entry_type))}</b>\n"
+        f"Путь: <code>{html.escape(str(entry_point))}</code>"
     )
 
 BOT_ENTRY_MODULE_TEXT = (
-    "📄 <b>Смена точки запуска</b>\n\n"
-    "Выбран режим пакетного импорта (-m).\n\n"
-    "Передайте имя целевого пакета.\n"
-    "Пример структуры: <code>app.pkg.main</code>"
+    "<b>📄 Точка входа · модуль</b>\n\n"
+    "Отправь имя Python-модуля, например:\n"
+    "<code>app.pkg.main</code>\n\n"
+    "<i>Модуль должен находиться внутри проекта.</i>"
 )
 
 BOT_ENTRY_SELECT_FILE_TEXT = "Пожалуйста, определите исполняемый файл, используя интерактивный менеджер директорий."
@@ -292,20 +297,17 @@ BOT_ENTRY_SELECT_FILE_TEXT = "Пожалуйста, определите исп�
 # ─── BOT COOWNERS ───
 
 def bot_coowners_text(name: str) -> str:
-    return f"""👥 <b>Совместный доступ</b>
+    return f"""<b>👥 Совместный доступ</b>
 
-<b>Проект:</b> {name}
+<b>Проект:</b> {html.escape(str(name))}
 
-Дай доступ к проекту своим друзьям или коллегам.
+<blockquote>Дай доступ друзьям или коллегам. Права можно настроить отдельно для каждого совладельца.</blockquote>
 
-<b>Что могут делать совладельцы:</b>
-  ✅ Запускать и останавливать
-  ✅ Смотреть логи
-  ✅ Редактировать файлы
-  ❌ Удалять проект
-  ❌ Менять владельца
+<b>Владелец</b> всегда может:
+✅ управлять проектом
+✅ удалять его
 
-💡 <i>Только ты можешь удалить проект</i>"""
+<i>💡 Удалить проект может только владелец.</i>"""
 
 BOT_COOWNER_ADD_TEXT = "👤 Введите уникальный Telegram ID пользователя для делегирования полномочий:"
 BOT_COOWNER_ADD_ROLE_TEXT = "👤 Определите системную роль для добавляемого специалиста:"
@@ -344,21 +346,21 @@ def project_card_text(
         cpu_bar = _create_progress_bar(cpu, 100)
         stats_block = f"""
 
-📊 <b>Мониторинг:</b>
-  ⚡ CPU: <b>{cpu:.1f}%</b>
-  {cpu_bar}
-  💾 RAM: <b>{ram:.1f} MB</b>
-  ⏱ Работает: <b>{uptime}</b>
-  🔄 Перезапусков: <b>{restarts}</b>"""
-    
-    return f"""<b>{status_emoji} {name}</b>
+<blockquote><b>📊 Мониторинг</b>
+⚡ CPU: <b>{cpu:.1f}%</b>
+{cpu_bar}
+💾 RAM: <b>{ram:.1f} MB</b>
+⏱ Работает: <b>{html.escape(str(uptime))}</b>
+🔄 Перезапусков: <b>{restarts}</b></blockquote>"""
 
-Статус: {status_text}
+    return f"""<b>{status_emoji} {html.escape(str(name))}</b>
 
-🐍 Python: <b>{python_version}</b>
-📄 Запуск: <code>{entry_point}</code>{stats_block}
+{status_text}
 
-Что хочешь сделать?"""
+<blockquote>🐍 Python: <b>{html.escape(str(python_version))}</b>
+📄 Запуск: <code>{html.escape(str(entry_point))}</code></blockquote>{stats_block}
+
+<i>Выбери действие:</i>"""
 
 
 PROJECT_START_SUCCESS = "✅ <b>Проект запущен!</b>\n\nКонтейнер развернут и работает."
@@ -371,32 +373,34 @@ PROJECT_STOP_ERROR = "❌ <b>Ошибка остановки</b>\n\nПопроб
 
 def bot_logs_text(name: str, logs: str) -> str:
     """Логи проекта в новом стиле."""
-    return f"""📋 <b>Логи проекта</b>
+    return f"""<b>📋 Логи проекта</b>
 
-<b>{name}</b>
+<b>{html.escape(str(name))}</b>
 
-Последние 3500 символов:
+<blockquote>Последние 3500 символов:</blockquote>
 
-<pre>{logs}</pre>
+<pre>{html.escape(logs)}</pre>
 
-💡 <i>Используй "Скачать всё" для полного файла логов</i>"""
+<i>💡 Используй «Скачать всё», чтобы получить полный файл логов.</i>"""
 
 
 # ─── BOT FILES ───
 
 def bot_files_text(project_name: str, path: str = "/app") -> str:
     """Файловый менеджер проекта."""
-    return f"""📁 <b>Файлы: {project_name}</b>
+    return f"""<b>📁 Файлы проекта</b>
 
-📂 Текущая папка: <code>{path}</code>
+<b>{html.escape(str(project_name))}</b>
 
-Что можешь сделать:
-  👁️ Просмотреть содержимое
-  💾 Скачать файл
-  🗑️ Удалить
-  📤 Загрузить новые
+<blockquote>📂 Текущая папка: <code>{html.escape(str(path))}</code></blockquote>
 
-💡 <i>Просто перетащи файл в чат для загрузки</i>"""
+<b>Доступные действия:</b>
+👁️ просмотр файлов
+💾 скачивание
+🗑️ удаление
+📤 загрузка новых файлов
+
+<i>💡 Просто отправь файл в чат, чтобы загрузить его в проект.</i>"""
 
 
 BOT_FILES_TEXT = bot_files_text("project", "/app")  # Для совместимости
@@ -407,11 +411,11 @@ def bot_files_path_text(path: str) -> str:
 
 
 def bot_file_delete_confirm(file_path: str) -> str:
-    return f"""🗑️ <b>Удалить файл?</b>
+    return f"""<b>🗑️ Удалить файл?</b>
 
-<code>{file_path}</code>
+<blockquote><code>{html.escape(str(file_path))}</code></blockquote>
 
-⚠️ <i>Это действие нельзя отменить!</i>"""
+<i>⚠️ Это действие нельзя отменить.</i>"""
 
 
 BOT_FILE_DELETE_CONFIRM_TEXT = bot_file_delete_confirm  # Для совместимости
@@ -423,63 +427,65 @@ BOT_FILE_NOT_FOUND_TEXT = "❌ Файл не найден"
 
 # ─── BOT LIBRARIES ───
 
-BOT_LIBS_TEXT = """📦 <b>Зависимости проекта</b>
+BOT_LIBS_TEXT = """<b>📦 Зависимости проекта</b>
 
-Управляй Python библиотеками своего проекта:
-  • Устанавливай новые
-  • Удаляй ненужные
-  • Обновляй версии
+<blockquote>Здесь собраны пакеты, установленные в виртуальном окружении проекта.</blockquote>
 
-💡 <i>Библиотеки устанавливаются через pip</i>"""
+<b>Что можно сделать:</b>
+➕ установить новый пакет
+🗑️ удалить ненужный
+🔄 обновить версию
 
-BOT_LIB_ADD_TEXT = """📦 <b>Установка библиотеки</b>
+<i>💡 Зависимости ставятся через pip.</i>"""
+
+BOT_LIB_ADD_TEXT = """<b>📦 Установка библиотеки</b>
 
 Отправь название пакета из PyPI:
 
-<b>Примеры:</b>
-  • <code>aiogram</code>
-  • <code>requests>=2.30.0</code>
-  • <code>python-dotenv</code>
+<blockquote><code>aiogram</code>
+<code>requests&gt;=2.30.0</code>
+<code>python-dotenv</code></blockquote>
 
-💡 <i>После установки проект нужно перезапустить</i>"""
+<i>💡 После установки перезапусти проект, чтобы изменения применились.</i>"""
 
 
 # ─── SUBSCRIPTION ───
 
 def subscription_text(is_premium: bool, projects_count: int = 0, max_projects: int = 1) -> str:
     """Экран подписки с персонализацией."""
+    from bot.config import settings
+
     tariff_emoji = "🆓" if not is_premium else "💎"
     tariff_name = "Бесплатный" if not is_premium else "Premium"
-    
     progress = _create_progress_bar(projects_count, max_projects)
-    
-    if is_premium:
-        features = """<b>Твои возможности:</b>
-  ✅ 5 проектов
-  ✅ 1024 MB ОЗУ
-  ✅ 1.0 CPU на все проекты
-  ✅ Приоритетная поддержка
-  ✅ Автобэкапы каждый час"""
-        tip = "💜 <i>Спасибо за поддержку!</i>"
-    else:
-        features = f"""<b>Твои возможности:</b>
-  ✅ 1 проект
-  ✅ 256 MB ОЗУ
-  ✅ 0.3 CPU на все проекты
-  ✅ Базовая поддержка
 
-<b>💎 Premium даёт:</b>
-  🚀 5 проектов
-  💪 1024 MB ОЗУ
-  ⚡ 1.0 CPU
-  💾 Автобэкапы каждый час"""
-        tip = "💡 <i>Обнови до Premium для больших возможностей</i>"
-    
-    return f"""💳 <b>Твоя подписка</b>
+    if is_premium:
+        features = f"""<blockquote><b>✅ Твои возможности</b>
+🚀 до {settings.PREMIUM_TARIFF_PROJECTS} проектов
+💪 {settings.PREMIUM_TARIFF_RAM} MB ОЗУ
+⚡ {settings.PREMIUM_TARIFF_CPU:g} CPU
+💾 автобэкапы каждый час
+🎯 приоритетная поддержка</blockquote>"""
+        tip = "💜 <i>Спасибо, что поддерживаешь DeployGram!</i>"
+    else:
+        features = f"""<blockquote><b>✅ Бесплатный тариф</b>
+🚀 {settings.FREE_TARIFF_PROJECTS} проект
+💪 {settings.FREE_TARIFF_RAM} MB ОЗУ
+⚡ {settings.FREE_TARIFF_CPU:g} CPU
+💾 автобэкапы каждый час</blockquote>
+
+<b>💎 Premium открывает:</b>
+🚀 до {settings.PREMIUM_TARIFF_PROJECTS} проектов
+💪 {settings.PREMIUM_TARIFF_RAM} MB ОЗУ
+⚡ {settings.PREMIUM_TARIFF_CPU:g} CPU
+🎯 приоритетную поддержку"""
+        tip = "💡 <i>Обнови тариф, когда проекту станет тесно.</i>"
+
+    return f"""<b>💳 Твоя подписка</b>
 
 {tariff_emoji} <b>Тариф:</b> {tariff_name}
 
-📦 <b>Проекты:</b> {projects_count} из {max_projects}
+<b>📦 Проекты:</b> {projects_count} из {max_projects}
 {progress}
 
 {features}
@@ -492,41 +498,33 @@ SUBSCRIPTION_INFO_TEXT = None
 
 def subscription_info_text() -> str:
     """Информация о Premium."""
-    return """💎 <b>Обнови до Premium</b>
+    from bot.config import settings
 
-<b>Получи больше мощности для своих проектов:</b>
+    return f"""<b>💎 DeployGram Premium</b>
 
-🚀 <b>5 проектов</b>
-   Запускай сколько нужно
+<i>Больше мощности для твоих проектов.</i>
 
-💪 <b>1024 MB ОЗУ</b>
-   На каждый проект
-
-⚡ <b>1.0 CPU</b>
-   На все проекты
-
-💾 <b>Автобэкапы</b>
-   Каждый час
-
-🎯 <b>Быстрая поддержка</b>
-   Ответим за 1 час
+<blockquote>🚀 до <b>{settings.PREMIUM_TARIFF_PROJECTS} проектов</b>
+💪 <b>{settings.PREMIUM_TARIFF_RAM} MB ОЗУ</b> на проект
+⚡ <b>{settings.PREMIUM_TARIFF_CPU:g} CPU</b>
+💾 автобэкапы каждый час
+🎯 приоритетная поддержка</blockquote>
 
 <b>💰 Стоимость:</b>
-  • 1 неделя — 49₽
-  • 1 месяц — 149₽
-  • 3 месяца — 402₽ <i>(экономия 45₽)</i>
-  • 6 месяцев — 759₽ <i>(экономия 135₽)</i>
-  • 1 год — 1430₽ <i>(экономия 358₽)</i>
+• 1 неделя — <b>{settings.PREMIUM_PRICE_1W}₽</b>
+• 1 месяц — <b>{settings.PREMIUM_PRICE_1M}₽</b>
+• 3 месяца — <b>{settings.PREMIUM_PRICE_3M}₽</b>
+• 6 месяцев — <b>{settings.PREMIUM_PRICE_6M}₽</b>
+• 1 год — <b>{settings.PREMIUM_PRICE_12M}₽</b>
 
-🎁 <b>Первая неделя всего 49₽!</b>
-Можешь отменить в любой момент."""
+<i>🎁 Первая неделя — самый простой способ попробовать. Отменить можно в любой момент.</i>"""
 
 
-SUBSCRIPTION_BUY_TEXT = """💳 <b>Выбери период подписки</b>
+SUBSCRIPTION_BUY_TEXT = """<b>💳 Выбери период подписки</b>
 
-Чем дольше период — тем больше экономия!
+<blockquote>Чем дольше период — тем выгоднее цена.</blockquote>
 
-💡 <i>После выбора покажем инструкцию по оплате</i>"""
+<i>💡 После выбора покажем инструкцию по оплате.</i>"""
 
 
 def subscription_buy_plan_text(plan_label: str, price: int) -> str:
@@ -541,44 +539,49 @@ def subscription_buy_plan_text(plan_label: str, price: int) -> str:
     savings = savings_map.get(plan_label, 0)
     savings_text = f"\n🎉 <b>Экономия: {savings}₽</b>" if savings > 0 else ""
     
-    return f"""💎 <b>Premium {plan_label}</b>
+    from bot.config import settings
 
-<b>Стоимость:</b> {price}₽{savings_text}
+    return f"""<b>💎 Premium · {html.escape(str(plan_label))}</b>
+
+<blockquote><b>Стоимость:</b> {price}₽{savings_text}</blockquote>
 
 <b>Что входит:</b>
-  • 5 проектов
-  • 1024 MB ОЗУ на проект
-  • 1.0 CPU
-  • Приоритетная поддержка
-  • Автобэкапы каждый час
+🚀 до {settings.PREMIUM_TARIFF_PROJECTS} проектов
+💪 {settings.PREMIUM_TARIFF_RAM} MB ОЗУ на проект
+⚡ {settings.PREMIUM_TARIFF_CPU:g} CPU
+🎯 приоритетная поддержка
+💾 автобэкапы каждый час
 
 <b>Как оплатить:</b>
-  1. Напиши @support_username
-  2. Отправь: "Premium {plan_label}"
-  3. Получи реквизиты для оплаты
+<blockquote>1. Напиши @support_username
+2. Отправь: «Premium {html.escape(str(plan_label))}»
+3. Получи реквизиты для оплаты</blockquote>
 
-<i>Подписка активируется автоматически после оплаты</i>"""
+<i>Подписка активируется автоматически после оплаты.</i>"""
 
 
 # ─── BACKUPS ───
 
 BACKUPS_LIST_EMPTY_TEXT = (
-    f"☁ <b>Снимки файловой системы</b>\n\n"
-    f"Резервные копии отсутствуют, так как у вас нет активных вычислительных сред."
+    "<b>☁ Резервные копии</b>\n\n"
+    "Пока пусто — создай первый проект, и мы начнём автоматически сохранять его файлы."
 )
 
 BACKUPS_LIST_TEXT = (
-    f"☁ <b>Архив точек восстановления</b>\n\n"
-    f"🟢 — Точка восстановления активна\n"
-    f"🟡 — Выполняется архивация ресурсов\n"
-    f"🔴 — Процесс архивации завершился критическим сбоем\n\n"
-    f"Выберите нужный снимок из архива или инициализируйте создание новой копии:"
+    "<b>☁ Резервные копии</b>\n\n"
+    "<blockquote>🟢 — бэкап готов к восстановлению\n"
+    "🟡 — создаётся\n"
+    "🔴 — ошибка создания</blockquote>\n\n"
+    "<i>Выбери проект, чтобы посмотреть его резервные копии.</i>"
 )
+
+BACKUP_CREATE_ERROR = "❌ Не удалось создать резервную копию. Попробуй ещё раз."
 
 def backups_bot_text(name: str, count: int) -> str:
     return (
-        f"☁ <b>Резервные копии инстанса: {name}</b>\n\n"
-        f"Доступное количество архивов: {count}"
+        f"<b>☁ Резервные копии</b>\n\n"
+        f"<b>Проект:</b> {html.escape(str(name))}\n"
+        f"<b>Сохранено:</b> {count}"
     )
 
 
@@ -586,35 +589,35 @@ def backups_bot_text(name: str, count: int) -> str:
 
 def admin_panel_text(users: int, projects: int, servers: int) -> str:
     return (
-        f"{Emoji.SETTINGS} <b>Консоль главного администратора</b>\n\n"
-        f"{Emoji.PROFILE} Зарегистрированные аккаунты: {users}\n"
-        f"{Emoji.FILE} Контейнеров в рантайме: {projects}\n"
-        f"{Emoji.HOME} Доступные серверные ноды: {servers}"
+        f"{Emoji.SETTINGS} <b>Админ-панель</b>\n\n"
+        f"<blockquote>{Emoji.PROFILE} Пользователи: <b>{users}</b>\n"
+        f"{Emoji.FILE} Проекты: <b>{projects}</b>\n"
+        f"{Emoji.HOME} Серверы: <b>{servers}</b></blockquote>"
     )
 
 def admin_users_text(count: int) -> str:
-    return f"{Emoji.PEOPLE} <b>Реестр пользователей системы</b> ({count})"
+    return f"{Emoji.PEOPLE} <b>Пользователи</b> · {count}"
 
 def admin_user_view_text(
     telegram_id: int, username: str, full_name: str,
     tariff: str, balance: float, is_banned: bool,
     projects_count: int, registered_at: str
 ) -> str:
-    status = "🚫 Ограничен (Ban)" if is_banned else "✅ Активен"
+    status = "🚫 Заблокирован" if is_banned else "✅ Активен"
     return (
-        f"{Emoji.PROFILE} <b>Параметры профиля</b>\n\n"
-        f"Telegram ID: <code>{telegram_id}</code>\n"
-        f"Юзернейм: @{username or '—'}\n"
-        f"Отображаемое имя: {full_name or '—'}\n"
-        f"Текущий план: <b>{tariff}</b>\n"
-        f"Финансовый баланс: <b>{balance:.2f}</b>\n"
-        f"Статус доступа: {status}\n"
-        f"Количество проектов: {projects_count}\n"
-        f"Дата создания аккаунта: {registered_at}"
+        f"{Emoji.PROFILE} <b>Профиль пользователя</b>\n\n"
+        f"<blockquote>Telegram ID: <code>{telegram_id}</code>\n"
+        f"Username: @{html.escape(str(username or '—'))}\n"
+        f"Имя: {html.escape(str(full_name or '—'))}\n"
+        f"Тариф: <b>{html.escape(str(tariff))}</b>\n"
+        f"Баланс: <b>{balance:.2f}₽</b>\n"
+        f"Статус: {status}\n"
+        f"Проектов: <b>{projects_count}</b>\n"
+        f"Регистрация: {html.escape(str(registered_at))}</blockquote>"
     )
 
 def admin_servers_text(count: int) -> str:
-    return f"{Emoji.HOME} <b>Управление вычислительными узлами</b> ({count})"
+    return f"{Emoji.HOME} <b>Серверы</b> · {count}"
 
 def admin_server_view_text(
     name: str, country: str, ip: str, port: int,
@@ -622,46 +625,46 @@ def admin_server_view_text(
     rating: float, ping: int, load_cpu: float, load_ram: float,
     status: str
 ) -> str:
-    status_icon = "🟢 Сеть стабильна" if status == "online" else "🔴 Хост недоступен"
-    api_key_text = "Активен" if api_key else "Выключен"
+    status_icon = "🟢 Онлайн" if status == "online" else "🔴 Недоступен"
+    api_key_text = "включён" if api_key else "выключен"
     return (
-        f"{Emoji.HOME} <b>Спецификация ноды: {name}</b>\n\n"
-        f"🌍 Локация: {country}\n"
-        f"📡 Сетевой адрес: {ip}:{port}\n"
-        f"🔑 Авторизация агента: {api_key_text}\n"
-        f"💻 Заполненность слотов: {free_slots}/{total_slots}\n"
-        f"⭐ Приоритет распределения: {rating:.1f}\n"
-        f"📡 Сетевой пинг: {ping}ms\n"
-        f"📊 Утилизация CPU: {load_cpu:.1f}%\n"
-        f"🧠 Занятость RAM: {load_ram:.1f}%\n"
-        f"Текущий статус: {status_icon}"
+        f"{Emoji.HOME} <b>Сервер · {html.escape(str(name))}</b>\n\n"
+        f"<blockquote>🌍 Локация: {html.escape(str(country))}\n"
+        f"📡 Адрес: <code>{html.escape(str(ip))}:{port}</code>\n"
+        f"🔑 API-ключ: {api_key_text}\n"
+        f"💻 Слоты: <b>{free_slots}/{total_slots}</b>\n"
+        f"⭐ Рейтинг: <b>{rating:.1f}</b>\n"
+        f"📡 Ping: <b>{ping} ms</b>\n"
+        f"📊 CPU: <b>{load_cpu:.1f}%</b>\n"
+        f"🧠 RAM: <b>{load_ram:.1f}%</b>\n"
+        f"Статус: {status_icon}</blockquote>"
     )
 
 def admin_stats_text(users: int, projects: int, active: int, servers: int, online: int) -> str:
     return (
-        f"{Emoji.GRAPH_STATS} <b>Сводная системная аналитика</b>\n\n"
-        f"👤 Всего профилей в БД: {users}\n"
-        f"📦 Всего конфигураций: {projects}\n"
-        f"🟢 Активных процессов: {active}\n"
-        f"🌍 Общее число нод: {servers}\n"
-        f"🟢 Серверов онлайн: {online}"
+        f"{Emoji.GRAPH_STATS} <b>Статистика платформы</b>\n\n"
+        f"<blockquote>👤 Пользователи: <b>{users}</b>\n"
+        f"📦 Проекты: <b>{projects}</b>\n"
+        f"🟢 Запущено: <b>{active}</b>\n"
+        f"🌍 Серверы: <b>{servers}</b>\n"
+        f"🟢 Онлайн: <b>{online}</b></blockquote>"
     )
 
 def admin_promos_text(count: int) -> str:
-    return f"{Emoji.GIFT} <b>Архив промо-кодов</b> ({count})"
+    return f"{Emoji.GIFT} <b>Промокоды</b> · {count}"
 
 def admin_subscriptions_text(free_count: int, premium_count: int, total: int) -> str:
     return (
-        f"💎 <b>Распределение тарифных планов</b>\n\n"
-        f"🆓 Базовые аккаунты: {free_count}\n"
-        f"💎 Премиум лицензии: {premium_count}\n"
-        f"Всего пользователей: {total}"
+        f"💎 <b>Тарифы</b>\n\n"
+        f"<blockquote>🆓 Free: <b>{free_count}</b>\n"
+        f"💎 Premium: <b>{premium_count}</b>\n"
+        f"Всего: <b>{total}</b></blockquote>"
     )
 
 def admin_referrals_text(count: int) -> str:
     return (
-        f"🔗 <b>Статистика партнерской сети</b>\n\n"
-        f"Общее количество реферальных связей: {count}"
+        f"🔗 <b>Рефералы</b>\n\n"
+        f"<blockquote>Приглашений: <b>{count}</b></blockquote>"
     )
 
 
@@ -842,65 +845,67 @@ BTN_DELETE_BACKUP = "🗑 Стереть архивный снимок"
 
 def project_monitor_text(name: str, status_text: str, cpu: float, ram: float, disk: float, uptime: str, restarts: int) -> str:
     return (
-        f"{Emoji.GRAPH_STATS} <b>Телеметрия ресурсов инстанса: {name}</b>\n\n"
-        f"Состояние контейнера: {status_text}\n"
-        f"Нагрузка на ядро CPU: <b>{cpu:.1f}%</b>\n"
-        f"Выделенная память RAM: <b>{ram:.1f} MB</b>\n"
-        f"Объем дискового пространства: <b>{disk:.1f} MB</b>\n"
-        f"Uptime текущей сессии: <b>{uptime}</b>\n"
-        f"Количество аварийных перезапусков: <b>{restarts}</b>"
+        f"<b>{Emoji.GRAPH_STATS} Мониторинг</b>\n\n"
+        f"<b>{html.escape(str(name))}</b>\n\n"
+        f"<blockquote>Статус: {status_text}\n"
+        f"⚡ CPU: <b>{cpu:.1f}%</b>\n"
+        f"💾 RAM: <b>{ram:.1f} MB</b>\n"
+        f"💽 Диск: <b>{disk:.1f} MB</b>\n"
+        f"⏱ Uptime: <b>{html.escape(str(uptime))}</b>\n"
+        f"🔄 Перезапусков: <b>{restarts}</b></blockquote>"
     )
 
 def project_graphs_text(hours: int, avg_cpu: float, max_cpu: float, avg_ram: float, max_ram: float, data_points: int) -> str:
     return (
-        f"{Emoji.GRAPH_UP} <b>Агрегированная статистика за интервал {hours}ч</b>\n\n"
-        f"{Emoji.GRAPH_STATS} Вычислительная мощность (CPU):\n"
-        f"  Медианное значение: {avg_cpu:.1f}%\n"
-        f"  Пиковый всплеск: {max_cpu:.1f}%\n\n"
-        f"{Emoji.GRAPH_UP} Оперативная память (RAM):\n"
-        f"  Среднее заполнение: {avg_ram:.1f} MB\n"
-        f"  Максимальная аллокация: {max_ram:.1f} MB\n\n"
-        f"{Emoji.INFO} Всего обработано маркеров телеметрии: {data_points}"
+        f"<b>{Emoji.GRAPH_UP} Статистика за {hours} ч</b>\n\n"
+        f"<blockquote>⚡ <b>CPU</b>\n"
+        f"среднее: {avg_cpu:.1f}%\n"
+        f"пик: {max_cpu:.1f}%\n\n"
+        f"💾 <b>RAM</b>\n"
+        f"среднее: {avg_ram:.1f} MB\n"
+        f"пик: {max_ram:.1f} MB</blockquote>\n\n"
+        f"<i>{Emoji.INFO} Точек данных: {data_points}</i>"
     )
 
-ERROR_NO_STATS_DATA = "За выбранный хронологический период метрики отсутствуют в базе данных."
+ERROR_NO_STATS_DATA = "📊 За выбранный период данных пока нет."
 
 
 # ─── PROJECT SETTINGS ───
 
 def project_settings_text(name: str, python_version: str, entry_point: str, entry_type: str) -> str:
     return (
-        f"{Emoji.SETTINGS} <b>Спецификация конфигурации: {name}</b>\n\n"
-        f"Версия интерпретатора: Python {python_version}\n"
-        f"Исполняемый маркер: <code>{entry_point}</code>\n"
-        f"Архитектура вызова: {entry_type}"
+        f"<b>{Emoji.SETTINGS} Настройки проекта</b>\n\n"
+        f"<b>{html.escape(str(name))}</b>\n\n"
+        f"<blockquote>🐍 Python: <b>{html.escape(str(python_version))}</b>\n"
+        f"📄 Запуск: <code>{html.escape(str(entry_point))}</code>\n"
+        f"Режим: {html.escape(str(entry_type))}</blockquote>"
     )
 
-PROJECT_PYTHON_SELECT_TEXT = f"{Emoji.SETTINGS} Укажите необходимую версию изолированной среды Python:"
-PROJECT_ENTRY_INPUT_TEXT = f"{Emoji.PENCIL} Задайте новый корневой скрипт или пространство имен модуля:"
-PROJECT_SETTINGS_USE_CARD = "Синхронизировать параметры со стандартной конфигурационной схемой проекта"
+PROJECT_PYTHON_SELECT_TEXT = f"{Emoji.SETTINGS} <b>Версия Python</b>\n\nВыбери версию для проекта:"
+PROJECT_ENTRY_INPUT_TEXT = f"{Emoji.PENCIL} <b>Точка входа</b>\n\nОтправь путь к файлу или имя модуля:"
+PROJECT_SETTINGS_USE_CARD = "Вернуться к карточке проекта"
 
 
 # ─── PROJECT LOGS ───
 
 def project_logs_menu_text(name: str) -> str:
-    return f"""📋 <b>Логи проекта</b>
+    return f"""<b>📋 Логи проекта</b>
 
-<b>{name}</b>
+<b>{html.escape(str(name))}</b>
 
-Что хочешь сделать?"""
+<i>Что хочешь сделать?</i>"""
 
 def project_logs_view_text(logs: str) -> str:
-    return f"""📋 <b>Логи проекта</b>
+    return f"""<b>📋 Логи проекта</b>
 
-Последние 100 строк:
+<blockquote>Последние 100 строк:</blockquote>
 
-<pre>{logs}</pre>
+<pre>{html.escape(str(logs))}</pre>
 
-💡 <i>Используй "Скачать" для полного файла</i>"""
+<i>💡 Используй «Скачать», чтобы получить полный файл.</i>"""
 
 def project_logs_file_caption(name: str) -> str:
-    return f"📄 Логи проекта <b>{name}</b>"
+    return f"📄 Логи проекта <b>{html.escape(str(name))}</b>"
 
 PROJECT_LOGS_CLEARED = "✅ Логи очищены"
 PROJECT_LOGS_CLEAR_ERROR = "❌ Не удалось очистить логи. Попробуй ещё раз."
@@ -910,13 +915,13 @@ PROJECT_LOGS_CLEAR_ERROR = "❌ Не удалось очистить логи. �
 
 def project_delete_confirm_text(name: str) -> str:
     return (
-        f"{Emoji.TRASH} <b>Уничтожение изолированной среды</b>\n\n"
-        f"Вы собираетесь полностью удалить инстанс <b>{name}</b>.\n"
-        f"Это сотрет все ассоциированные контейнеры и локальные папки без возможности восстановления."
+        f"<b>{Emoji.TRASH} Удалить проект?</b>\n\n"
+        f"Проект <b>{html.escape(str(name))}</b> будет остановлен, а его файлы и бэкапы — удалены.\n\n"
+        "<blockquote>⚠️ <b>Это действие нельзя отменить.</b></blockquote>"
     )
 
-PROJECT_DELETED_TEXT = f"{Emoji.CHECK} Виртуальное окружение проекта успешно ликвидировано."
-PROJECT_DELETE_ERROR = "Критический сбой API при попытке деинсталлировать контейнер."
+PROJECT_DELETED_TEXT = f"{Emoji.CHECK} <b>Проект удалён</b>\n\nСлот освобождён."
+PROJECT_DELETE_ERROR = "❌ Не удалось удалить проект. Попробуй ещё раз."
 
 
 # ─── PROFILE & SETTINGS ───
@@ -936,21 +941,20 @@ def profile_text(
     # Прогресс-бар для проектов
     progress_bar = _create_progress_bar(projects_count, max_projects)
     
-    return f"""👤 <b>Твой профиль</b>
+    return f"""<b>👤 Твой профиль</b>
 
-<b>@{username}</b>
+<b>{html.escape(str(username))}</b>
 
-📦 <b>Проекты:</b> {projects_count} из {max_projects}
+<blockquote>📦 <b>Проекты:</b> {projects_count} из {max_projects}
 {progress_bar}
 
 {tariff_icon} <b>Тариф:</b> {tariff_name}
+💰 <b>Баланс:</b> {balance:.2f}₽</blockquote>
 
-💰 <b>Баланс:</b> {balance:.2f}₽
+<b>🔗 Реферальная ссылка:</b>
+<code>{html.escape(str(referral_link))}</code>
 
-🔗 <b>Реферальная ссылка:</b>
-<code>{referral_link}</code>
-
-💡 <i>Приглашай друзей и получай бонусы!</i>"""
+<i>💡 Приглашай друзей и получай бонусы.</i>"""
 
 
 SETTINGS_NOT_FOUND = "❌ Настройки не найдены"
@@ -960,32 +964,25 @@ SETTINGS_CHANGED = "✅ Настройка изменена"
 
 def notification_settings_text() -> str:
     """Настройки уведомлений."""
-    return f"""🔔 <b>Уведомления</b>
+    return """<b>🔔 Уведомления</b>
 
-Выбери, о чём хочешь получать уведомления:
+<blockquote><b>📊 Статус проектов</b>
+запуск · остановка · ошибки
 
-<b>📊 Статус проектов:</b>
-  • Проект запущен
-  • Проект остановлен
-  • Ошибка запуска
+<b>⚠️ Ресурсы</b>
+высокая нагрузка CPU/RAM · мало места
 
-<b>⚠️ Проблемы:</b>
-  • Высокая нагрузка CPU
-  • Нехватка памяти
-  • Мало места на диске
+<b>📦 Бэкапы и обновления</b>
+создание копии · завершение обновления</blockquote>
 
-<b>📦 Бэкапы и обновления:</b>
-  • Бэкап создан
-  • Обновление установлено
-
-💡 <i>Нажми на кнопку чтобы включить/выключить</i>"""
+<i>💡 Нажми на пункт, чтобы включить или выключить уведомление.</i>"""
 
 
 # ─── LOCATIONS ───
 
-LOCATIONS_NO_SERVERS = f"{Emoji.HOME} <b>Вычислительные кластеры</b>\n\nДоступные физические серверные ноды отсутствуют."
-LOCATIONS_SERVERS_TEXT = f"{Emoji.HOME} <b>Список активных серверных узлов</b>"
-LOCATION_NOT_FOUND = "Выбранный физический сервер не отвечает на запросы кластера."
+LOCATIONS_NO_SERVERS = f"{Emoji.HOME} <b>Серверы</b>\n\n<i>Сейчас нет доступных серверов — попробуй позже.</i>"
+LOCATIONS_SERVERS_TEXT = f"{Emoji.HOME} <b>Доступные серверы</b>\n\n<i>Выбери площадку для размещения проекта.</i>"
+LOCATION_NOT_FOUND = "❌ Сервер не найден."
 
 
 # ─── SUBSCRIPTION ───
@@ -994,27 +991,26 @@ SUBSCRIPTION_PLAN_UNKNOWN = "Запрошена неподдерживаемая
 
 def subscription_buy_confirm_text(plan_label: str, price: int) -> str:
     return (
-        f"💳 <b>Активация подписки</b>\n\n"
-        f"Выбранный тарифный план: <b>Premium {plan_label}</b>\n"
-        f"Фиксированная стоимость: <b>{price}₽</b>\n\n"
-        f"Для генерации платежной сессии и проведения транзакции перейдите в диалог с биллингом."
+        f"<b>💳 Premium · {html.escape(str(plan_label))}</b>\n\n"
+        f"<blockquote>Стоимость: <b>{price}₽</b></blockquote>\n\n"
+        f"<i>Для оплаты напиши в поддержку — мы поможем активировать подписку.</i>"
     )
 
 
 # ─── COOWNERS ───
 
-COOWNER_ENTER_ID = """👥 <b>Добавить совладельца</b>
+COOWNER_ENTER_ID = """<b>👥 Добавить совладельца</b>
 
 Отправь <b>Telegram ID</b> пользователя.
 
-<b>Как узнать ID:</b>
-  1. Пусть человек напишет @userinfobot
-  2. Бот ответит с его ID
-  3. Отправь это число сюда
+<blockquote><b>Как узнать ID:</b>
+1. Пусть человек напишет @userinfobot
+2. Бот ответит его ID
+3. Отправь это число сюда</blockquote>
 
 <b>Пример:</b> <code>123456789</code>
 
-💡 <i>Пользователь должен хотя бы раз запустить бота</i>"""
+<i>💡 Пользователь должен хотя бы раз запустить бота.</i>"""
 
 COOWNER_REMOVED = "✅ Доступ отозван"
 COOWNER_INVALID_ID = "❌ <b>Неверный формат</b>\n\nID должен быть числом."
@@ -1023,7 +1019,10 @@ COOWNER_USER_NOT_FOUND = "❌ <b>Пользователь не найден</b>\
 COOWNER_ALREADY_EXISTS = "❌ <b>Уже добавлен</b>\n\nЭтот пользователь уже имеет доступ."
 
 def coowner_added_text(username: str) -> str:
-    return f"✅ <b>Доступ предоставлен!</b>\n\n<b>{username}</b> теперь может управлять этим проектом."
+    return (
+        f"<b>✅ Доступ предоставлен</b>\n\n"
+        f"<b>{html.escape(str(username))}</b> теперь может управлять этим проектом."
+    )
 
 
 # ─── BOT CREATE ───
@@ -1051,38 +1050,39 @@ BOT_CREATE_ENTRY_MODULE_TEXT = (
 )
 def bot_create_entry_confirm_text(entry: str) -> str:
     return (
-        f"📄 <b>Параметр вызова: {entry}</b>\n\n"
-        f"Утвердите выбранную точку входа. Изменение сценария запуска доступно в панели управления проектом."
+        f"<b>📄 Точка входа</b>\n\n"
+        f"<blockquote><code>{html.escape(str(entry))}</code></blockquote>\n\n"
+        f"<i>Проверь параметр и подтверди создание проекта.</i>"
     )
 
 def bot_create_confirm_text(name: str, python: str, entry: str) -> str:
     return (
-        f"{Emoji.CHECK} <b>Верификация архитектурной схемы деплоя</b>\n\n"
-        f"📝 Проект: <b>{name}</b>\n"
-        f"🐍 Рантайм: Python {python}\n"
-        f"📄 Инициализатор: <code>{entry}</code>\n\n"
-        f"Запустить компиляцию образов и сборку проекта?"
+        f"{Emoji.CHECK} <b>Проверь параметры</b>\n\n"
+        f"<blockquote>📝 Проект: <b>{html.escape(str(name))}</b>\n"
+        f"🐍 Python: <b>{html.escape(str(python))}</b>\n"
+        f"📄 Запуск: <code>{html.escape(str(entry))}</code></blockquote>\n\n"
+        f"<i>Создать проект?</i>"
     )
 
 BOT_CREATE_SUCCESS_TEXT = (
-    f"🤖 <b>Оркестрация контейнера завершена успешно!</b>\n\n"
-    f"Ваш сервис переведен в рабочую фазу выполнения на удаленном узле.\n\n"
-    f"Используйте главный дашборд для администрирования параметров рантайма."
+    f"🤖 <b>Проект создан</b>\n\n"
+    f"<blockquote>Контейнер развёрнут и готов к запуску.</blockquote>\n\n"
+    f"<i>Открой карточку проекта, чтобы запустить его.</i>"
 )
 
 
 # ─── ADMIN ───
 
-ADMIN_NO_ACCESS = "⛔ Критическая ошибка авторизации. Требуются root-привилегии суперпользователя."
-ADMIN_USER_NOT_FOUND = "Запрошенная учетная запись пользователя отсутствует в глобальной базе данных."
-ADMIN_SERVER_NOT_FOUND = "Выбранный физический узел инфраструктуры не зарегистрирован в системе."
-ADMIN_SERVER_DELETED = "Вычислительный узел успешно выведен из кластера и удален."
-ADMIN_REFERRAL_WIP = "Компонент реферального трекинга находится на стадии разработки и закрытого тестирования."
+ADMIN_NO_ACCESS = "⛔ У тебя нет доступа к админ-панели."
+ADMIN_USER_NOT_FOUND = "❌ Пользователь не найден."
+ADMIN_SERVER_NOT_FOUND = "❌ Сервер не найден."
+ADMIN_SERVER_DELETED = "✅ Сервер удалён."
+ADMIN_REFERRAL_WIP = "🔗 Реферальная статистика скоро появится."
 
-ADMIN_USER_BANNED = "🚫 К аккаунту применены санкции перманентного ограничения доступа (Ban)"
-ADMIN_USER_UNBANNED = "✅ Ограничения доступа с учетной записи пользователя полностью сняты"
-ADMIN_TARIFF_CHANGED = lambda tariff: f"✅ Тарифный план учетной записи успешно изменен на {tariff}"
-ADMIN_BALANCE_INPUT_ERROR = "❌ Неверный тип данных. Система ожидает исключительно числовой формат формата float/int:"
+ADMIN_USER_BANNED = "🚫 Пользователь заблокирован"
+ADMIN_USER_UNBANNED = "✅ Пользователь разблокирован"
+ADMIN_TARIFF_CHANGED = lambda tariff: f"✅ Тариф изменён на {tariff}"
+ADMIN_BALANCE_INPUT_ERROR = "❌ Введи число, например 100 или -50."
 ADMIN_PROMO_TYPE_ERROR = "❌ Ошибка валидации типа сущности купона. Разрешенные значения: tariff, projects, balance"
 
 def admin_user_status_text(username: str, status: str) -> str:
@@ -1098,7 +1098,11 @@ def admin_balance_result_text(amount: float, balance: float) -> str:
     )
 
 def admin_server_delete_confirm_text(name: str) -> str:
-    return f"{Emoji.TRASH} Вы действительно хотите деинсталлировать физический сервер <b>{name}</b> из инфраструктуры?"
+    return (
+        f"{Emoji.TRASH} <b>Удалить сервер?</b>\n\n"
+        f"<blockquote><b>{html.escape(str(name))}</b> будет удалён из инфраструктуры.\n"
+        f"Проекты на нём не удалятся, но потеряют привязку к серверу.</blockquote>"
+    )
 
 ADMIN_SERVER_ENTER_NAME = f"{Emoji.HOME} Задайте кодовое наименование для регистрируемой ноды:"
 ADMIN_SERVER_ENTER_COUNTRY = f"{Emoji.HOME} Укажите страну физического размещения сервера:"
@@ -1137,29 +1141,33 @@ def success_secret_added(key: str) -> str:
 def success_secret_deleted(key: str) -> str:
     return f"✅ Переменная <b>{key}</b> удалена"
 
-SUCCESS_BACKUP_CREATED = "☁ Актуальный снимок системы успешно сгенерирован и отправлен в облачный репозиторий!"
+SUCCESS_BACKUP_CREATED = "☁ <b>Резервная копия создана</b>\n\n<i>Файлы проекта сохранены.</i>"
 
 def success_entry_changed(entry: str) -> str:
-    return f"{Emoji.CHECK} Архитектурный маркер вызова процесса изменен на: <code>{entry}</code>"
+    return f"<b>✅ Точка входа изменена</b>\n\n<code>{html.escape(str(entry))}</code>"
 
 def success_python_changed(version: str) -> str:
-    return f"✅ Среда рантайма переключена на интерпретатор Python {version}"
+    return f"<b>✅ Python обновлён</b>\n\nПроект будет запущен на Python {html.escape(str(version))}."
 
 def success_balance_changed(amount: float, balance: float) -> str:
-    return f"✅ Финансовая транзакция проведена. Изменение: {amount:.2f} | Текущий остаток на счете: {balance:.2f}"
+    return (
+        f"<b>✅ Баланс изменён</b>\n\n"
+        f"Изменение: <b>{amount:+.2f}₽</b>\n"
+        f"Текущий баланс: <b>{balance:.2f}₽</b>"
+    )
 
 
 # ─── COOWNERS (NEW) ───
 
-COOWNER_ENTER_ID = """👤 <b>Добавление совладельца</b>
+COOWNER_ENTER_ID = """<b>👥 Добавить совладельца</b>
 
 Введи Telegram ID пользователя:
 
-<b>Где найти ID:</b>
-  • @userinfobot — отправь ему любое сообщение
-  • Это просто число, например: <code>123456789</code>
+<blockquote><b>Где найти ID:</b>
+• @userinfobot — отправь ему любое сообщение
+• это просто число, например <code>123456789</code></blockquote>
 
-💡 <i>Пользователь должен хотя бы раз запустить бота</i>"""
+<i>💡 Пользователь должен хотя бы раз запустить бота.</i>"""
 
 COOWNER_INVALID_ID = "❌ Это не похоже на Telegram ID. Введи число, например: <code>123456789</code>"
 COOWNER_SELF_ADD = "❌ Нельзя добавить самого себя в совладельцы 😊"
@@ -1168,36 +1176,34 @@ COOWNER_ALREADY_EXISTS = "❌ Этот пользователь уже явля�
 COOWNER_REMOVED = "✅ Совладелец удалён"
 
 def coowner_added_text(username: str) -> str:
-    return f"""✅ <b>Совладелец добавлен!</b>
+    return f"""<b>✅ Совладелец добавлен</b>
 
-<b>{username}</b> теперь имеет доступ к проекту.
+<b>{html.escape(str(username))}</b> теперь имеет доступ к проекту.
 
-По умолчанию включены разрешения:
-  ✅ Запуск/остановка
-  ✅ Просмотр логов
-  ✅ Просмотр настроек
+<blockquote><b>Разрешения по умолчанию:</b>
+✅ запуск и остановка
+✅ просмотр логов
+✅ просмотр настроек</blockquote>
 
-Ты можешь настроить разрешения через список совладельцев."""
+<i>Разрешения можно изменить в списке совладельцев.</i>"""
 
 def coowner_permissions_text(user_id: int) -> str:
-    return f"""🔐 <b>Разрешения совладельца</b>
+    return f"""<b>🔐 Разрешения совладельца</b>
 
-<b>ID:</b> {user_id}
+<b>ID:</b> <code>{user_id}</code>
 
-Настрой что может делать этот совладелец:
+<blockquote>Настрой, что может делать этот совладелец.
 
-<b>Основные действия:</b>
-  • Запуск и остановка проекта
-  • Просмотр логов
+<b>Действия</b>
+запуск и остановка · просмотр логов
 
-<b>Файлы и зависимости:</b>
-  • Редактирование файлов
-  • Управление библиотеками
+<b>Файлы</b>
+редактирование · управление зависимостями
 
-<b>Просмотр:</b>
-  • Доступ к настройкам проекта
+<b>Настройки</b>
+просмотр параметров проекта</blockquote>
 
-💡 <i>Нажми на кнопку чтобы включить/выключить разрешение</i>"""
+<i>💡 Нажми на пункт, чтобы включить или выключить разрешение.</i>"""
 
 def success_entry_changed(entry: str) -> str:
-    return f"✅ Точка входа изменена на <code>{entry}</code>"
+    return f"<b>✅ Точка входа изменена</b>\n\n<code>{html.escape(str(entry))}</code>"

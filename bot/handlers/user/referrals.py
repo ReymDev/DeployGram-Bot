@@ -18,16 +18,16 @@ async def referrals_menu(callback: CallbackQuery, db_user, session):
 
     text = (
         f"{Emoji.LINK} <b>Реферальная система</b>\n\n"
-        f"🔗 Ваша ссылка:\n<code>{link}</code>\n\n"
-        f"👥 Приглашено: <b>{count}</b>\n\n"
-        f"Поделитесь ссылкой с друзьями!"
+        f"<blockquote><b>Твоя ссылка:</b>\n<code>{link}</code>\n\n"
+        f"👥 Приглашено: <b>{count}</b></blockquote>\n\n"
+        f"<i>Приглашай друзей и получай бонусы.</i>"
     )
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="◁ Меню", style="danger", callback_data="main_menu"),
+        InlineKeyboardButton(text="◁ Меню", style="primary", callback_data="main_menu"),
     )
 
     await edit_photo_or_text(

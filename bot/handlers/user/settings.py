@@ -42,7 +42,7 @@ async def project_settings(callback: CallbackQuery, project_service, db_user, st
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data=f"project_view_{project_id}"),
+        InlineKeyboardButton(text="◁ Назад", style="primary", callback_data=f"project_view_{project_id}"),
     )
 
     await callback.message.edit_text(
@@ -68,7 +68,7 @@ async def ps_python_select(callback: CallbackQuery, state: FSMContext):
             )
         )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data=f"project_settings_{project_id}"),
+        InlineKeyboardButton(text="◁ Назад", style="primary", callback_data=f"project_settings_{project_id}"),
     )
 
     await callback.message.edit_text(

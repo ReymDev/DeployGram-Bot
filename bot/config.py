@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     BOT_TOKEN: str = ""
     BOT_NAME: str = "DeployGram"
+    BOT_USERNAME: str = "DeployGramBot"
     ADMIN_IDS: List[int] = []
 
     @field_validator("ADMIN_IDS", mode="before")

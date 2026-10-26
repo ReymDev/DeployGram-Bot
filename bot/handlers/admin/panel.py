@@ -5,6 +5,8 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
+from html import escape
+
 from bot.config import settings
 from bot.keyboards.admin import (
     get_admin_keyboard,
@@ -28,7 +30,8 @@ def is_admin(user_id: int) -> bool:
 
 
 @router.message(Command("admin"))
-async def cmd_admin(message: Message, session):
+async def cmd_admin(message: Message, session, state: FSMContext):
+    await state.clear()
     if not is_admin(message.from_user.id):
         await message.answer(texts.ADMIN_NO_ACCESS)
         return
@@ -54,16 +57,12 @@ async def cmd_admin(message: Message, session):
 
 
 def admin_panel_text(users, projects, servers):
-    return (
-        f"{Emoji.SETTINGS} <b>Админ-панель</b>\n\n"
-        f"👤 Пользователей: {users}\n"
-        f"📦 Проектов: {projects}\n"
-        f"🌍 Серверов: {servers}"
-    )
+    return texts.admin_panel_text(users, projects, servers)
 
 
 @router.callback_query(F.data == "admin_panel")
-async def admin_panel(callback: CallbackQuery, session):
+async def admin_panel(callback: CallbackQuery, session, state: FSMContext):
+    await state.clear()
     if not is_admin(callback.from_user.id):
         await callback.answer(texts.ADMIN_NO_ACCESS, show_alert=True)
         return
@@ -213,7 +212,7 @@ def get_admin_user_tariff_keyboard(user_id: int):
         InlineKeyboardButton(text="💎 Premium", callback_data=f"admin_set_tariff_{user_id}_premium", style="success"),
     )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data=f"admin_user_view_{user_id}"),
+        InlineKeyboardButton(text="◁ Назад", style="primary", callback_data=f"admin_user_view_{user_id}"),
     )
     return builder.as_markup()
 
@@ -226,6 +225,9 @@ async def admin_set_tariff(callback: CallbackQuery, session):
     parts = callback.data.split("_")
     user_id = int(parts[3])
     tariff = parts[4]
+    if tariff not in ("free", "premium"):
+        await callback.answer(texts.SETTINGS_UNKNOWN, show_alert=True)
+        return
 
     user_svc = UserService(session)
     await user_svc.set_tariff(user_id, tariff)
@@ -261,6 +263,9 @@ async def admin_locations(callback: CallbackQuery, session):
 
 @router.callback_query(F.data == "admin_server_add")
 async def admin_server_add(callback: CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        await callback.answer(texts.ADMIN_NO_ACCESS, show_alert=True)
+        return
     await callback.message.edit_text(
         texts.ADMIN_SERVER_ENTER_NAME,
     )
@@ -287,14 +292,23 @@ async def admin_balance_input(message: Message, state: FSMContext, session):
     if not is_admin(message.from_user.id):
         return
 
+    import math
+
     try:
         amount = float(message.text.strip())
     except ValueError:
         await message.answer(texts.ADMIN_BALANCE_INPUT_ERROR)
         return
+    if not math.isfinite(amount) or abs(amount) > 1_000_000:
+        await message.answer(texts.ADMIN_BALANCE_INPUT_ERROR)
+        return
 
     data = await state.get_data()
     user_id = data.get("admin_balance_user_id")
+    if not user_id:
+        await message.answer(texts.ADMIN_USER_NOT_FOUND)
+        await state.clear()
+        return
 
     user_svc = UserService(session)
     await user_svc.update_balance(user_id, amount)
@@ -388,7 +402,7 @@ async def admin_server_view(callback: CallbackQuery, session):
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data="admin_locations"),
+        InlineKeyboardButton(text="◁ Назад", style="primary", callback_data="admin_locations"),
     )
 
     await callback.message.edit_text(text, reply_markup=builder.as_markup())
@@ -479,13 +493,12 @@ async def admin_stats(callback: CallbackQuery, session):
     servers = await server_repo.get_all()
     running = await project_repo.get_running_projects()
 
-    text = (
-        f"{Emoji.GRAPH_STATS} <b>Статистика</b>\n\n"
-        f"👤 Пользователей: {users_count}\n"
-        f"📦 Всего проектов: {projects_count}\n"
-        f"🟢 Активных: {len(running)}\n"
-        f"🌍 Серверов: {len(servers)}\n"
-        f"🟢 Онлайн: {len([s for s in servers if s.status == 'online'])}"
+    text = texts.admin_stats_text(
+        users_count,
+        projects_count,
+        len(running),
+        len(servers),
+        len([s for s in servers if s.status == "online"]),
     )
 
     from bot.keyboards.admin import get_admin_keyboard
@@ -511,6 +524,40 @@ async def admin_promos(callback: CallbackQuery, session):
     await callback.message.edit_text(
         f"{Emoji.GIFT} <b>Промокоды</b> ({len(promos)})",
         reply_markup=get_admin_promos_keyboard(promos),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("admin_promo_view_"))
+async def admin_promo_view(callback: CallbackQuery, session):
+    if not is_admin(callback.from_user.id):
+        await callback.answer(texts.ADMIN_NO_ACCESS, show_alert=True)
+        return
+
+    try:
+        promo_id = int(callback.data.split("_")[-1])
+    except ValueError:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+
+    from repositories.promo import PromoRepository
+    promo = await PromoRepository(session).get_by_id(promo_id)
+    if promo is None:
+        await callback.answer("Промокод не найден", show_alert=True)
+        return
+
+    expires = promo.expires_at.strftime("%d.%m.%Y %H:%M") if promo.expires_at else "бессрочно"
+    text = (
+        f"🎁 <b>Промокод</b>\n\n"
+        f"<blockquote><b>Код:</b> <code>{escape(str(promo.code))}</code>\n"
+        f"<b>Награда:</b> {escape(str(promo.reward_type))} = {escape(str(promo.reward_value))}\n"
+        f"<b>Активации:</b> {promo.activated_count}/{promo.max_activations}\n"
+        f"<b>Действует до:</b> {escape(str(expires))}</blockquote>"
+    )
+    await callback.message.edit_text(
+        text,
+        reply_markup=get_back_keyboard("admin_promos"),
+        parse_mode="HTML",
     )
     await callback.answer()
 
@@ -557,7 +604,7 @@ async def admin_broadcast(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "admin_settings")
 async def admin_settings(callback: CallbackQuery):
     if not is_admin(callback.from_user.id):
-        await callback.answer("⛔", show_alert=True)
+        await callback.answer(texts.ADMIN_NO_ACCESS, show_alert=True)
         return
     from bot.config import settings as cfg
     await callback.message.edit_text(
@@ -567,12 +614,19 @@ async def admin_settings(callback: CallbackQuery):
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("admin_set_sleep_"))
+@router.callback_query(F.data.startswith("admin_sleep_"))
 async def admin_set_sleep(callback: CallbackQuery):
     if not is_admin(callback.from_user.id):
-        await callback.answer("⛔", show_alert=True)
+        await callback.answer(texts.ADMIN_NO_ACCESS, show_alert=True)
         return
-    minutes = int(callback.data.replace("admin_sleep_", ""))
+    try:
+        minutes = int(callback.data.replace("admin_sleep_", ""))
+    except ValueError:
+        await callback.answer(texts.SETTINGS_UNKNOWN, show_alert=True)
+        return
+    if minutes not in (0, 30, 60, 360, 1440):
+        await callback.answer(texts.SETTINGS_UNKNOWN, show_alert=True)
+        return
 
     from bot.config import settings as cfg
     cfg.AUTO_SLEEP_MINUTES = minutes
@@ -672,7 +726,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
     api_key = data.get("server_api_key", "")
 
     log_lines = []
-    log_lines.append(f"🔌 <b>Подключение к {server_name} ({server_ip}:8080)</b>\n")
+    log_lines.append(f"🔌 <b>Подключение к {escape(str(server_name))} ({escape(str(server_ip))}:8080)</b>\n")
 
     status_msg = await message.answer(
         texts.ADMIN_SERVER_CHECKING + "\n\n"
@@ -734,6 +788,8 @@ async def server_slots_received(message: Message, state: FSMContext, session):
 
     try:
         stats = await client.get_server_stats()
+        if stats.get("error"):
+            raise RuntimeError(str(stats["error"]))
         containers_running = stats.get("containers_running", 0)
         containers_total = stats.get("containers_total", 0)
         log_lines.append(f"   {Emoji.CHECK} Docker: OK (контейнеров: {containers_running}/{containers_total})")
@@ -844,9 +900,9 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         await status_msg.edit_text(
             f"📋 <b>Логи подключения:</b>\n\n"
             + "\n".join(log_lines)
-            + f"\n\n{Emoji.CHECK} <b>Сервер {server_name} успешно добавлен!</b>\n\n"
-            f"🌍 Страна: {data['server_country']}\n"
-            f"📡 IP: {server_ip}:8080\n"
+            + f"\n\n{Emoji.CHECK} <b>Сервер {escape(str(server_name))} успешно добавлен!</b>\n\n"
+            f"🌍 Страна: {escape(str(data['server_country']))}\n"
+            f"📡 IP: {escape(str(server_ip))}:8080\n"
             f"💻 Слоты: {slots}\n"
             f"🔑 API Key: {'Есть' if api_key else 'Нет'}",
             reply_markup=get_back_keyboard("admin_panel"),
@@ -855,9 +911,9 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         await message.answer(
             f"📋 <b>Логи подключения:</b>\n\n"
             + "\n".join(log_lines)
-            + f"\n\n{Emoji.CHECK} <b>Сервер {server_name} успешно добавлен!</b>\n\n"
-            f"🌍 Страна: {data['server_country']}\n"
-            f"📡 IP: {server_ip}:8080\n"
+            + f"\n\n{Emoji.CHECK} <b>Сервер {escape(str(server_name))} успешно добавлен!</b>\n\n"
+            f"🌍 Страна: {escape(str(data['server_country']))}\n"
+            f"📡 IP: {escape(str(server_ip))}:8080\n"
             f"💻 Слоты: {slots}\n"
             f"🔑 API Key: {'Есть' if api_key else 'Нет'}",
             reply_markup=get_back_keyboard("admin_panel"),
@@ -911,6 +967,9 @@ async def promo_max_input(message: Message, state: FSMContext, session):
     except ValueError:
         await message.answer("❌ Введите число:")
         return
+    if max_act < 1 or max_act > 1_000_000:
+        await message.answer("❌ Количество активаций: от 1 до 1 000 000")
+        return
 
     data = await state.get_data()
     from services.promo import PromoService
@@ -924,6 +983,6 @@ async def promo_max_input(message: Message, state: FSMContext, session):
 
     await state.clear()
     await message.answer(
-        f"{Emoji.CHECK} Промокод <b>{data['promo_code']}</b> создан.",
+        f"{Emoji.CHECK} Промокод <b>{escape(str(data['promo_code']))}</b> создан.",
         reply_markup=get_back_keyboard("admin_panel"),
     )

@@ -5,7 +5,11 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
+from html import escape
+
+from bot.utils.callbacks import decode_path, encode_path
 from bot.utils.emojis import Emoji
+from bot.utils.media import edit_photo_or_text
 from bot import texts
 
 router = Router()
@@ -41,13 +45,13 @@ async def _check_file_access(callback: CallbackQuery, project_service, db_user, 
 async def bot_files_redirect(callback: CallbackQuery, project_service, db_user, session):
     """Редирект с bot_files_ на files_main_menu_."""
     project_id = int(callback.data.split("_")[-1])
-    # Перенаправляем на новый хендлер
-    callback.data = f"files_main_menu_{project_id}"
-    await files_main_menu(callback, project_service, db_user, session)
+    redirected = callback.model_copy(update={"data": f"files_main_menu_{project_id}"})
+    await files_main_menu(redirected, project_service, db_user, session, state)
 
 
 @router.callback_query(F.data.startswith("files_main_menu_"))
-async def files_main_menu(callback: CallbackQuery, project_service, db_user, session):
+async def files_main_menu(callback: CallbackQuery, project_service, db_user, session, state: FSMContext):
+    await state.clear()
     """Главное меню файлового менеджера - выбор режима."""
     project_id = int(callback.data.split("_")[-1])
     # For main menu, only need basic access
@@ -71,8 +75,10 @@ async def files_main_menu(callback: CallbackQuery, project_service, db_user, ses
 
 Выбери действие:"""
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "file_manager",
         reply_markup=get_files_main_menu_keyboard(project_id),
         parse_mode="HTML"
     )
@@ -110,8 +116,10 @@ async def files_browse(callback: CallbackQuery, project_service, db_user, sessio
 
 Нажми на файл для действий или на папку чтобы открыть:"""
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "file_manager",
         reply_markup=get_file_browser_keyboard(project_id, files, "/app"),
         parse_mode="HTML"
     )
@@ -119,7 +127,8 @@ async def files_browse(callback: CallbackQuery, project_service, db_user, sessio
 
 
 @router.callback_query(F.data.startswith("files_upload_"))
-async def files_upload_mode(callback: CallbackQuery, project_service, db_user, session):
+async def files_upload_mode(callback: CallbackQuery, project_service, db_user, session, state: FSMContext):
+    await state.clear()
     """Режим загрузки файлов."""
     project_id = int(callback.data.split("_")[-1])
     # Uploading requires edit_files permission
@@ -144,8 +153,10 @@ async def files_upload_mode(callback: CallbackQuery, project_service, db_user, s
 
 Выбери папку или нажми "📤 Загрузить сюда":"""
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "file_manager",
         reply_markup=get_file_upload_browser_keyboard(project_id, files, "/app"),
         parse_mode="HTML"
     )
@@ -153,12 +164,15 @@ async def files_upload_mode(callback: CallbackQuery, project_service, db_user, s
 
 
 def _parse_file_callback(data: str, prefix: str) -> tuple[int, str]:
-    """Парсит callback с project_id и путем."""
+    """Парсит callback с project_id и закодированным путём."""
     remaining = data.replace(prefix + "_", "", 1)
     parts = remaining.split("_", 1)
     project_id = int(parts[0])
-    file_path = parts[1] if len(parts) > 1 else "/app"
-    return project_id, file_path
+    token = parts[1] if len(parts) > 1 else ""
+    decoded = decode_path(token) if token else "/app"
+    if decoded is None and token.startswith("/"):
+        decoded = token
+    return project_id, decoded or "/app"
 
 
 @router.callback_query(F.data.startswith("fbrowse_nav_"))
@@ -183,12 +197,14 @@ async def file_browse_nav(callback: CallbackQuery, project_service, db_user, ses
 
     text = f"""📂 <b>Просмотр файлов</b>
 
-<b>Путь:</b> <code>{path}</code>
+<b>Путь:</b> <code>{escape(path)}</code>
 
 Нажми на файл для действий или на папку чтобы открыть:"""
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "file_manager",
         reply_markup=get_file_browser_keyboard(project_id, files, path),
         parse_mode="HTML"
     )
@@ -217,12 +233,14 @@ async def file_upload_nav(callback: CallbackQuery, project_service, db_user, ses
 
     text = f"""📤 <b>Загрузка файлов</b>
 
-<b>Путь:</b> <code>{path}</code>
+<b>Путь:</b> <code>{escape(path)}</code>
 
 Выбери папку или нажми "📤 Загрузить сюда":"""
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "file_manager",
         reply_markup=get_file_upload_browser_keyboard(project_id, files, path),
         parse_mode="HTML"
     )
@@ -250,14 +268,16 @@ async def file_action_menu(callback: CallbackQuery, project_service, db_user, se
     import os
     filename = os.path.basename(file_path)
     
-    text = f"""📄 <b>{filename}</b>
+    text = f"""📄 <b>{escape(filename)}</b>
 
-<b>Путь:</b> <code>{file_path}</code>
+<b>Путь:</b> <code>{escape(file_path)}</code>
 
 Выбери действие:"""
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "file_manager",
         reply_markup=get_file_action_keyboard(project_id, file_path),
         parse_mode="HTML"
     )
@@ -294,7 +314,7 @@ async def file_download(callback: CallbackQuery, project_service, db_user, sessi
 
     await callback.message.answer_document(
         file,
-        caption=f"📄 <code>{file_path}</code>",
+        caption=f"📄 <code>{escape(file_path)}</code>",
         parse_mode="HTML"
     )
     await callback.answer("✅ Файл отправлен")
@@ -318,25 +338,28 @@ async def file_delete(callback: CallbackQuery, project_service, db_user, session
     builder.row(
         InlineKeyboardButton(
             text="✅ Да, удалить",
-            callback_data=f"file_del_confirm_{project_id}_{file_path}",
+            callback_data=f"file_del_confirm_{project_id}_{encode_path(file_path)}",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text="❌ Отмена",
-            callback_data=f"file_action_{project_id}_{file_path}",
+            style="primary",
+            callback_data=f"file_action_{project_id}_{encode_path(file_path)}",
         ),
     )
 
     text = f"""🗑️ <b>Удалить файл?</b>
 
-<b>Файл:</b> <code>{filename}</code>
-<b>Путь:</b> <code>{file_path}</code>
+<b>Файл:</b> <code>{escape(filename)}</code>
+<b>Путь:</b> <code>{escape(file_path)}</code>
 
 ⚠️ <i>Это действие нельзя отменить!</i>"""
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "file_manager",
         reply_markup=builder.as_markup(),
         parse_mode="HTML"
     )
@@ -357,18 +380,21 @@ async def file_delete_confirm(callback: CallbackQuery, project_service, db_user,
         await callback.answer("✅ Файл удалён", show_alert=True)
         
         # Возвращаемся в папку где был файл
-        parent = "/".join(file_path.strip("/").split("/")[:-1]) or "/app"
+        import posixpath
+        parent = posixpath.dirname(file_path.rstrip("/")) or "/app"
         files = await project_service.list_files(project_id, parent)
         from bot.keyboards.user import get_file_browser_keyboard
         
         text = f"""📂 <b>Просмотр файлов</b>
 
-<b>Путь:</b> <code>{parent}</code>
+<b>Путь:</b> <code>{escape(parent)}</code>
 
 Нажми на файл для действий или на папку чтобы открыть:"""
         
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             text,
+            "file_manager",
             reply_markup=get_file_browser_keyboard(project_id, files, parent),
             parse_mode="HTML"
         )
@@ -394,18 +420,21 @@ async def upload_here(callback: CallbackQuery, state: FSMContext, project_servic
     builder.row(
         InlineKeyboardButton(
             text="❌ Отмена",
+            style="primary",
             callback_data=f"files_upload_{project_id}",
         ),
     )
 
     text = f"""📤 <b>Загрузка файла</b>
 
-<b>Загрузка в:</b> <code>{path}</code>
+<b>Загрузка в:</b> <code>{escape(path)}</code>
 
 Отправь файл или несколько файлов:"""
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         text,
+        "file_manager",
         reply_markup=builder.as_markup(),
         parse_mode="HTML"
     )
@@ -413,26 +442,44 @@ async def upload_here(callback: CallbackQuery, state: FSMContext, project_servic
 
 
 @router.message(FileUploadStates.waiting_file, F.document)
-async def file_received(message: Message, state: FSMContext, project_service, db_user):
+async def file_received(message: Message, state: FSMContext, project_service, db_user, session):
     """Обработка загруженного файла."""
     data = await state.get_data()
     project_id = data.get("project_id")
     upload_path = data.get("upload_path", "/app")
-    
-    # Скачиваем файл
+
+    project = await project_service.get_project(project_id) if project_id else None
+    if project is None:
+        await state.clear()
+        await message.answer(texts.ERROR_NOT_FOUND)
+        return
+
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_edit_files")
+    if not has_perm:
+        await state.clear()
+        await message.answer(texts.ERROR_NO_ACCESS)
+        return
+
+    if message.document.file_size and message.document.file_size > 10 * 1024 * 1024:
+        await message.answer("❌ Файл слишком большой (максимум 10 МБ)")
+        return
+
+    filename = (message.document.file_name or "").replace("\\", "/").split("/")[-1]
+    if not filename or filename in (".", ".."):
+        await message.answer("❌ Некорректное имя файла")
+        return
+
     file = await message.bot.get_file(message.document.file_id)
     file_bytes = await message.bot.download_file(file.file_path)
-    
-    # Сохраняем файл
-    filename = message.document.file_name
+
     full_path = f"{upload_path.rstrip('/')}/{filename}"
-    
-    content = file_bytes.read().decode("utf-8", errors="ignore")
+    content = file_bytes.read().decode("utf-8", errors="replace")
     success = await project_service.write_file(project_id, full_path, content)
     
     if success:
         await message.answer(
-            f"✅ <b>Файл загружен</b>\n\n<code>{full_path}</code>",
+            f"✅ <b>Файл загружен</b>\n\n<code>{escape(full_path)}</code>",
             parse_mode="HTML"
         )
     else:

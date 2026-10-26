@@ -57,8 +57,15 @@ class OperationRateLimitMiddleware(BaseMiddleware):
         
         max_count, window = self.limits[operation]
         now = time.time()
-        
-        # Инициализация хранилища для пользователя
+
+        if len(self.operations) > 5000:
+            self.operations = {
+                uid: ops
+                for uid, ops in self.operations.items()
+                if any(ts >= now - max(w for _, w in self.limits.values()) for ts, _ in ops.get(operation, []))
+            }
+
+        # Инициализируем хранилище для пользователя
         if user_id not in self.operations:
             self.operations[user_id] = {}
         

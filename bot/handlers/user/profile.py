@@ -74,7 +74,14 @@ async def settings_page(callback: CallbackQuery, user_service, db_user):
 
 @router.callback_query(F.data.startswith("toggle_"))
 async def toggle_notification(callback: CallbackQuery, user_service, db_user):
-    setting = callback.data.replace("toggle_", "")
+    raw = callback.data.replace("toggle_", "", 1)
+    project_id = 0
+    if "_" in raw and raw.split("_", 1)[0].isdigit():
+        project_id_str, setting = raw.split("_", 1)
+        project_id = int(project_id_str)
+    else:
+        setting = raw
+
     valid_settings = [
         "notify_container_stopped", "notify_container_started", "notify_error",
         "notify_high_cpu", "notify_high_ram", "notify_low_disk",
@@ -94,5 +101,6 @@ async def toggle_notification(callback: CallbackQuery, user_service, db_user):
             s.notify_container_stopped, s.notify_container_started,
             s.notify_error, s.notify_high_cpu, s.notify_high_ram,
             s.notify_low_disk, s.notify_backup_created, s.notify_update_done,
+            project_id=project_id,
         )
         await callback.message.edit_reply_markup(reply_markup=keyboard)

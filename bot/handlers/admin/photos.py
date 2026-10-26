@@ -28,7 +28,8 @@ def is_admin(user_id: int) -> bool:
 
 
 @router.callback_query(F.data == "admin_photos")
-async def admin_photos_menu(callback: CallbackQuery):
+async def admin_photos_menu(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     if not is_admin(callback.from_user.id):
         await callback.answer("⛔", show_alert=True)
         return
@@ -49,7 +50,7 @@ async def admin_photos_menu(callback: CallbackQuery):
         )
 
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data="admin_panel"),
+        InlineKeyboardButton(text="◁ Назад", style="primary", callback_data="admin_panel"),
     )
 
     await callback.message.edit_text(
@@ -69,6 +70,9 @@ async def admin_photo_select(callback: CallbackQuery, state: FSMContext):
         return
 
     key = callback.data.replace("admin_photo_set_", "")
+    if key not in PHOTO_LABELS:
+        await callback.answer("Неизвестный экран", show_alert=True)
+        return
     label = PHOTO_LABELS.get(key, key)
 
     await state.update_data(photo_key=key)
@@ -94,6 +98,10 @@ async def admin_photo_received(message: Message, state: FSMContext):
 
     data = await state.get_data()
     key = data.get("photo_key")
+    if not key or key not in PHOTO_LABELS:
+        await state.clear()
+        await message.answer("??????????? ?????, ???????? ?????.")
+        return
     label = PHOTO_LABELS.get(key, key)
 
     photo = message.photo[-1]
@@ -118,6 +126,10 @@ async def admin_photo_text(message: Message, state: FSMContext):
     if text.lower() in ("удалить", "delete", "remove", "убрать"):
         data = await state.get_data()
         key = data.get("photo_key")
+        if not key or key not in PHOTO_LABELS:
+            await state.clear()
+            await message.answer("??????????? ?????, ???????? ?????.")
+            return
         label = PHOTO_LABELS.get(key, key)
 
         set_photo(key, None)

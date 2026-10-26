@@ -50,7 +50,7 @@ async def project_monitor(callback: CallbackQuery, project_service, db_user):
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data=f"project_view_{project_id}"),
+        InlineKeyboardButton(text="◁ Назад", style="primary", callback_data=f"project_view_{project_id}"),
     )
 
     try:
@@ -99,7 +99,7 @@ async def project_graphs(callback: CallbackQuery, project_service, db_user, sess
             )
         )
     builder.row(
-        InlineKeyboardButton(text="◁ Назад", style="danger", callback_data=f"project_monitor_{project_id}"),
+        InlineKeyboardButton(text="◁ Назад", style="primary", callback_data=f"project_monitor_{project_id}"),
     )
 
     try:

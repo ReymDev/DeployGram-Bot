@@ -61,12 +61,19 @@ async def send_photo_or_text(
                 await target.message.delete()
             except Exception:
                 pass
-            return await target.message.answer_photo(
-                photo=photo_file_id,
-                caption=text,
-                reply_markup=reply_markup,
-                parse_mode=parse_mode,
-            )
+            try:
+                return await target.message.answer_photo(
+                    photo=photo_file_id,
+                    caption=text,
+                    reply_markup=reply_markup,
+                    parse_mode=parse_mode,
+                )
+            except Exception:
+                return await target.message.answer(
+                    text,
+                    reply_markup=reply_markup,
+                    parse_mode=parse_mode,
+                )
         else:
             return await target.message.edit_text(
                 text,
@@ -75,12 +82,19 @@ async def send_photo_or_text(
             )
     elif isinstance(target, Message):
         if photo_file_id:
-            return await target.answer_photo(
-                photo=photo_file_id,
-                caption=text,
-                reply_markup=reply_markup,
-                parse_mode=parse_mode,
-            )
+            try:
+                return await target.answer_photo(
+                    photo=photo_file_id,
+                    caption=text,
+                    reply_markup=reply_markup,
+                    parse_mode=parse_mode,
+                )
+            except Exception:
+                return await target.answer(
+                    text,
+                    reply_markup=reply_markup,
+                    parse_mode=parse_mode,
+                )
         else:
             return await target.answer(
                 text,
@@ -126,24 +140,38 @@ async def edit_photo_or_text(
                     await message.delete()
                 except Exception:
                     pass
-                return await message.answer_photo(
-                    photo=photo_file_id,
-                    caption=text,
-                    reply_markup=reply_markup,
-                    parse_mode=parse_mode,
-                )
+                try:
+                    return await message.answer_photo(
+                        photo=photo_file_id,
+                        caption=text,
+                        reply_markup=reply_markup,
+                        parse_mode=parse_mode,
+                    )
+                except Exception:
+                    return await message.answer(
+                        text,
+                        reply_markup=reply_markup,
+                        parse_mode=parse_mode,
+                    )
         else:
             # Сообщение текстовое - удаляем и создаем с фото
             try:
                 await message.delete()
             except Exception:
                 pass
-            return await message.answer_photo(
-                photo=photo_file_id,
-                caption=text,
-                reply_markup=reply_markup,
-                parse_mode=parse_mode,
-            )
+            try:
+                return await message.answer_photo(
+                    photo=photo_file_id,
+                    caption=text,
+                    reply_markup=reply_markup,
+                    parse_mode=parse_mode,
+                )
+            except Exception:
+                return await message.answer(
+                    text,
+                    reply_markup=reply_markup,
+                    parse_mode=parse_mode,
+                )
     else:
         # Нет фото для этого ключа
         if message.photo:

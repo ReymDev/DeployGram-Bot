@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 
 from bot.keyboards.user import (
@@ -36,6 +37,7 @@ async def create_project_start(callback: CallbackQuery, user_service, db_user, p
         )
         return
 
+    await state.clear()
     await edit_photo_or_text(
         callback.message,
         texts.ADD_BOT_SOURCE_TEXT,
@@ -103,11 +105,14 @@ async def github_url_received(message: Message, state: FSMContext):
 
     await state.update_data(source_url=url, source_owner=owner, source_repo=repo)
     
-    description = info.get('description', 'Без описания')
+    from html import escape
+
+    description = escape(str(info.get("description") or "Без описания"))
+    full_name = escape(str(info.get("full_name") or url))
     await message.answer(
         f"✅ <b>Репозиторий найден</b>\n\n"
-        f"📦 <b>{info.get('full_name', url)}</b>\n"
-        f"📝 {description}\n\n"
+        f"📦 <b>{full_name}</b>\n"
+        f"<blockquote>📝 {description}</blockquote>\n\n"
         f"{texts.add_bot_python_text()}",
         reply_markup=get_python_version_keyboard(),
         parse_mode="HTML"
@@ -118,7 +123,7 @@ async def github_url_received(message: Message, state: FSMContext):
 @router.message(ProjectCreateStates.waiting_zip)
 async def zip_received(message: Message, state: FSMContext):
     from bot import texts
-    if not message.document or not message.document.file_name.endswith(".zip"):
+    if not message.document or not (message.document.file_name or "").lower().endswith(".zip"):
         await message.answer(
             "❌ <b>Неверный формат</b>\n\n"
             "Отправь ZIP архив (.zip файл).",
@@ -249,8 +254,9 @@ async def entry_received(message: Message, state: FSMContext):
     
     await state.update_data(entry_point=entry)
 
+    from html import escape
     await message.answer(
-        f"✅ <b>Точка входа:</b> <code>{entry}</code>\n\n"
+        f"✅ <b>Точка входа:</b> <code>{escape(entry)}</code>\n\n"
         f"{texts.ADD_BOT_NAME_TEXT}",
         reply_markup=get_back_keyboard("create_project"),
         parse_mode="HTML"
@@ -298,6 +304,28 @@ async def name_received(message: Message, state: FSMContext):
         await state.set_state(ProjectCreateStates.waiting_server)
 
 
+@router.callback_query(F.data == "create_back", StateFilter(ProjectCreateStates))
+async def create_back_active(callback: CallbackQuery, state: FSMContext):
+    from bot import texts
+    await state.clear()
+    await state.set_state(ProjectCreateStates.waiting_source)
+    await edit_photo_or_text(
+        callback.message,
+        texts.ADD_BOT_SOURCE_TEXT,
+        "upload_source",
+        reply_markup=get_create_project_step1_keyboard(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "server_pool_info")
+async def server_pool_info(callback: CallbackQuery):
+    await callback.answer(
+        "🖥 Это общий пул серверов: проект будет размещён на свободной площадке автоматически.",
+        show_alert=True,
+    )
+
+
 @router.callback_query(F.data.startswith("create_server_"), ProjectCreateStates.waiting_server)
 async def server_selected(callback: CallbackQuery, state: FSMContext):
     server_id = int(callback.data.replace("create_server_", ""))
@@ -323,12 +351,14 @@ async def show_confirmation(message, state: FSMContext, edit: bool = False):
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text="✅ Создать проект", callback_data="create_confirm"),
-        InlineKeyboardButton(text="❌ Отмена", callback_data="main_menu"),
+        InlineKeyboardButton(text="❌ Отмена", style="primary", callback_data="main_menu"),
     )
     kb = builder.as_markup()
 
     if edit:
-        await message.edit_text(text, reply_markup=kb, parse_mode="HTML")
+        await edit_photo_or_text(
+            message, text, "entry_confirm", reply_markup=kb, parse_mode="HTML"
+        )
     else:
         await message.answer(text, reply_markup=kb, parse_mode="HTML")
 
@@ -361,30 +391,54 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
                 logger.info("Downloading ZIP file: %s", zip_file_id)
                 file = await callback.bot.get_file(zip_file_id)
                 files_zip = await callback.bot.download_file(file.file_path)
-                # Сбрасываем курсор BytesIO в начало для последующего чтения
-                if hasattr(files_zip, 'seek'):
+                if hasattr(files_zip, "seek"):
                     files_zip.seek(0)
-                size = len(files_zip.getvalue()) if hasattr(files_zip, 'getvalue') else 0
+                size = len(files_zip.getvalue()) if hasattr(files_zip, "getvalue") else 0
                 logger.info("ZIP file downloaded successfully, size: %d bytes", size)
             except Exception as e:
                 logger.error("Failed to download ZIP file: %s", e)
                 await callback.answer(f"❌ Ошибка загрузки файла: {e}", show_alert=True)
                 return
-    
+        else:
+            await callback.answer("❌ ZIP-архив не найден, начните создание заново", show_alert=True)
+            return
+    elif source_type == "github":
+        owner = data.get("source_owner")
+        repo = data.get("source_repo")
+        if not owner or not repo:
+            await callback.answer("❌ Ссылка на GitHub потеряна, начните создание заново", show_alert=True)
+            return
+        try:
+            from services.github import GitHubService
+            files_zip = await GitHubService().download_zip(owner, repo)
+        except Exception as e:
+            logger.error("Failed to download GitHub archive: %s", e)
+            files_zip = None
+        if not files_zip:
+            await callback.answer(
+                "❌ Не удалось скачать репозиторий GitHub (ветка main/master, размер до 100 МБ)",
+                show_alert=True,
+            )
+            return
+
     logger.info("Creating project: name=%s, source_type=%s, server_id=%s, has_files=%s",
                 data.get("name"), source_type, data.get("server_id"), files_zip is not None)
 
-    project = await project_service.create_project(
-        user_id=db_user.id,
-        name=data.get("name", "my_project"),
-        source_type=source_type,
-        source_url=data.get("source_url"),
-        python_version=data.get("python_version", "3.12"),
-        entry_point=data.get("entry_point", "main.py"),
-        entry_type=data.get("entry_type", "script"),
-        server_id=data.get("server_id"),
-        files_zip=files_zip,
-    )
+    try:
+        project = await project_service.create_project(
+            user_id=db_user.id,
+            name=data.get("name", "my_project"),
+            source_type=source_type,
+            source_url=data.get("source_url"),
+            python_version=data.get("python_version", "3.12"),
+            entry_point=data.get("entry_point", "main.py"),
+            entry_type=data.get("entry_type", "script"),
+            server_id=data.get("server_id"),
+            files_zip=files_zip,
+        )
+    except ValueError as e:
+        await callback.answer(f"❌ {e}", show_alert=True)
+        return
     
     logger.info("Project created successfully: id=%d, name=%s", project.id, project.name)
 

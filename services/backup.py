@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import BASE_DIR
 from models.backup import Backup
+from services.archive import ArchiveError, safe_extract_zip
 from repositories.backup import BackupRepository
 from repositories.project import ProjectRepository
 
@@ -44,13 +45,21 @@ class BackupService:
                 try:
                     with zipfile.ZipFile(backup_file, "w", zipfile.ZIP_DEFLATED) as zf:
                         for root, dirs, files in os.walk(project_dir):
+                            dirs[:] = [
+                                d for d in dirs
+                                if d not in {".venv", "venv", "__pycache__", ".git"}
+                                and not os.path.islink(os.path.join(root, d))
+                            ]
                             for file in files:
                                 file_path = os.path.join(root, file)
+                                if os.path.islink(file_path):
+                                    continue
                                 arcname = os.path.relpath(file_path, project_dir)
                                 zf.write(file_path, arcname)
                     return backup_file.stat().st_size
                 except Exception as e:
                     logger.error("Failed to create backup for project %d: %s", project_id, e)
+                    backup_file.unlink(missing_ok=True)
                     return 0
 
             size = await asyncio.to_thread(_create)
@@ -65,6 +74,22 @@ class BackupService:
         return await self.backup_repo.get_by_project_id(project_id)
 
     async def delete_backup(self, backup_id: int) -> bool:
+        backup = await self.backup_repo.get_by_id(backup_id)
+        if backup is None:
+            return False
+
+        backup_dir = self._get_backup_dir(backup.project_id)
+        backup_files = list(backup_dir.glob("backup_*.zip"))
+        if backup_files:
+            backup_time = backup.created_at.timestamp() if backup.created_at else 0
+            matched = min(
+                backup_files, key=lambda f: abs(os.path.getctime(f) - backup_time)
+            )
+            try:
+                matched.unlink(missing_ok=True)
+            except OSError as e:
+                logger.warning("Failed to delete backup file %s: %s", matched, e)
+
         return await self.backup_repo.delete(backup_id)
 
     async def restore_backup(self, backup_id: int) -> tuple[bool, str]:
@@ -93,19 +118,27 @@ class BackupService:
                 shutil.rmtree(tmp_dir)
             tmp_dir.mkdir(parents=True, exist_ok=True)
 
-            with zipfile.ZipFile(matched_backup, "r") as zf:
-                for member in zf.infolist():
-                    target = (tmp_dir / member.filename).resolve()
-                    if not str(target).startswith(str(tmp_dir.resolve())):
-                        logger.warning("Zip slip in backup: %s", member.filename)
-                        return False, "Бэкап повреждён"
-                zf.extractall(tmp_dir)
+            safe_extract_zip(matched_backup, tmp_dir)
 
             if project_dir.exists():
                 shutil.rmtree(project_dir)
             tmp_dir.rename(project_dir)
 
+            if hasattr(os, "geteuid") and os.geteuid() == 0:
+                try:
+                    os.chown(project_dir, 1000, 1000)
+                    for root, dirs, files in os.walk(project_dir):
+                        for name in dirs + files:
+                            os.chown(os.path.join(root, name), 1000, 1000)
+                except OSError as exc:
+                    logger.warning("Failed to chown restored project: %s", exc)
+
             return True, "Бэкап восстановлен"
+        except ArchiveError as e:
+            logger.error("Unsafe backup %d: %s", backup_id, e)
+            if tmp_dir.exists():
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+            return False, "Бэкап повреждён"
         except Exception as e:
             logger.error("Failed to restore backup %d: %s", backup_id, e)
             if tmp_dir.exists():

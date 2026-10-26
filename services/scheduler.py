@@ -15,6 +15,18 @@ from services.monitoring import MonitoringService
 logger = logging.getLogger(__name__)
 
 
+def _utcnow_naive() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _as_naive_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is not None:
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
+
+
 class SchedulerService:
     def __init__(self) -> None:
         self._jobs: list = []
@@ -25,6 +37,7 @@ class SchedulerService:
         async with async_session_factory() as session:
             monitoring = MonitoringService(session)
             await monitoring.collect_all_stats()
+            await session.commit()
 
     async def check_resource_alerts(self) -> None:
         """Check for high resource usage and send notifications."""
@@ -96,13 +109,20 @@ class SchedulerService:
         async with async_session_factory() as session:
             service = ProjectService(session)
             projects = await service.project_repo.get_running_projects()
+            threshold = _utcnow_naive() - timedelta(minutes=settings.AUTO_SLEEP_MINUTES)
             for project in projects:
-                threshold = datetime.now(timezone.utc) - timedelta(minutes=settings.AUTO_SLEEP_MINUTES)
-                if project.updated_at and project.updated_at < threshold:
-                    if project.docker_container_id and service.docker:
-                        await service.docker.stop_container(project.docker_container_id)
-                        await service.project_repo.update(project.id, status="sleeping")
-                        logger.info("Project %d put to sleep after %d minutes of inactivity", project.id, settings.AUTO_SLEEP_MINUTES)
+                updated_at = _as_naive_utc(project.updated_at)
+                if updated_at and updated_at < threshold:
+                    if project.docker_container_id:
+                        success, _ = await service.stop_project(project.id)
+                        if success:
+                            await service.project_repo.update(project.id, status="sleeping")
+                            logger.info(
+                                "Project %d put to sleep after %d minutes of inactivity",
+                                project.id,
+                                settings.AUTO_SLEEP_MINUTES,
+                            )
+            await session.commit()
 
     async def cleanup_inactive_projects(self) -> None:
         async with async_session_factory() as session:
@@ -110,11 +130,13 @@ class SchedulerService:
             projects = await service.project_repo.get_all(limit=None)
             for project in projects:
                 if project.user and project.user.tariff == "free":
-                    if project.updated_at:
-                        days_inactive = (datetime.now(timezone.utc) - project.updated_at).days
+                    updated_at = _as_naive_utc(project.updated_at)
+                    if updated_at:
+                        days_inactive = (_utcnow_naive() - updated_at).days
                         if days_inactive >= settings.INACTIVE_DELETE_DAYS:
                             logger.info("Deleting inactive project %d (inactive %d days)", project.id, days_inactive)
                             await service.delete_project(project.id)
+            await session.commit()
 
     async def auto_backup(self) -> None:
         async with async_session_factory() as session:
@@ -129,3 +151,4 @@ class SchedulerService:
                     logger.info("Auto-backup created for project %d", project.id)
                 except Exception as e:
                     logger.error("Failed to auto-backup project %d: %s", project.id, e)
+            await session.commit()

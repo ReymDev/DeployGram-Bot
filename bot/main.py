@@ -62,11 +62,11 @@ def setup_dispatcher() -> Dispatcher:
 
     dp.include_router(start_router)
     dp.include_router(project_create_router)
+    dp.include_router(manage_router)
     dp.include_router(profile_router)
     dp.include_router(coowners_router)
     dp.include_router(referrals_router)
     dp.include_router(create_router)
-    dp.include_router(manage_router)
     dp.include_router(files_router)
     dp.include_router(subscription_router)
     dp.include_router(backups_router)

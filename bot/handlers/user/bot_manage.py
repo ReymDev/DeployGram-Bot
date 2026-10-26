@@ -22,6 +22,7 @@ from bot.keyboards.user import (
     get_server_select_keyboard,
 )
 from bot.keyboards.common import get_back_keyboard, get_control_panel_keyboard
+from bot.utils.callbacks import decode_path
 from bot.utils.emojis import Emoji
 from bot.utils.media import edit_photo_or_text
 from bot.utils.formatters import format_status, format_uptime
@@ -92,7 +93,8 @@ async def bots_page(callback: CallbackQuery, db_user, project_service):
 
 
 @router.callback_query(F.data.startswith("bot_view_"))
-async def bot_view(callback: CallbackQuery, project_service, db_user, session):
+async def bot_view(callback: CallbackQuery, project_service, db_user, session, state: FSMContext):
+    await state.clear()
     project_id = int(callback.data.replace("bot_view_", ""))
     project = await _check_owner(callback, project_service, db_user, project_id, session)
     if project is None:
@@ -159,8 +161,12 @@ async def bot_start(callback: CallbackQuery, project_service, db_user, session):
 
     success, msg = await project_service.start_project(project_id)
     
-    # Show notification in alert
-    await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
+    # Show notification in alert (best effort: VPS start may take a while)
+    try:
+        from bot.utils.text import plain_text
+        await callback.answer(plain_text(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}"))
+    except Exception:
+        pass
     
     # Refresh project view with full info
     project = await project_service.get_project(project_id)
@@ -232,8 +238,12 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
 
     success, msg = await project_service.stop_project(project_id)
     
-    # Show notification in alert
-    await callback.answer(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}")
+    # Show notification in alert (best effort: VPS start may take a while)
+    try:
+        from bot.utils.text import plain_text
+        await callback.answer(plain_text(f"{Emoji.CHECK if success else Emoji.CROSS} {msg}"))
+    except Exception:
+        pass
     
     # Refresh project view with full info
     project = await project_service.get_project(project_id)
@@ -298,11 +308,14 @@ async def bot_logs(callback: CallbackQuery, project_service, db_user, session):
         return
 
     logs = await project_service.get_logs(project_id, tail=100)
+    from html import escape
     from bot.utils.formatters import truncate_text
-    truncated = truncate_text(logs, 3500)
+    truncated = escape(truncate_text(logs, 3500))
 
     text = (
-        f"📋 Логи <b>{project.name}</b> (последние 3500 симв.)\n\n"
+        f"<b>📋 Логи</b>\n\n"
+        f"<b>{escape(project.name)}</b>\n\n"
+        f"<blockquote>Последние 3500 символов</blockquote>\n\n"
         f"<pre>{truncated}</pre>"
     )
 
@@ -376,7 +389,8 @@ async def logs_file(callback: CallbackQuery, project_service, db_user, session):
 
 
 @router.callback_query(F.data.startswith("bot_settings_"))
-async def bot_settings(callback: CallbackQuery, project_service, db_user, session):
+async def bot_settings(callback: CallbackQuery, project_service, db_user, session, state: FSMContext):
+    await state.clear()
     project_id = int(callback.data.replace("bot_settings_", ""))
     project = await project_service.get_project(project_id)
     if project is None:
@@ -414,8 +428,10 @@ async def bot_rename(callback: CallbackQuery, state: FSMContext, project_service
     
     await state.update_data(rename_project_id=project_id)
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.BOT_RENAME_TEXT,
+        "rename_bot",
         reply_markup=get_back_keyboard(f"bot_settings_{project_id}"),
         parse_mode="HTML"
     )
@@ -506,7 +522,7 @@ async def bot_delete_confirm(callback: CallbackQuery, project_service, db_user):
 
 
 @router.callback_query(F.data.startswith("bot_python_"))
-async def bot_python(callback: CallbackQuery, project_service, db_user):
+async def bot_python(callback: CallbackQuery, project_service, db_user, notify: bool = True):
     project_id = int(callback.data.replace("bot_python_", ""))
     project = await _check_owner(callback, project_service, db_user, project_id)
     if project is None:
@@ -518,7 +534,8 @@ async def bot_python(callback: CallbackQuery, project_service, db_user):
         "python_change",
         reply_markup=get_python_change_keyboard(project_id, project.python_version),
     )
-    await callback.answer()
+    if notify:
+        await callback.answer()
 
 
 @router.callback_query(F.data.startswith("set_python_"))
@@ -541,12 +558,14 @@ async def set_python(callback: CallbackQuery, project_service, db_user):
         project_repo = ProjectRepository(session)
         await project_repo.update(project_id, python_version=version)
 
-    await callback.answer(texts.success_python_changed(version), show_alert=True)
-    await bot_python(callback, project_service, db_user)
+    from bot.utils.text import plain_text
+    await callback.answer(plain_text(texts.success_python_changed(version)), show_alert=True)
+    await bot_python(callback, project_service, db_user, notify=False)
 
 
 @router.callback_query(F.data.startswith("bot_entry_"))
-async def bot_entry(callback: CallbackQuery, project_service, db_user):
+async def bot_entry(callback: CallbackQuery, project_service, db_user, state: FSMContext):
+    await state.clear()
     project_id = int(callback.data.replace("bot_entry_", ""))
     project = await _check_owner(callback, project_service, db_user, project_id)
     if project is None:
@@ -573,31 +592,39 @@ async def set_entry(callback: CallbackQuery, project_service, db_user, state: FS
 
     if entry_type == "module":
         await state.update_data(entry_project_id=project_id)
-        await callback.message.edit_text(
+        await edit_photo_or_text(
+            callback.message,
             texts.BOT_ENTRY_MODULE_TEXT,
-            "Режим: Модульный запуск / python -m\n\n"
-            "Отправь имя модуля вручную.\n"
-            "Примеры: <code>app.pkg.main</code>",
+            "entry_change",
             reply_markup=get_back_keyboard(f"bot_entry_{project_id}"),
         )
         await state.set_state(BotEntryStates.waiting_module)
+        await callback.answer()
     else:
         await callback.answer("Выберите файл через файловый менеджер", show_alert=True)
 
-    await callback.answer()
-
 
 @router.message(F.text, BotEntryStates.waiting_module)
-async def entry_module_received(message: Message, state: FSMContext):
+async def entry_module_received(message: Message, state: FSMContext, db_user, project_service):
     module = message.text.strip()
     data = await state.get_data()
     project_id = data.get("entry_project_id")
 
-    from repositories.project import ProjectRepository
-    from db.engine import async_session_factory
-    async with async_session_factory() as session:
-        project_repo = ProjectRepository(session)
-        await project_repo.update(project_id, entry_point=module, entry_type="module")
+    project = await project_service.get_project(project_id) if project_id else None
+    if project is None or project.user_id != db_user.id:
+        await state.clear()
+        await message.answer(texts.ERROR_NO_ACCESS)
+        return
+
+    try:
+        module = project_service.validate_entry_point(module, "module")
+    except ValueError as e:
+        await message.answer(f"❌ {e}", parse_mode="HTML")
+        return
+
+    await project_service.project_repo.update(
+        project_id, entry_point=module, entry_type="module"
+    )
 
     await state.clear()
     await message.answer(
@@ -607,7 +634,9 @@ async def entry_module_received(message: Message, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith("bot_libs_"))
-async def bot_libs(callback: CallbackQuery, project_service, db_user, session):
+async def bot_libs(callback: CallbackQuery, project_service, db_user, session, notify: bool = True, state: FSMContext | None = None):
+    if state is not None:
+        await state.clear()
     project_id = int(callback.data.replace("bot_libs_", ""))
     project = await project_service.get_project(project_id)
     if project is None:
@@ -644,7 +673,8 @@ async def bot_libs(callback: CallbackQuery, project_service, db_user, session):
         "library_manager",
         reply_markup=get_libs_keyboard(project_id, all_libs),
     )
-    await callback.answer()
+    if notify:
+        await callback.answer()
 
 
 @router.callback_query(F.data.startswith("lib_add_"))
@@ -664,8 +694,10 @@ async def lib_add(callback: CallbackQuery, state: FSMContext, project_service, d
     
     await state.update_data(lib_project_id=project_id)
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         texts.BOT_LIB_ADD_TEXT,
+        "library_manager",
         reply_markup=get_back_keyboard(f"bot_libs_{project_id}"),
     )
     await state.set_state(BotLibStates.waiting_lib)
@@ -673,15 +705,28 @@ async def lib_add(callback: CallbackQuery, state: FSMContext, project_service, d
 
 
 @router.message(F.text, BotLibStates.waiting_lib)
-async def lib_add_received(message: Message, state: FSMContext, project_service, db_user):
+async def lib_add_received(message: Message, state: FSMContext, project_service, db_user, session):
+    import re
+
     lib = message.text.strip()
     data = await state.get_data()
     project_id = data.get("lib_project_id")
 
-    project = await project_service.get_project(project_id)
-    if project is None or project.user_id != db_user.id:
+    project = await project_service.get_project(project_id) if project_id else None
+    if project is None:
         await message.answer(texts.ERROR_NOT_FOUND)
         await state.clear()
+        return
+
+    from bot.utils.access import check_permission
+    has_perm, _ = await check_permission(project, db_user, session, "can_manage_deps")
+    if not has_perm:
+        await message.answer(texts.ERROR_NO_ACCESS)
+        await state.clear()
+        return
+
+    if not re.fullmatch(r"[A-Za-z0-9_.\-\[\]<>=!~;,]{1,200}", lib):
+        await message.answer("❌ Некорректная запись пакета. Пример: <code>requests==2.32.0</code>", parse_mode="HTML")
         return
 
     try:
@@ -708,7 +753,11 @@ async def lib_add_received(message: Message, state: FSMContext, project_service,
 async def lib_del(callback: CallbackQuery, project_service, db_user, session):
     parts = callback.data.replace("lib_del_", "").split("_", 1)
     project_id = int(parts[0])
-    lib_name = parts[1] if len(parts) > 1 else ""
+    lib_name = decode_path(parts[1]) if len(parts) > 1 else ""
+    lib_name = lib_name or ""
+    if not lib_name:
+        await callback.answer("Меню устарело, открой зависимости заново.", show_alert=True)
+        return
 
     project = await project_service.get_project(project_id)
     if project is None:
@@ -732,13 +781,14 @@ async def lib_del(callback: CallbackQuery, project_service, db_user, session):
         pass
 
     await callback.answer(f"✅ {lib_name} удалена", show_alert=True)
-    await bot_libs(callback, project_service, db_user)
+    await bot_libs(callback, project_service, db_user, session, notify=False)
 
 
 # ─── CO-OWNERS ───
 
 @router.callback_query(F.data.startswith("bot_coowners_"))
-async def bot_coowners(callback: CallbackQuery, project_service, db_user, session):
+async def bot_coowners(callback: CallbackQuery, project_service, db_user, session, state: FSMContext):
+    await state.clear()
     project_id = int(callback.data.replace("bot_coowners_", ""))
     # Only owner can manage coowners
     project = await project_service.get_project(project_id)
@@ -753,32 +803,13 @@ async def bot_coowners(callback: CallbackQuery, project_service, db_user, sessio
     coowner_repo = CoOwnerRepository(session)
     coowners = await coowner_repo.get_by_project_id(project_id)
 
-    from aiogram.utils.keyboard import InlineKeyboardBuilder
-    from aiogram.types import InlineKeyboardButton
-    builder = InlineKeyboardBuilder()
+    from bot.keyboards.user import get_coowners_keyboard
 
-    for co in coowners:
-        builder.row(
-            InlineKeyboardButton(
-                text=f"👤 ID:{co.user_id} ({co.role})",
-                callback_data=f"noop",
-            ),
-            InlineKeyboardButton(text="🗑", callback_data=f"coowner_del_{project_id}_{co.id}", style="danger"),
-        )
-
-    builder.row(
-        InlineKeyboardButton(text="➕ Добавить", callback_data=f"coowner_add_{project_id}", style="primary"),
-    )
-    builder.row(
-        InlineKeyboardButton(text="Назад", style="danger", callback_data=f"bot_settings_{project_id}"),
-    )
-
-    await callback.message.edit_text(
-        f"👥 <b>Совладельцы: {project.name}</b>\n\n"
-        f"Роли:\n"
-        f"  <b>Owner</b> — полный доступ\n"
-        f"  <b>Developer</b> — запуск, остановка, логи, файлы",
-        reply_markup=builder.as_markup(),
+    await edit_photo_or_text(
+        callback.message,
+        texts.bot_coowners_text(project.name),
+        "bot_control",
+        reply_markup=get_coowners_keyboard(project_id, coowners),
     )
     await callback.answer()
 
@@ -790,14 +821,17 @@ class CoOwnerStates(StatesGroup):
 @router.callback_query(F.data.startswith("coowner_add_"))
 async def coowner_add(callback: CallbackQuery, project_service, db_user, state: FSMContext):
     project_id = int(callback.data.replace("coowner_add_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
-    if project is None:
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     await state.update_data(coowner_project_id=project_id)
 
-    await callback.message.edit_text(
+    await edit_photo_or_text(
+        callback.message,
         "👤 Отправь Telegram ID пользователя для добавления:",
+        "bot_settings",
         reply_markup=get_back_keyboard(f"bot_coowners_{project_id}"),
     )
     await state.set_state(CoOwnerStates.waiting_id)
@@ -805,9 +839,14 @@ async def coowner_add(callback: CallbackQuery, project_service, db_user, state: 
 
 
 @router.message(F.text, CoOwnerStates.waiting_id)
-async def coowner_id_received(message: Message, state: FSMContext, session, db_user):
+async def coowner_id_received(message: Message, state: FSMContext, session, db_user, project_service):
     data = await state.get_data()
     project_id = data.get("coowner_project_id")
+    project = await project_service.get_project(project_id) if project_id else None
+    if project is None or project.user_id != db_user.id:
+        await state.clear()
+        await message.answer(texts.ERROR_NO_ACCESS)
+        return
 
     try:
         target_telegram_id = int(message.text.strip())
@@ -849,8 +888,9 @@ async def coowner_del(callback: CallbackQuery, project_service, db_user, session
     project_id = int(parts[0])
     coowner_id = int(parts[1])
 
-    project = await _check_owner(callback, project_service, db_user, project_id, session)
-    if project is None:
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     from repositories.coowner import CoOwnerRepository
@@ -876,10 +916,12 @@ async def bot_editor(callback: CallbackQuery, project_service, db_user, state: F
 
     await state.update_data(editor_project_id=project_id)
 
-    await callback.message.edit_text(
-        f"🖋 <b>Редактор: {project.name}</b>\n\n"
-        f"Отправь файл для редактирования (.py, .txt, .env, .json, .yaml)\n"
-        f"Или введи путь к файлу в проекте:",
+    await edit_photo_or_text(
+        callback.message,
+        f"📝 <b>Редактор: {project.name}</b>\n\n"
+        f"<blockquote>Отправь файл для редактирования (.py, .txt, .env, .json, .yaml)\n"
+        f"или напиши путь к файлу в проекте.</blockquote>",
+        "bot_settings",
         reply_markup=get_back_keyboard(f"bot_settings_{project_id}"),
     )
     await state.set_state(EditorStates.waiting_file)
@@ -896,10 +938,15 @@ async def editor_file_uploaded(message: Message, state: FSMContext, project_serv
     if not message.document or not message.document.file_name:
         return
 
-    file_name = message.document.file_name
+    import html
+
+    file_name = (message.document.file_name or "").replace("\\", "/").split("/")[-1]
     allowed = (".py", ".txt", ".env", ".json", ".yaml", ".yml", ".toml", ".cfg")
     if not file_name.endswith(allowed):
-        await message.answer("❌ Поддерживаются только: .py, .txt, .env, .json, .yaml")
+        await message.answer("⚠️ Поддерживаются только: .py, .txt, .env, .json, .yaml")
+        return
+    if message.document.file_size and message.document.file_size > 10 * 1024 * 1024:
+        await message.answer("❌ Файл слишком большой (максимум 10 МБ)")
         return
 
     try:
@@ -911,11 +958,15 @@ async def editor_file_uploaded(message: Message, state: FSMContext, project_serv
 
     data = await state.get_data()
     project_id = data.get("editor_project_id")
+    if not project_id:
+        await state.clear()
+        await message.answer(texts.ERROR_NOT_FOUND)
+        return
 
     await state.update_data(editor_file_name=file_name, editor_content=text)
     await message.answer(
-        f"🖋 <b>Редактирование: {file_name}</b>\n\n"
-        f"<code>{text[:2000]}</code>\n\n"
+        f"📝 <b>Редактирование: {html.escape(file_name)}</b>\n\n"
+        f"<blockquote><code>{html.escape(text[:2000])}</code></blockquote>\n\n"
         f"Отправь новый текст файла:",
     )
     await state.set_state(EditorStates.sending)
@@ -924,9 +975,10 @@ async def editor_file_uploaded(message: Message, state: FSMContext, project_serv
 @router.message(F.text, EditorStates.waiting_file)
 async def editor_text_input(message: Message, state: FSMContext):
     file_path = message.text.strip()
+    from html import escape
     await state.update_data(editor_file_name=file_path)
     await message.answer(
-        f"🖋 Файл: <code>{file_path}</code>\n\nОтправь новый текст:",
+        f"📝 Путь: <code>{escape(file_path)}</code>\n\nОтправь новый текст:",
     )
     await state.set_state(EditorStates.sending)
 
@@ -944,8 +996,9 @@ async def editor_save(message: Message, state: FSMContext, project_service, db_u
             file_path = f"/app/{file_name}"
             success = await project_service.write_file(project_id, file_path, content)
             if success:
+                from html import escape
                 await message.answer(
-                    f"✅ Файл <b>{file_name}</b> сохранён.",
+                    f"✅ Файл <b>{escape(file_name)}</b> сохранён.",
                     reply_markup=get_back_keyboard(f"bot_view_{project_id}"),
                 )
             else:
@@ -960,14 +1013,24 @@ async def editor_save(message: Message, state: FSMContext, project_service, db_u
 
 @router.callback_query(F.data.startswith("bot_graphs_"))
 async def bot_graphs(callback: CallbackQuery, project_service, db_user, session):
-    project_id = int(callback.data.replace("bot_graphs_", ""))
-    project = await _check_owner(callback, project_service, db_user, project_id)
+    parts = callback.data.replace("bot_graphs_", "").split("_")
+    project_id = int(parts[0])
+    hours = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 24
+    if hours not in (24, 168, 720):
+        hours = 24
+
+    project = await project_service.get_project(project_id)
     if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    from bot.utils.access import check_project_access
+    if not await check_project_access(project, db_user, session):
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
         return
 
     from services.monitoring import MonitoringService
     monitoring = MonitoringService(session)
-    stats = await monitoring.get_stats_history(project_id, 24)
+    stats = await monitoring.get_stats_history(project_id, hours)
 
     if not stats:
         await callback.answer("Нет данных за этот период", show_alert=True)
@@ -987,14 +1050,21 @@ async def bot_graphs(callback: CallbackQuery, project_service, db_user, session)
             InlineKeyboardButton(text=f"📊 {label}", callback_data=f"bot_graphs_{project_id}_{h}")
         )
     builder.row(
-        InlineKeyboardButton(text="Назад", style="danger", callback_data=f"bot_view_{project_id}"),
+        InlineKeyboardButton(text="Назад", style="primary", callback_data=f"bot_view_{project_id}"),
     )
 
-    await callback.message.edit_text(
-        f"📊 <b>Графики за 24ч</b>\n\n"
-        f"📊 CPU:\n  Среднее: {avg_cpu:.1f}%\n  Максимум: {max_cpu:.1f}%\n\n"
-        f"📈 RAM:\n  Среднее: {avg_ram:.1f} MB\n  Максимум: {max_ram:.1f} MB\n\n"
-        f"ℹ Точек данных: {len(stats)}",
+    period_label = {24: "24 часа", 168: "7 дней", 720: "30 дней"}[hours]
+    await edit_photo_or_text(
+        callback.message,
+        f"📊 <b>Статистика за {period_label}</b>\n\n"
+        f"<blockquote>🖥 <b>CPU</b>\n"
+        f"Среднее: <b>{avg_cpu:.1f}%</b>\n"
+        f"Максимум: <b>{max_cpu:.1f}%</b></blockquote>\n\n"
+        f"<blockquote>💾 <b>RAM</b>\n"
+        f"Среднее: <b>{avg_ram:.1f} MB</b>\n"
+        f"Максимум: <b>{max_ram:.1f} MB</b></blockquote>\n\n"
+        f"<i>Точек данных: {len(stats)}</i>",
+        "bot_control",
         reply_markup=builder.as_markup(),
     )
     await callback.answer()
@@ -1003,8 +1073,16 @@ async def bot_graphs(callback: CallbackQuery, project_service, db_user, session)
 # ─── NOTIFICATIONS ───
 
 @router.callback_query(F.data.startswith("bot_notify_"))
-async def bot_notify(callback: CallbackQuery, user_service, db_user):
+async def bot_notify(callback: CallbackQuery, user_service, db_user, project_service, session):
     project_id = int(callback.data.replace("bot_notify_", ""))
+    project = await project_service.get_project(project_id)
+    if project is None:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
+    from bot.utils.access import check_project_access
+    if not await check_project_access(project, db_user, session):
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
+        return
 
     s = await user_service.get_settings(db_user.id)
     if s is None:
@@ -1029,23 +1107,41 @@ async def bot_notify(callback: CallbackQuery, user_service, db_user):
     for data_key, label, val in items:
         icon = "✅" if val else "❌"
         builder.row(
-            InlineKeyboardButton(text=f"{icon} {label}", callback_data=f"toggle_{data_key}"),
+            InlineKeyboardButton(
+                text=f"{icon} {label}",
+                callback_data=f"toggle_{project_id}_{data_key}",
+            ),
         )
 
     builder.row(
-        InlineKeyboardButton(text="Назад", style="danger", callback_data=f"bot_settings_{project_id}"),
+        InlineKeyboardButton(text="Назад", style="primary", callback_data=f"bot_settings_{project_id}"),
     )
 
-    await callback.message.edit_text(
-        f"🔔 <b>Настройки уведомлений</b>",
+    await edit_photo_or_text(
+        callback.message,
+        "🔔 <b>Настройки уведомлений</b>\n\n"
+        "<i>Нажми на пункт, чтобы включить или выключить уведомление.</i>",
+        "bot_settings",
         reply_markup=builder.as_markup(),
     )
     await callback.answer()
 
 
+@router.callback_query(F.data == "noop")
+async def noop_callback(callback: CallbackQuery):
+    await callback.answer()
+
+
 @router.callback_query(F.data.startswith("toggle_"))
 async def toggle_notification(callback: CallbackQuery, user_service, db_user):
-    setting = callback.data.replace("toggle_", "")
+    raw = callback.data.replace("toggle_", "", 1)
+    project_id = 0
+    if "_" in raw and raw.split("_", 1)[0].isdigit():
+        project_id_str, setting = raw.split("_", 1)
+        project_id = int(project_id_str)
+    else:
+        setting = raw
+
     valid_settings = [
         "notify_container_stopped", "notify_container_started", "notify_error",
         "notify_high_cpu", "notify_high_ram", "notify_low_disk",
@@ -1077,13 +1173,16 @@ async def toggle_notification(callback: CallbackQuery, user_service, db_user):
 
         for data_key, label, val in items:
             icon = "✅" if val else "❌"
+            callback = (
+                f"toggle_{project_id}_{data_key}" if project_id else f"toggle_{data_key}"
+            )
             builder.row(
-                InlineKeyboardButton(text=f"{icon} {label}", callback_data=f"toggle_{data_key}"),
+                InlineKeyboardButton(text=f"{icon} {label}", callback_data=callback),
             )
 
-        project_id = int(callback.data.split("_")[-1]) if callback.data.split("_")[-1].isdigit() else 0
+        back_callback = f"bot_settings_{project_id}" if project_id else "profile"
         builder.row(
-            InlineKeyboardButton(text="Назад", style="danger", callback_data=f"bot_settings_{project_id}"),
+            InlineKeyboardButton(text="Назад", style="primary", callback_data=back_callback),
         )
 
         try:

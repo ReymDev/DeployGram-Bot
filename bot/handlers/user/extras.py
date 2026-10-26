@@ -21,7 +21,7 @@ class PromoStates(StatesGroup):
 async def promo_menu(callback: CallbackQuery, state: FSMContext):
     await edit_photo_or_text(
         callback.message,
-        "🎁 <b>Активация промокода</b>\n\nВведи код:",
+        "<b>🎁 Активация промокода</b>\n\n<blockquote>Отправь код сообщением — мы активируем награду автоматически.</blockquote>",
         "control_panel",
         reply_markup=get_back_keyboard("main_menu"),
     )
@@ -51,13 +51,15 @@ async def promo_code_received(message: Message, state: FSMContext, db_user, sess
                 except (ValueError, TypeError):
                     pass
 
+        from html import escape
         await message.answer(
-            f"🎉 {msg}",
+            f"🎉 {escape(str(msg))}",
             reply_markup=get_back_keyboard("main_menu"),
         )
     else:
+        from html import escape
         await message.answer(
-            f"❌ {msg}",
+            f"❌ {escape(str(msg))}",
             reply_markup=get_back_keyboard("main_menu"),
         )
 

@@ -51,4 +51,5 @@ class ReferralService:
         return await self.referral_repo.get_by_referrer(user_id)
 
     async def _get_bot_username(self) -> str:
-        return "DeployGramBot"
+        from bot.config import settings
+        return settings.BOT_USERNAME or "DeployGramBot"

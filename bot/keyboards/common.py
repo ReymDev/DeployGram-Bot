@@ -28,7 +28,11 @@ def get_welcome_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text="🎁 Промокод", style="primary", callback_data="promo_activate"),
         InlineKeyboardButton(text="🔗 Рефералы", style="primary", callback_data="referrals"),
     )
-    
+    builder.row(
+        InlineKeyboardButton(text="👤 Профиль", style="primary", callback_data="profile"),
+        InlineKeyboardButton(text="⚙️ Настройки", style="primary", callback_data="settings"),
+    )
+
     return builder.as_markup()
 
 
@@ -37,9 +41,12 @@ def get_control_panel_keyboard(has_bots: bool = False) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="✨ Создать проект", style="success", callback_data="create_project"),
+        InlineKeyboardButton(text="➕ Создать проект", style="success", callback_data="create_project"),
     )
-    
+    builder.row(
+        InlineKeyboardButton(text="🏠 Главное меню", style="primary", callback_data="main_menu"),
+    )
+
     return builder.as_markup()
 
 
@@ -52,7 +59,7 @@ def get_back_keyboard(callback_data: str = "control_panel") -> InlineKeyboardMar
     builder.row(
         InlineKeyboardButton(
             text="Назад",
-            style="danger",
+            style="primary",
             callback_data=callback_data,
         ),
     )
@@ -70,7 +77,7 @@ def get_confirm_keyboard(confirm_data: str, cancel_data: str = "control_panel") 
         InlineKeyboardButton(
             text="❌ Отмена",
             callback_data=cancel_data,
-            style="danger",
+            style="primary",
         ),
     )
     return builder.as_markup()

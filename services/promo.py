@@ -38,8 +38,12 @@ class PromoService:
             return False, "Промокод не найден", None
         if promo.activated_count >= promo.max_activations:
             return False, "Промокод уже использован максимальное количество раз", None
-        if promo.expires_at and promo.expires_at < datetime.now(timezone.utc):
-            return False, "Промокод истёк", None
+        expires_at = promo.expires_at
+        if expires_at is not None:
+            if expires_at.tzinfo is not None:
+                expires_at = expires_at.astimezone(timezone.utc).replace(tzinfo=None)
+            if expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
+                return False, "Промокод истёк", None
 
         result = await self.session.execute(
             update(PromoCode)
@@ -52,7 +56,13 @@ class PromoService:
             return False, "Промокод уже использован", None
 
         promo = await self.promo_repo.get_by_id(promo.id)
-        return True, f"Промокод активирован! Награда: {promo.reward_type} = {promo.reward_value}", promo
+        labels = {
+            "tariff": "Premium-подписка",
+            "balance": "бонус на баланс",
+            "projects": "бонусные проекты",
+        }
+        reward = labels.get(promo.reward_type, promo.reward_type)
+        return True, f"Промокод активирован! Награда: {reward} ({promo.reward_value})", promo
 
     async def get_promos(self) -> list[PromoCode]:
         return await self.promo_repo.get_all()

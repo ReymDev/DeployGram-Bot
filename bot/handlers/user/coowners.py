@@ -41,8 +41,12 @@ async def coowners_menu(callback: CallbackQuery, project_service, db_user, sessi
 
 
 @router.callback_query(F.data.startswith("coowner_add_"))
-async def coowner_add(callback: CallbackQuery, state: FSMContext, db_user):
+async def coowner_add(callback: CallbackQuery, state: FSMContext, db_user, project_service):
     project_id = int(callback.data.split("_")[-1])
+    project = await project_service.get_project(project_id)
+    if project is None or project.user_id != db_user.id:
+        await callback.answer(texts.ERROR_NO_ACCESS, show_alert=True)
+        return
     await state.update_data(coowner_project_id=project_id)
     await edit_photo_or_text(
         callback.message,
@@ -67,6 +71,10 @@ async def coowner_remove(callback: CallbackQuery, project_service, db_user, sess
 
     from repositories.coowner import CoOwnerRepository
     coowner_repo = CoOwnerRepository(session)
+    coowner = await coowner_repo.get_by_id(coowner_id)
+    if coowner is None or coowner.project_id != project_id:
+        await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
+        return
     await coowner_repo.delete(coowner_id)
 
     await callback.answer(texts.COOWNER_REMOVED, show_alert=True)
@@ -120,6 +128,13 @@ async def coowner_toggle_permission(callback: CallbackQuery, project_service, db
     project_id = int(parts[2])
     coowner_id = int(parts[3])
     permission = "_".join(parts[4:])  # can_start_stop, can_view_logs, etc.
+    allowed_permissions = {
+        "can_start_stop", "can_view_logs", "can_edit_files",
+        "can_manage_deps", "can_view_settings",
+    }
+    if permission not in allowed_permissions:
+        await callback.answer(texts.SETTINGS_UNKNOWN, show_alert=True)
+        return
 
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
@@ -151,9 +166,14 @@ async def coowner_toggle_permission(callback: CallbackQuery, project_service, db
 
 
 @router.message(F.text, CoOwnerStates.waiting_id)
-async def coowner_id_received(message: Message, state: FSMContext, session, db_user):
+async def coowner_id_received(message: Message, state: FSMContext, session, db_user, project_service):
     data = await state.get_data()
     project_id = data.get("coowner_project_id")
+    project = await project_service.get_project(project_id) if project_id else None
+    if project is None or project.user_id != db_user.id:
+        await state.clear()
+        await message.answer(texts.ERROR_NO_ACCESS)
+        return
 
     try:
         target_telegram_id = int(message.text.strip())

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import html
+import re
+
 from bot.utils.emojis import Emoji
 
 
@@ -84,3 +87,8 @@ def server_card(
         f"{Emoji.CODE} CPU: {load_cpu:.1f}%\n"
         f"{Emoji.GRAPH_UP} RAM: {load_ram:.1f}%"
     )
+
+
+def plain_text(value: object) -> str:
+    """Strip Telegram HTML tags for callback alerts (they are plain text)."""
+    return html.unescape(re.sub(r"<[^>]+>", "", str(value)))

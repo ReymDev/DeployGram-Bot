@@ -3,6 +3,7 @@ from __future__ import annotations
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from bot.utils.callbacks import encode_path
 from bot.utils.emojis import EmojiID
 
 
@@ -86,7 +87,7 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
     nav_row = []
     if page > 0:
         nav_row.append(
-            InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"bots_page_{page - 1}")
+            InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data=f"bots_page_{page - 1}")
         )
     if end < len(bots):
         nav_row.append(
@@ -106,7 +107,7 @@ def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> Inlin
     
     # Кнопка "Назад" в главное меню
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="main_menu"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="main_menu"),
     )
     
     return builder.as_markup()
@@ -138,10 +139,12 @@ def get_bot_control_keyboard(bot_id: int, status: str) -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="📋 Логи",
+            style="primary",
             callback_data=f"bot_logs_{bot_id}",
         ),
         InlineKeyboardButton(
             text="📊 Статистика",
+            style="primary",
             callback_data=f"bot_graphs_{bot_id}",
         ),
     )
@@ -150,10 +153,12 @@ def get_bot_control_keyboard(bot_id: int, status: str) -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="📁 Файлы",
+            style="primary",
             callback_data=f"bot_files_{bot_id}",
         ),
         InlineKeyboardButton(
             text="⚙️ Настройки",
+            style="primary",
             callback_data=f"bot_settings_{bot_id}",
         ),
     )
@@ -170,26 +175,26 @@ def get_bot_settings_keyboard(bot_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="📝 Переименовать", callback_data=f"bot_rename_{bot_id}"),
+        InlineKeyboardButton(text="📝 Переименовать", style="primary", callback_data=f"bot_rename_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="🐍 Изменить Python", callback_data=f"bot_python_{bot_id}"),
-        InlineKeyboardButton(text="🎯 Точка входа", callback_data=f"bot_entry_{bot_id}"),
+        InlineKeyboardButton(text="🐍 Изменить Python", style="primary", callback_data=f"bot_python_{bot_id}"),
+        InlineKeyboardButton(text="🎯 Точка входа", style="primary", callback_data=f"bot_entry_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="📦 Зависимости", callback_data=f"bot_libs_{bot_id}"),
+        InlineKeyboardButton(text="📦 Зависимости", style="primary", callback_data=f"bot_libs_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="👥 Доступ", callback_data=f"bot_coowners_{bot_id}"),
+        InlineKeyboardButton(text="👥 Доступ", style="primary", callback_data=f"bot_coowners_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="🔔 Уведомления", callback_data=f"bot_notify_{bot_id}"),
+        InlineKeyboardButton(text="🔔 Уведомления", style="primary", callback_data=f"bot_notify_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="🗑️ Удалить проект", callback_data=f"bot_delete_{bot_id}"),
+        InlineKeyboardButton(text="🗑️ Удалить проект", style="danger", callback_data=f"bot_delete_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ К проекту", callback_data=f"bot_view_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ К проекту", style="primary", callback_data=f"bot_view_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -201,6 +206,7 @@ def get_logs_keyboard(bot_id: int) -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="🔄 Обновить",
+            style="primary",
             callback_data=f"bot_logs_{bot_id}",
         ),
     )
@@ -213,6 +219,7 @@ def get_logs_keyboard(bot_id: int) -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="⬅️ К проекту",
+            style="primary",
             callback_data=f"bot_view_{bot_id}",
         ),
     )
@@ -241,7 +248,7 @@ def get_subscription_keyboard(is_premium: bool) -> InlineKeyboardMarkup:
         )
     
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="main_menu"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="main_menu"),
     )
     return builder.as_markup()
 
@@ -297,7 +304,7 @@ def get_buy_subscription_keyboard() -> InlineKeyboardMarkup:
     )
     
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="subscription")
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="subscription")
     )
     return builder.as_markup()
 
@@ -309,17 +316,19 @@ def get_source_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="📦 Загрузить ZIP",
+            style="success",
             callback_data="create_type_zip",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text="🔗 Из GitHub",
+            style="success",
             callback_data="create_type_github",
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="❌ Отмена", callback_data="control_panel"),
+        InlineKeyboardButton(text="❌ Отмена", style="primary", callback_data="control_panel"),
     )
     return builder.as_markup()
 
@@ -346,7 +355,7 @@ def get_entry_type_keyboard() -> InlineKeyboardMarkup:
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="create_project"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="create_project"),
     )
     return builder.as_markup()
 
@@ -356,7 +365,7 @@ def get_confirm_start_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text="✅ Создать", callback_data="create_confirm"),
-        InlineKeyboardButton(text="❌ Отмена", callback_data="main_menu"),
+        InlineKeyboardButton(text="❌ Отмена", style="primary", callback_data="main_menu"),
     )
     return builder.as_markup()
 
@@ -387,7 +396,7 @@ def get_python_version_keyboard(step: str = "", current: str = "") -> InlineKeyb
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="create_back"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="create_back"),
     )
     return builder.as_markup()
 
@@ -413,7 +422,7 @@ def get_entry_mode_keyboard() -> InlineKeyboardMarkup:
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="create_back"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="create_back"),
     )
     return builder.as_markup()
 
@@ -500,7 +509,7 @@ def get_file_manager_keyboard(
         InlineKeyboardButton(text="➕ Загрузить файл", callback_data=f"file_upload_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ К проекту", callback_data=f"bot_view_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ К проекту", style="primary", callback_data=f"bot_view_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -512,10 +521,12 @@ def get_files_main_menu_keyboard(project_id: int) -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="👁️ Просмотр",
+            style="primary",
             callback_data=f"files_browse_{project_id}",
         ),
         InlineKeyboardButton(
             text="📤 Загрузка",
+            style="primary",
             callback_data=f"files_upload_{project_id}",
         ),
     )
@@ -540,7 +551,7 @@ def get_file_browser_keyboard(
         builder.row(
             InlineKeyboardButton(
                 text="🔼 Вверх",
-                callback_data=f"fbrowse_nav_{project_id}_{parent}",
+                callback_data=f"fbrowse_nav_{project_id}_{encode_path(parent)}",
             )
         )
 
@@ -553,7 +564,8 @@ def get_file_browser_keyboard(
             # Папки - открываются по клику
             folder_name = f.rstrip("/")
             icon = "📁"
-            callback = f"fbrowse_nav_{project_id}_{current_path.rstrip('/')}/{folder_name}"
+            folder_path = f"{current_path.rstrip('/')}/{folder_name}"
+            callback = f"fbrowse_nav_{project_id}_{encode_path(folder_path)}"
             builder.row(
                 InlineKeyboardButton(
                     text=f"{icon} {folder_name[:35]}",
@@ -579,7 +591,7 @@ def get_file_browser_keyboard(
             builder.row(
                 InlineKeyboardButton(
                     text=f"{icon} {f[:35]}",
-                    callback_data=f"file_action_{project_id}_{file_path}",
+                    callback_data=f"file_action_{project_id}_{encode_path(file_path)}",
                 )
             )
 
@@ -587,7 +599,7 @@ def get_file_browser_keyboard(
     builder.row(
         InlineKeyboardButton(
             text="⬅️ Назад",
-            style="danger",
+            style="primary",
             callback_data=f"bot_files_{project_id}",
         ),
     )
@@ -604,7 +616,8 @@ def get_file_upload_browser_keyboard(
     builder.row(
         InlineKeyboardButton(
             text="📤 Загрузить сюда",
-            callback_data=f"upload_here_{project_id}_{current_path}",
+            style="primary",
+            callback_data=f"upload_here_{project_id}_{encode_path(current_path)}",
         )
     )
 
@@ -614,7 +627,7 @@ def get_file_upload_browser_keyboard(
         builder.row(
             InlineKeyboardButton(
                 text="🔼 Вверх",
-                callback_data=f"fupload_nav_{project_id}_{parent}",
+                callback_data=f"fupload_nav_{project_id}_{encode_path(parent)}",
             )
         )
 
@@ -625,7 +638,8 @@ def get_file_upload_browser_keyboard(
         
         if is_dir:
             folder_name = f.rstrip("/")
-            callback = f"fupload_nav_{project_id}_{current_path.rstrip('/')}/{folder_name}"
+            folder_path = f"{current_path.rstrip('/')}/{folder_name}"
+            callback = f"fupload_nav_{project_id}_{encode_path(folder_path)}"
             builder.row(
                 InlineKeyboardButton(
                     text=f"📁 {folder_name[:35]}",
@@ -637,7 +651,7 @@ def get_file_upload_browser_keyboard(
     builder.row(
         InlineKeyboardButton(
             text="⬅️ Назад",
-            style="danger",
+            style="primary",
             callback_data=f"bot_files_{project_id}",
         ),
     )
@@ -651,13 +665,15 @@ def get_file_action_keyboard(project_id: int, file_path: str) -> InlineKeyboardM
     builder.row(
         InlineKeyboardButton(
             text="💾 Скачать",
-            callback_data=f"file_download_{project_id}_{file_path}",
+            style="primary",
+            callback_data=f"file_download_{project_id}_{encode_path(file_path)}",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text="🗑️ Удалить",
-            callback_data=f"file_delete_{project_id}_{file_path}",
+            style="danger",
+            callback_data=f"file_delete_{project_id}_{encode_path(file_path)}",
         ),
     )
     
@@ -666,8 +682,8 @@ def get_file_action_keyboard(project_id: int, file_path: str) -> InlineKeyboardM
     builder.row(
         InlineKeyboardButton(
             text="⬅️ Назад",
-            style="danger",
-            callback_data=f"fbrowse_nav_{project_id}_{parent}",
+            style="primary",
+            callback_data=f"fbrowse_nav_{project_id}_{encode_path(parent)}",
         ),
     )
     return builder.as_markup()
@@ -680,21 +696,24 @@ def get_python_change_keyboard(bot_id: int, current: str) -> InlineKeyboardMarku
     builder.row(
         InlineKeyboardButton(
             text=f"{'🔥 ' if current == '3.12' else ''}Python 3.12{' (текущая)' if current == '3.12' else ''}",
+            style="primary",
             callback_data=f"set_python_{bot_id}_3.12",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{'✓ ' if current == '3.11' else ''}Python 3.11{' (текущая)' if current == '3.11' else ''}",
+            style="primary",
             callback_data=f"set_python_{bot_id}_3.11",
         ),
         InlineKeyboardButton(
             text=f"{'✓ ' if current == '3.10' else ''}Python 3.10{' (текущая)' if current == '3.10' else ''}",
+            style="primary",
             callback_data=f"set_python_{bot_id}_3.10",
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"bot_settings_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data=f"bot_settings_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -706,15 +725,17 @@ def get_entry_change_keyboard(bot_id: int, entry_type: str, entry_point: str) ->
     builder.row(
         InlineKeyboardButton(
             text=f"📄 Скрипт{'  ✓' if entry_type == 'script' else ''}",
+            style="primary",
             callback_data=f"set_entry_{bot_id}_script",
         ),
         InlineKeyboardButton(
             text=f"📦 Модуль{'  ✓' if entry_type == 'module' else ''}",
+            style="primary",
             callback_data=f"set_entry_{bot_id}_module",
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"bot_settings_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data=f"bot_settings_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -726,12 +747,14 @@ def get_delete_confirm_keyboard(bot_id: int) -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="✅ Да, удалить",
+            style="danger",
             callback_data=f"bot_del_confirm_{bot_id}",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text="❌ Отмена",
+            style="primary",
             callback_data=f"bot_view_{bot_id}",
         ),
     )
@@ -762,7 +785,7 @@ def get_server_select_keyboard(servers: list, tariff: str = "free") -> InlineKey
         )
 
     builder.row(
-        InlineKeyboardButton(text="Назад", style="danger", callback_data="create_back"),
+        InlineKeyboardButton(text="Назад", style="primary", callback_data="create_back"),
     )
     return builder.as_markup()
 
@@ -778,7 +801,7 @@ def get_backups_list_keyboard(bots: list) -> InlineKeyboardMarkup:
             )
         )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="main_menu"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="main_menu"),
     )
     return builder.as_markup()
 
@@ -803,7 +826,7 @@ def get_backups_keyboard(bot_id: int, backups: list) -> InlineKeyboardMarkup:
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="Назад к списку", style="danger", callback_data="backups_list"),
+        InlineKeyboardButton(text="Назад к списку", style="primary", callback_data="backups_list"),
     )
     return builder.as_markup()
 
@@ -821,18 +844,20 @@ def get_libs_keyboard(bot_id: int, libs: list[str]) -> InlineKeyboardMarkup:
             ),
             InlineKeyboardButton(
                 text="🗑️",
-                callback_data=f"lib_del_{bot_id}_{lib}",
+                style="danger",
+                callback_data=f"lib_del_{bot_id}_{encode_path(lib)}",
             ),
         )
 
     builder.row(
         InlineKeyboardButton(
             text="➕ Установить библиотеку",
+            style="success",
             callback_data=f"lib_add_{bot_id}",
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"bot_settings_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data=f"bot_settings_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -846,6 +871,7 @@ def get_settings_keyboard(
     notify_low_disk: bool,
     notify_backup_created: bool,
     notify_update_done: bool,
+    project_id: int = 0,
 ) -> InlineKeyboardMarkup:
     """Клавиатура настроек уведомлений пользователя."""
     builder = InlineKeyboardBuilder()
@@ -856,53 +882,53 @@ def get_settings_keyboard(
     builder.row(
         InlineKeyboardButton(
             text=f"{toggle_icon(notify_container_stopped)} Остановка проекта",
-            callback_data="toggle_notify_container_stopped",
+            callback_data=(f"toggle_{project_id}_notify_container_stopped" if project_id else f"toggle_notify_container_stopped"),
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{toggle_icon(notify_container_started)} Запуск проекта",
-            callback_data="toggle_notify_container_started",
+            callback_data=(f"toggle_{project_id}_notify_container_started" if project_id else f"toggle_notify_container_started"),
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{toggle_icon(notify_error)} Ошибки",
-            callback_data="toggle_notify_error",
+            callback_data=(f"toggle_{project_id}_notify_error" if project_id else f"toggle_notify_error"),
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{toggle_icon(notify_high_cpu)} Высокая нагрузка CPU",
-            callback_data="toggle_notify_high_cpu",
+            callback_data=(f"toggle_{project_id}_notify_high_cpu" if project_id else f"toggle_notify_high_cpu"),
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{toggle_icon(notify_high_ram)} Высокая нагрузка RAM",
-            callback_data="toggle_notify_high_ram",
+            callback_data=(f"toggle_{project_id}_notify_high_ram" if project_id else f"toggle_notify_high_ram"),
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{toggle_icon(notify_low_disk)} Мало места на диске",
-            callback_data="toggle_notify_low_disk",
+            callback_data=(f"toggle_{project_id}_notify_low_disk" if project_id else f"toggle_notify_low_disk"),
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{toggle_icon(notify_backup_created)} Создание бэкапов",
-            callback_data="toggle_notify_backup_created",
+            callback_data=(f"toggle_{project_id}_notify_backup_created" if project_id else f"toggle_notify_backup_created"),
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{toggle_icon(notify_update_done)} Обновления",
-            callback_data="toggle_notify_update_done",
+            callback_data=(f"toggle_{project_id}_notify_update_done" if project_id else f"toggle_notify_update_done"),
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data="profile"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="profile"),
     )
     return builder.as_markup()
 
@@ -915,10 +941,12 @@ def get_coowners_keyboard(project_id: int, coowners: list) -> InlineKeyboardMark
         builder.row(
             InlineKeyboardButton(
                 text=f"👤 ID:{co.user_id} ({co.role})",
+                style="primary",
                 callback_data=f"coowner_edit_{project_id}_{co.id}",
             ),
             InlineKeyboardButton(
                 text="🗑️",
+                style="danger",
                 callback_data=f"coowner_remove_{project_id}_{co.id}",
             ),
         )
@@ -926,11 +954,12 @@ def get_coowners_keyboard(project_id: int, coowners: list) -> InlineKeyboardMark
     builder.row(
         InlineKeyboardButton(
             text="➕ Добавить совладельца",
+            style="success",
             callback_data=f"coowner_add_{project_id}",
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="danger", callback_data=f"bot_settings_{project_id}"),
+        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data=f"bot_settings_{project_id}"),
     )
     return builder.as_markup()
 
@@ -945,34 +974,39 @@ def get_coowner_permissions_keyboard(project_id: int, coowner_id: int, coowner) 
     builder.row(
         InlineKeyboardButton(
             text=f"{perm_icon(coowner.can_start_stop)} Запуск/остановка",
+            style="primary",
             callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_start_stop",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{perm_icon(coowner.can_view_logs)} Просмотр логов",
+            style="primary",
             callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_view_logs",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{perm_icon(coowner.can_edit_files)} Редактирование файлов",
+            style="primary",
             callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_edit_files",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{perm_icon(coowner.can_manage_deps)} Управление зависимостями",
+            style="primary",
             callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_manage_deps",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text=f"{perm_icon(coowner.can_view_settings)} Просмотр настроек",
+            style="primary",
             callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_view_settings",
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ К совладельцам", callback_data=f"bot_coowners_{project_id}"),
+        InlineKeyboardButton(text="⬅️ К совладельцам", style="primary", callback_data=f"bot_coowners_{project_id}"),
     )
     return builder.as_markup()

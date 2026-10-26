@@ -3,6 +3,7 @@ from __future__ import annotations
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
+from aiogram.fsm.context import FSMContext
 
 from bot.config import settings
 from bot.keyboards.common import get_welcome_keyboard, get_control_panel_keyboard
@@ -14,7 +15,8 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, session, db_user, user_service, project_service):
+async def cmd_start(message: Message, session, db_user, user_service, project_service, state: FSMContext):
+    await state.clear()
     args = message.text.split()
     referral_code = args[1] if len(args) > 1 else None
 
@@ -26,7 +28,7 @@ async def cmd_start(message: Message, session, db_user, user_service, project_se
             await ref_svc.process_referral(referrer_id, db_user.telegram_id)
 
     # Получаем количество проектов для персонализации приветствия
-    projects = await project_service.get_user_projects(db_user.id)
+    projects = await project_service.get_all_user_projects(db_user.id)
     
     await send_photo_or_text(
         message,
@@ -40,7 +42,8 @@ async def cmd_start(message: Message, session, db_user, user_service, project_se
 
 
 @router.callback_query(F.data == "control_panel")
-async def control_panel(callback: CallbackQuery, db_user, project_service):
+async def control_panel(callback: CallbackQuery, db_user, project_service, state: FSMContext):
+    await state.clear()
     from bot.keyboards.user import get_bot_list_keyboard
     projects_with_flags = await project_service.get_all_user_projects(db_user.id)
 
@@ -63,9 +66,10 @@ async def control_panel(callback: CallbackQuery, db_user, project_service):
 
 
 @router.callback_query(F.data == "main_menu")
-async def main_menu(callback: CallbackQuery, db_user, project_service):
+async def main_menu(callback: CallbackQuery, db_user, project_service, state: FSMContext):
+    await state.clear()
     # Получаем количество проектов для персонализации приветствия
-    projects = await project_service.get_user_projects(db_user.id)
+    projects = await project_service.get_all_user_projects(db_user.id)
     
     await edit_photo_or_text(
         callback.message,
