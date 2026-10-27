@@ -16,6 +16,7 @@ class Settings(BaseSettings):
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
     BOT_TOKEN: str = ""
@@ -37,6 +38,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     SECRET_KEY: str = "change-me"
+    AGENT_API_KEY: str = ""
+    AGENT_PORT: int = 8080
 
     DEFAULT_TARIFF: str = "free"
     FREE_TARIFF_PROJECTS: int = 1
