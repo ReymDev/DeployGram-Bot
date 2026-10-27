@@ -27,7 +27,7 @@ async def cmd_start(message: Message, session, db_user, user_service, project_se
             ref_svc = ReferralService(session)
             await ref_svc.process_referral(referrer_id, db_user.telegram_id)
 
-    # Получаем количество проектов для персонализации приветствия
+    # Получаем количество приложений для персонализации приветствия
     projects = await project_service.get_all_user_projects(db_user.id)
     
     await send_photo_or_text(
@@ -55,7 +55,7 @@ async def control_panel(callback: CallbackQuery, db_user, project_service, state
             reply_markup=get_bot_list_keyboard(projects_with_flags),
         )
     else:
-        # Если проектов нет - показываем дружелюбное сообщение
+        # Если приложений нет - показываем дружелюбное сообщение
         await edit_photo_or_text(
             callback.message,
             texts.EMPTY_PROJECTS,
@@ -68,7 +68,7 @@ async def control_panel(callback: CallbackQuery, db_user, project_service, state
 @router.callback_query(F.data == "main_menu")
 async def main_menu(callback: CallbackQuery, db_user, project_service, state: FSMContext):
     await state.clear()
-    # Получаем количество проектов для персонализации приветствия
+    # Получаем количество приложений для персонализации приветствия
     projects = await project_service.get_all_user_projects(db_user.id)
     
     await edit_photo_or_text(

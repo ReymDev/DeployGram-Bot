@@ -107,7 +107,7 @@ async def logs_clear(callback: CallbackQuery, project_service, db_user, session)
     
     # Only owner can clear logs
     if project.user_id != db_user.id:
-        await callback.answer("⛔ Только владелец может очищать логи", show_alert=True)
+        await callback.answer("⛔ Только владелец может очищать консоль", show_alert=True)
         return
 
     success = await project_service.clear_logs(project_id)

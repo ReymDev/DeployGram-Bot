@@ -134,7 +134,7 @@ async def ps_entry_received(message: Message, state: FSMContext, project_service
 
     project = await project_service.get_project(project_id)
     if project is None or project.user_id != db_user.id:
-        await message.answer("❌ Проект не найден")
+        await message.answer("❌ Приложение не найден")
         await state.clear()
         return
 

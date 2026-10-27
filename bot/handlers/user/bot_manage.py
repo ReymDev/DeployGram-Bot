@@ -156,7 +156,7 @@ async def bot_start(callback: CallbackQuery, project_service, db_user, session):
     from bot.utils.access import check_permission
     has_perm, _ = await check_permission(project, db_user, session, "can_start_stop")
     if not has_perm:
-        await callback.answer("⛔ У вас нет прав на запуск/остановку проекта", show_alert=True)
+        await callback.answer("⛔ Нет прав на старт/паузу сервиса", show_alert=True)
         return
 
     success, msg = await project_service.start_project(project_id)
@@ -233,7 +233,7 @@ async def bot_stop(callback: CallbackQuery, project_service, db_user, session):
     from bot.utils.access import check_permission
     has_perm, _ = await check_permission(project, db_user, session, "can_start_stop")
     if not has_perm:
-        await callback.answer("⛔ У вас нет прав на запуск/остановку проекта", show_alert=True)
+        await callback.answer("⛔ Нет прав на старт/паузу сервиса", show_alert=True)
         return
 
     success, msg = await project_service.stop_project(project_id)
@@ -313,7 +313,7 @@ async def bot_logs(callback: CallbackQuery, project_service, db_user, session):
     truncated = escape(truncate_text(logs, 3500))
 
     text = (
-        f"<b>📋 Логи</b>\n\n"
+        f"<b>📋 Консоль</b>\n\n"
         f"<b>{escape(project.name)}</b>\n\n"
         f"<blockquote>Последние 3500 символов</blockquote>\n\n"
         f"<pre>{truncated}</pre>"
@@ -384,7 +384,7 @@ async def logs_file(callback: CallbackQuery, project_service, db_user, session):
     log_bytes = logs.encode("utf-8")
     file = BufferedInputFile(log_bytes, filename=f"{project.name}_logs.txt")
 
-    await callback.message.answer_document(file, caption=f"📋 Логи {project.name}")
+    await callback.message.answer_document(file, caption=f"📋 Консоль {project.name}")
     await callback.answer()
 
 
@@ -423,7 +423,7 @@ async def bot_rename(callback: CallbackQuery, state: FSMContext, project_service
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
     if project.user_id != db_user.id:
-        await callback.answer("⛔ Только владелец может переименовать проект", show_alert=True)
+        await callback.answer("⛔ Только владелец может переименовать приложение", show_alert=True)
         return
     
     await state.update_data(rename_project_id=project_id)
@@ -481,7 +481,7 @@ async def bot_delete(callback: CallbackQuery, project_service, db_user, session)
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
     if project.user_id != db_user.id:
-        await callback.answer("⛔ Только владелец может удалить проект", show_alert=True)
+        await callback.answer("⛔ Только владелец может удалить приложение", show_alert=True)
         return
 
     await edit_photo_or_text(
@@ -502,7 +502,7 @@ async def bot_delete_confirm(callback: CallbackQuery, project_service, db_user):
         await callback.answer(texts.ERROR_NOT_FOUND, show_alert=True)
         return
     if project.user_id != db_user.id:
-        await callback.answer("⛔ Только владелец может удалить проект", show_alert=True)
+        await callback.answer("⛔ Только владелец может удалить приложение", show_alert=True)
         return
 
     project_name = project.name
@@ -601,7 +601,7 @@ async def set_entry(callback: CallbackQuery, project_service, db_user, state: FS
         await state.set_state(BotEntryStates.waiting_module)
         await callback.answer()
     else:
-        await callback.answer("Выберите файл через файловый менеджер", show_alert=True)
+        await callback.answer("Выберите файл через хранилище", show_alert=True)
 
 
 @router.message(F.text, BotEntryStates.waiting_module)
@@ -628,7 +628,7 @@ async def entry_module_received(message: Message, state: FSMContext, db_user, pr
 
     await state.clear()
     await message.answer(
-        f"{Emoji.CHECK} Точка входа: <code>{module}</code>",
+        f"{Emoji.CHECK} Точка старта: <code>{module}</code>",
         reply_markup=get_back_keyboard(f"bot_view_{project_id}"),
     )
 
@@ -756,7 +756,7 @@ async def lib_del(callback: CallbackQuery, project_service, db_user, session):
     lib_name = decode_path(parts[1]) if len(parts) > 1 else ""
     lib_name = lib_name or ""
     if not lib_name:
-        await callback.answer("Меню устарело, открой зависимости заново.", show_alert=True)
+        await callback.answer("Меню устарело, открой модули заново.", show_alert=True)
         return
 
     project = await project_service.get_project(project_id)
@@ -830,7 +830,7 @@ async def coowner_add(callback: CallbackQuery, project_service, db_user, state: 
 
     await edit_photo_or_text(
         callback.message,
-        "👤 Отправь Telegram ID пользователя для добавления:",
+        "<b>👥 Позвать в команду</b>\n\n<blockquote>Отправь Telegram ID нового участника.</blockquote>",
         "bot_settings",
         reply_markup=get_back_keyboard(f"bot_coowners_{project_id}"),
     )
@@ -863,21 +863,21 @@ async def coowner_id_received(message: Message, state: FSMContext, session, db_u
     target_user = await user_repo.get_by_telegram_id(target_telegram_id)
 
     if target_user is None:
-        await message.answer("❌ Пользователь не найден. Он должен хотя бы раз запустить бота.")
+        await message.answer("❌ Пользователь не найден. Он должен хотя бы раз поднять бота.")
         return
 
     from repositories.coowner import CoOwnerRepository
     coowner_repo = CoOwnerRepository(session)
     existing = await coowner_repo.get_by_user_and_project(target_user.id, project_id)
     if existing:
-        await message.answer("❌ Этот пользователь уже совладелец")
+        await message.answer("❌ Этот пользователь уже участник")
         return
 
     await coowner_repo.create(project_id=project_id, user_id=target_user.id, role="developer")
 
     await state.clear()
     await message.answer(
-        f"✅ Пользователь <b>{target_user.username or target_telegram_id}</b> добавлен как совладелец.",
+        f"✅ Пользователь <b>{target_user.username or target_telegram_id}</b> добавлен как участник.",
         reply_markup=get_back_keyboard(f"bot_coowners_{project_id}"),
     )
 
@@ -902,7 +902,7 @@ async def coowner_del(callback: CallbackQuery, project_service, db_user, session
 
     await coowner_repo.delete(coowner_id)
 
-    await callback.answer("✅ Совладелец удалён", show_alert=True)
+    await callback.answer("✅ Участник удалён", show_alert=True)
 
 
 # ─── EDITOR ───
@@ -920,7 +920,7 @@ async def bot_editor(callback: CallbackQuery, project_service, db_user, state: F
         callback.message,
         f"📝 <b>Редактор: {project.name}</b>\n\n"
         f"<blockquote>Отправь файл для редактирования (.py, .txt, .env, .json, .yaml)\n"
-        f"или напиши путь к файлу в проекте.</blockquote>",
+        f"или напиши путь к файлу в приложении.</blockquote>",
         "bot_settings",
         reply_markup=get_back_keyboard(f"bot_settings_{project_id}"),
     )
@@ -1057,7 +1057,7 @@ async def bot_graphs(callback: CallbackQuery, project_service, db_user, session)
     from html import escape
     await edit_photo_or_text(
         callback.message,
-        f"📊 <b>Мониторинг</b>\n\n"
+        f"📊 <b>Метрики</b>\n\n"
         f"<b>{escape(project.name)}</b> · <i>{period_label}</i>\n\n"
         f"<blockquote>🖥 <b>CPU</b>\n"
         f"Среднее: <b>{avg_cpu:.1f}%</b>\n"
@@ -1088,7 +1088,7 @@ async def bot_notify(callback: CallbackQuery, user_service, db_user, project_ser
 
     s = await user_service.get_settings(db_user.id)
     if s is None:
-        await callback.answer("Настройки не найдены", show_alert=True)
+        await callback.answer("Параметры не найдены", show_alert=True)
         return
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -1102,7 +1102,7 @@ async def bot_notify(callback: CallbackQuery, user_service, db_user, project_ser
         ("notify_high_cpu", "Высокая нагрузка CPU", s.notify_high_cpu),
         ("notify_high_ram", "Высокая нагрузка RAM", s.notify_high_ram),
         ("notify_low_disk", "Мало места на диске", s.notify_low_disk),
-        ("notify_backup_created", "Бэкап создан", s.notify_backup_created),
+        ("notify_backup_created", "Снимок создан", s.notify_backup_created),
         ("notify_update_done", "Обновление завершено", s.notify_update_done),
     ]
 
@@ -1169,7 +1169,7 @@ async def toggle_notification(callback: CallbackQuery, user_service, db_user):
             ("notify_high_cpu", "Высокая нагрузка CPU", s.notify_high_cpu),
             ("notify_high_ram", "Высокая нагрузка RAM", s.notify_high_ram),
             ("notify_low_disk", "Мало места на диске", s.notify_low_disk),
-            ("notify_backup_created", "Бэкап создан", s.notify_backup_created),
+            ("notify_backup_created", "Снимок создан", s.notify_backup_created),
             ("notify_update_done", "Обновление завершено", s.notify_update_done),
         ]
 

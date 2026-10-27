@@ -17,7 +17,7 @@ async def referrals_menu(callback: CallbackQuery, db_user, session):
     count = await ref_svc.get_referrals_count(db_user.id)
 
     text = (
-        f"{Emoji.LINK} <b>Реферальная система</b>\n\n"
+        f"{Emoji.LINK} <b>Партнёрская система</b>\n\n"
         f"<blockquote><b>Твоя ссылка:</b>\n<code>{link}</code>\n\n"
         f"👥 Приглашено: <b>{count}</b></blockquote>\n\n"
         f"<i>Приглашай друзей и получай бонусы.</i>"

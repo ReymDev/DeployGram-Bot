@@ -13,45 +13,43 @@ def get_welcome_keyboard() -> InlineKeyboardMarkup:
     # Главные действия
     builder.row(
         InlineKeyboardButton(
-            text="➕ Создать проект",
-            style="success",
-            callback_data="create_project",
-        ),
-    )
-    builder.row(
-        InlineKeyboardButton(
-            text="🚀 Мои проекты",
+            text="🧩 Сервисы",
             style="primary",
             callback_data="control_panel",
+        ),
+        InlineKeyboardButton(
+            text="➕ Новый",
+            style="success",
+            callback_data="create_project",
         ),
     )
 
     # Дополнительные функции
     builder.row(
-        InlineKeyboardButton(text="💳 Подписка", style="primary", callback_data="subscription"),
-        InlineKeyboardButton(text="☁️ Бэкапы", style="primary", callback_data="backups_list"),
+        InlineKeyboardButton(text="💳 Тариф", style="primary", callback_data="subscription"),
+        InlineKeyboardButton(text="☁️ Снимки", style="primary", callback_data="backups_list"),
     )
     builder.row(
-        InlineKeyboardButton(text="🎟 Промокод", style="primary", callback_data="promo_activate"),
-        InlineKeyboardButton(text="🤝 Рефералы", style="primary", callback_data="referrals"),
+        InlineKeyboardButton(text="🎟 Ключ", style="primary", callback_data="promo_activate"),
+        InlineKeyboardButton(text="🤝 Партнёры", style="primary", callback_data="referrals"),
     )
     builder.row(
-        InlineKeyboardButton(text="👤 Профиль", style="primary", callback_data="profile"),
-        InlineKeyboardButton(text="⚙️ Настройки", style="primary", callback_data="settings"),
+        InlineKeyboardButton(text="👤 Аккаунт", style="primary", callback_data="profile"),
+        InlineKeyboardButton(text="⚙️ Параметры", style="primary", callback_data="settings"),
     )
 
     return builder.as_markup()
 
 
 def get_control_panel_keyboard(has_bots: bool = False) -> InlineKeyboardMarkup:
-    """Клавиатура когда нет проектов - только кнопка Создать проект."""
+    """Клавиатура когда нет приложений - только кнопка Развернуть сервис."""
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="➕ Создать проект", style="success", callback_data="create_project"),
+        InlineKeyboardButton(text="➕ Создать сервис", style="success", callback_data="create_project"),
     )
     builder.row(
-        InlineKeyboardButton(text="🏠 Главное меню", style="primary", callback_data="main_menu"),
+        InlineKeyboardButton(text="⬅️ В меню", style="primary", callback_data="main_menu"),
     )
 
     return builder.as_markup()

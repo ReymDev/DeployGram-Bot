@@ -25,14 +25,14 @@ router = Router()
 async def create_project_start(callback: CallbackQuery, user_service, db_user, project_service, state: FSMContext):
     from bot import texts
     
-    # Проверка лимита проектов
+    # Проверка лимита приложений
     max_projects = await user_service.get_max_projects(db_user.tariff)
     current_count = await project_service.count_user_projects(db_user.id)
     
     if current_count >= max_projects:
         await callback.answer(
-            f"⚠️ Достигнут лимит проектов ({max_projects})\n\n"
-            f"Обнови подписку для больших возможностей!",
+            f"⚠️ Достигнут лимит приложений ({max_projects})\n\n"
+            f"Обнови тариф для больших возможностей!",
             show_alert=True,
         )
         return
@@ -225,7 +225,7 @@ async def entry_received(message: Message, state: FSMContext):
             await message.answer(
                 "❌ <b>Небезопасный модуль</b>\n\n"
                 "Использование системных модулей запрещено из соображений безопасности.\n\n"
-                "Используй пользовательские модули из своего проекта.",
+                "Используй пользовательские модули из своего приложения.",
                 reply_markup=get_back_keyboard("create_project"),
                 parse_mode="HTML"
             )
@@ -256,7 +256,7 @@ async def entry_received(message: Message, state: FSMContext):
 
     from html import escape
     await message.answer(
-        f"✅ <b>Точка входа:</b> <code>{escape(entry)}</code>\n\n"
+        f"✅ <b>Точка старта:</b> <code>{escape(entry)}</code>\n\n"
         f"{texts.ADD_BOT_NAME_TEXT}",
         reply_markup=get_back_keyboard("create_project"),
         parse_mode="HTML"
@@ -289,7 +289,7 @@ async def name_received(message: Message, state: FSMContext):
     if not servers:
         await message.answer(
             f"🌍 <b>Нет доступных серверов</b>\n\n"
-            f"Проект будет создан без конкретного сервера.",
+            f"Приложение будет создан без конкретного сервера.",
             reply_markup=get_back_keyboard("create_project"),
             parse_mode="HTML"
         )
@@ -321,7 +321,7 @@ async def create_back_active(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "server_pool_info")
 async def server_pool_info(callback: CallbackQuery):
     await callback.answer(
-        "🖥 Это общий пул серверов: проект будет размещён на свободной площадке автоматически.",
+        "🖥 Это общий пул серверов: приложение будет размещён на свободной площадке автоматически.",
         show_alert=True,
     )
 
@@ -350,7 +350,7 @@ async def show_confirmation(message, state: FSMContext, edit: bool = False):
     from aiogram.types import InlineKeyboardButton
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(style="success", text="✅ Создать проект", callback_data="create_confirm"),
+        InlineKeyboardButton(style="success", text="✅ Развернуть сервис", callback_data="create_confirm"),
         InlineKeyboardButton(text="❌ Отмена", style="primary", callback_data="main_menu"),
     )
     kb = builder.as_markup()
@@ -377,7 +377,7 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
     current_count = await project_service.count_user_projects(db_user.id)
     if current_count >= max_projects:
         await callback.answer(
-            f"⚠️ Достигнут лимит проектов ({max_projects})\n\nОбнови подписку для больших возможностей!",
+            f"⚠️ Достигнут лимит приложений ({max_projects})\n\nОбнови тариф для больших возможностей!",
             show_alert=True,
         )
         return
@@ -447,9 +447,9 @@ async def create_confirmed(callback: CallbackQuery, state: FSMContext, db_user, 
     from bot.keyboards.user import get_project_manage_keyboard
     await edit_photo_or_text(
         callback.message,
-        f"🎉 <b>Проект создан!</b>\n\n"
-        f"<b>{project.name}</b> готов к запуску.\n\n"
-        f"Нажми <b>\"Запустить\"</b> чтобы развернуть его в облаке.",
+        f"🎉 <b>Сервис создан!</b>\n\n"
+        f"<b>{project.name}</b> готов к работе.\n\n"
+        f"Нажми <b>«Поднять»</b>, чтобы запустить его в облаке.",
         "bot_ready",
         reply_markup=get_project_manage_keyboard(project.id, project.status),
         parse_mode="HTML"

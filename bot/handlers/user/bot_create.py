@@ -39,7 +39,7 @@ class CreateStates(StatesGroup):
 
 STEP_TEXT = "(1/4) Откуда загружаем?"
 STEP_PYTHON = "(2/4) Версия Python"
-STEP_ENTRY = "(2/4) Точка входа"
+STEP_ENTRY = "(2/4) Точка старта"
 STEP_NAME = "(3/4) Название"
 STEP_SERVER = "(4/4) Сервер"
 
@@ -545,7 +545,7 @@ async def create_back(callback: CallbackQuery, state: FSMContext):
         await state.set_state(CreateStates.waiting_python)
         text = (
             f"🐍 <b>{STEP_PYTHON}</b>\n"
-            f"<i>Для Legacy-проектов с aiogram 2.x подойдет 3.10</i>\n\n"
+            f"<i>Для Legacy-приложений с aiogram 2.x подойдет 3.10</i>\n\n"
             f"На какой версии будет запущен твой код?"
         )
         await edit_photo_or_text(callback.message, text, "python_version")

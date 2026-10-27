@@ -21,7 +21,7 @@ class PromoStates(StatesGroup):
 async def promo_menu(callback: CallbackQuery, state: FSMContext):
     await edit_photo_or_text(
         callback.message,
-        "<b>🎁 Активация промокода</b>\n\n<blockquote>Отправь код сообщением — мы активируем награду автоматически.</blockquote>",
+        "<b>🎁 Активация ключа</b>\n\n<blockquote>Отправь код сообщением — мы активируем награду автоматически.</blockquote>",
         "control_panel",
         reply_markup=get_back_keyboard("main_menu"),
     )
@@ -74,7 +74,7 @@ async def referrals_menu(callback: CallbackQuery, db_user, session):
     count = await ref_svc.get_referrals_count(db_user.id)
 
     text = (
-        f"🔗 <b>Реферальная система</b>\n\n"
+        f"🔗 <b>Партнёрская система</b>\n\n"
         f"🔗 Твоя ссылка:\n<code>{link}</code>\n\n"
         f"👥 Приглашено: <b>{count}</b>\n\n"
         f"Поделись ссылкой с друзьями!"

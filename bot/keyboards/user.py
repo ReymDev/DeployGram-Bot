@@ -36,93 +36,80 @@ def get_flag(country: str) -> str:
     return "🏳"
 
 
-def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 6) -> InlineKeyboardMarkup:
-    """
-    Список проектов в карточном стиле - 2 в ряд для лучшей читаемости.
-    
-    Args:
-        bots: список проектов или список кортежей (project, is_coowner)
-        page: номер страницы
-        per_page: количество на странице
-    """
+def get_bot_list_keyboard(bots: list, page: int = 0, per_page: int = 5) -> InlineKeyboardMarkup:
+    """Список сервисов: одна строка = один сервис."""
     builder = InlineKeyboardBuilder()
     start = page * per_page
     end = start + per_page
     page_bots = bots[start:end]
 
-    # Группируем по 2 в ряд
-    for i in range(0, len(page_bots), 2):
-        row_bots = page_bots[i:i+2]
-        row_buttons = []
-        
-        for item in row_bots:
-            # Проверяем формат данных - это может быть Project или (Project, is_coowner)
-            if isinstance(item, tuple):
-                b, is_coowner = item
-            else:
-                b = item
-                is_coowner = False
-            
-            # Иконка статуса
-            if b.status == "running":
-                icon = "🟢"
-            elif b.status == "error":
-                icon = "🔴"
-            else:
-                icon = "⚫"
-            
-            # Добавляем тег совладельца
-            coowner_tag = " 👥" if is_coowner else ""
-            
-            row_buttons.append(
-                InlineKeyboardButton(
-                    text=f"{icon} {b.name[:14]}{coowner_tag}",
-                    style="primary",
-                    callback_data=f"bot_view_{b.id}",
-                )
-            )
-        
-        builder.row(*row_buttons)
+    status_map = {
+        "running": ("🟢", "работает"),
+        "error": ("🔴", "сбой"),
+        "sleeping": ("🌙", "пауза"),
+        "stopped": ("⚫", "остановлен"),
+    }
 
-    # Навигация
-    nav_row = []
-    if page > 0:
-        nav_row.append(
-            InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data=f"bots_page_{page - 1}")
+    for item in page_bots:
+        if isinstance(item, tuple):
+            b, is_coowner = item
+        else:
+            b = item
+            is_coowner = False
+
+        icon, status_label = status_map.get(b.status, ("⚪", b.status))
+        role_tag = " · 👥" if is_coowner else ""
+        button_style = (
+            "success" if b.status == "running"
+            else "danger" if b.status == "error"
+            else "primary"
         )
-    if end < len(bots):
-        nav_row.append(
-            InlineKeyboardButton(style="primary", text="Вперёд ➡️", callback_data=f"bots_page_{page + 1}")
+        builder.row(
+            InlineKeyboardButton(
+                text=f"{icon} {b.name[:20]} · {status_label}{role_tag}",
+                style=button_style,
+                callback_data=f"bot_view_{b.id}",
+            )
         )
-    if nav_row:
+
+    if page > 0 or end < len(bots):
+        nav_row = []
+        if page > 0:
+            nav_row.append(
+                InlineKeyboardButton(text="←", style="primary", callback_data=f"bots_page_{page - 1}")
+            )
+        nav_row.append(
+            InlineKeyboardButton(text=f"{page + 1}", style="default", callback_data="noop")
+        )
+        if end < len(bots):
+            nav_row.append(
+                InlineKeyboardButton(text="→", style="primary", callback_data=f"bots_page_{page + 1}")
+            )
         builder.row(*nav_row)
 
-    # Только кнопка создания проекта
     builder.row(
         InlineKeyboardButton(
-            text="✨ Создать проект",
+            text="➕ Новый сервис",
             style="success",
             callback_data="create_project",
         ),
     )
-    
-    # Кнопка "Назад" в главное меню
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="main_menu"),
+        InlineKeyboardButton(text="⬅️ В кабинет", style="primary", callback_data="main_menu"),
     )
-    
+
     return builder.as_markup()
 
 
 def get_bot_control_keyboard(bot_id: int, status: str) -> InlineKeyboardMarkup:
-    """Панель управления проектом с контекстными кнопками."""
+    """Панель управления приложением с контекстными кнопками."""
     builder = InlineKeyboardBuilder()
 
-    # Основные действия в зависимости от статуса
+    # Основные действия в модули от статуса
     if status == "running":
         builder.row(
             InlineKeyboardButton(
-                text="⏹ Остановить",
+                text="⏸ Приостановить",
                 style="danger",
                 callback_data=f"bot_stop_{bot_id}",
             ),
@@ -130,21 +117,21 @@ def get_bot_control_keyboard(bot_id: int, status: str) -> InlineKeyboardMarkup:
     else:
         builder.row(
             InlineKeyboardButton(
-                text="▶️ Запустить",
+                text="▶️ Поднять",
                 style="success",
                 callback_data=f"bot_start_{bot_id}",
             ),
         )
 
-    # Информация и мониторинг
+    # Информация и метрики
     builder.row(
         InlineKeyboardButton(
-            text="📜 Логи",
+            text="📜 Консоль",
             style="primary",
             callback_data=f"bot_logs_{bot_id}",
         ),
         InlineKeyboardButton(
-            text="📊 Мониторинг",
+            text="📊 Метрики",
             style="primary",
             callback_data=f"bot_graphs_{bot_id}",
         ),
@@ -153,12 +140,12 @@ def get_bot_control_keyboard(bot_id: int, status: str) -> InlineKeyboardMarkup:
     # Управление файлами и настройками
     builder.row(
         InlineKeyboardButton(
-            text="📂 Файлы",
+            text="📂 Хранилище",
             style="primary",
             callback_data=f"bot_files_{bot_id}",
         ),
         InlineKeyboardButton(
-            text="⚙️ Настройки",
+            text="⚙️ Параметры",
             style="primary",
             callback_data=f"bot_settings_{bot_id}",
         ),
@@ -166,13 +153,13 @@ def get_bot_control_keyboard(bot_id: int, status: str) -> InlineKeyboardMarkup:
 
     # Навигация
     builder.row(
-        InlineKeyboardButton(style="primary", text="⬅️ К проектам", callback_data="control_panel"),
+        InlineKeyboardButton(style="primary", text="⬅️ К сервисам", callback_data="control_panel"),
     )
     return builder.as_markup()
 
 
 def get_bot_settings_keyboard(bot_id: int) -> InlineKeyboardMarkup:
-    """Меню настроек проекта."""
+    """Меню настроек приложения."""
     builder = InlineKeyboardBuilder()
     
     builder.row(
@@ -180,20 +167,20 @@ def get_bot_settings_keyboard(bot_id: int) -> InlineKeyboardMarkup:
     )
     builder.row(
         InlineKeyboardButton(text="🐍 Python", style="primary", callback_data=f"bot_python_{bot_id}"),
-        InlineKeyboardButton(text="🚀 Точка входа", style="primary", callback_data=f"bot_entry_{bot_id}"),
+        InlineKeyboardButton(text="🚀 Точка старта", style="primary", callback_data=f"bot_entry_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="📦 Зависимости", style="primary", callback_data=f"bot_libs_{bot_id}"),
-        InlineKeyboardButton(text="🔔 Уведомления", style="primary", callback_data=f"bot_notify_{bot_id}"),
+        InlineKeyboardButton(text="📦 Модули", style="primary", callback_data=f"bot_libs_{bot_id}"),
+        InlineKeyboardButton(text="🔔 Сигналы", style="primary", callback_data=f"bot_notify_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="👥 Совладельцы", style="primary", callback_data=f"bot_coowners_{bot_id}"),
+        InlineKeyboardButton(text="👥 Команда", style="primary", callback_data=f"bot_coowners_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="🗑 Удалить проект", style="danger", callback_data=f"bot_delete_{bot_id}"),
+        InlineKeyboardButton(text="🗑 Распустить сервис", style="danger", callback_data=f"bot_delete_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ К проекту", style="primary", callback_data=f"bot_view_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ К сервису", style="primary", callback_data=f"bot_view_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -210,13 +197,13 @@ def get_logs_keyboard(bot_id: int) -> InlineKeyboardMarkup:
         ),
         InlineKeyboardButton(
             style="primary",
-            text="⬇️ Скачать",
+            text="⤓ Выгрузить",
             callback_data=f"logs_file_{bot_id}",
         ),
     )
     builder.row(
         InlineKeyboardButton(
-            text="⬅️ К проекту",
+            text="⬅️ К сервису",
             style="primary",
             callback_data=f"bot_view_{bot_id}",
         ),
@@ -239,7 +226,7 @@ def get_subscription_keyboard(is_premium: bool) -> InlineKeyboardMarkup:
     if not is_premium:
         builder.row(
             InlineKeyboardButton(
-                text="💳 Купить подписку",
+                text="💳 Купить тариф",
                 style="success",
                 callback_data="subscription_buy",
             ),
@@ -361,7 +348,7 @@ def get_entry_type_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_confirm_start_keyboard() -> InlineKeyboardMarkup:
-    """Подтверждение создания проекта."""
+    """Подтверждение создания приложения."""
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(style="success", text="✅ Создать", callback_data="create_confirm"),
@@ -371,7 +358,7 @@ def get_confirm_start_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_project_manage_keyboard(project_id: int, status: str) -> InlineKeyboardMarkup:
-    """Клавиатура управления проектом (после создания)."""
+    """Клавиатура управления приложением (после создания)."""
     return get_bot_control_keyboard(project_id, status)
 
 
@@ -485,7 +472,7 @@ def get_file_manager_keyboard(
                 )
             )
         else:
-            # Файлы с определением типа
+            # Хранилище с определением типа
             if f.endswith(".py"):
                 icon = "🐍"
             elif f.endswith((".txt", ".md")):
@@ -521,7 +508,7 @@ def get_file_manager_keyboard(
         InlineKeyboardButton(style="success", text="➕ Загрузить файл", callback_data=f"file_upload_{bot_id}"),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ К проекту", style="primary", callback_data=f"bot_view_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ К сервису", style="primary", callback_data=f"bot_view_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -532,12 +519,12 @@ def get_files_main_menu_keyboard(project_id: int) -> InlineKeyboardMarkup:
     
     builder.row(
         InlineKeyboardButton(
-            text="📂 Просмотр",
+            text="🗂 Проводник",
             style="primary",
             callback_data=f"files_browse_{project_id}",
         ),
         InlineKeyboardButton(
-            text="📤 Загрузка",
+            text="📤 Загрузить",
             style="success",
             callback_data=f"files_upload_{project_id}",
         ),
@@ -545,7 +532,7 @@ def get_files_main_menu_keyboard(project_id: int) -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             style="primary",
-            text="⬅️ К проекту",
+            text="⬅️ К сервису",
             callback_data=f"bot_view_{project_id}",
         ),
     )
@@ -588,7 +575,7 @@ def get_file_browser_keyboard(
                 )
             )
         else:
-            # Файлы - открывают меню действий
+            # Хранилище - открывают меню действий
             if f.endswith(".py"):
                 icon = "🐍"
             elif f.endswith((".txt", ".md", ".log")):
@@ -759,7 +746,7 @@ def get_entry_change_keyboard(bot_id: int, entry_type: str, entry_point: str) ->
 
 
 def get_delete_confirm_keyboard(bot_id: int) -> InlineKeyboardMarkup:
-    """Подтверждение удаления проекта."""
+    """Подтверждение удаления приложения."""
     builder = InlineKeyboardBuilder()
     
     builder.row(
@@ -839,7 +826,7 @@ def get_backups_keyboard(bot_id: int, backups: list) -> InlineKeyboardMarkup:
 
     builder.row(
         InlineKeyboardButton(
-            text="💾 Создать бэкап",
+            text="💾 Создать снимок",
             callback_data=f"backup_create_{bot_id}",
             style="success",
         ),
@@ -871,13 +858,13 @@ def get_libs_keyboard(bot_id: int, libs: list[str]) -> InlineKeyboardMarkup:
 
     builder.row(
         InlineKeyboardButton(
-            text="➕ Установить библиотеку",
+            text="➕ Установить модуль",
             style="success",
             callback_data=f"lib_add_{bot_id}",
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data=f"bot_settings_{bot_id}"),
+        InlineKeyboardButton(text="⬅️ К параметрам", style="primary", callback_data=f"bot_settings_{bot_id}"),
     )
     return builder.as_markup()
 
@@ -943,7 +930,7 @@ def get_settings_keyboard(
         ),
         InlineKeyboardButton(
             style=("success" if notify_backup_created else "primary"),
-            text=f"{toggle_icon(notify_backup_created)} Бэкапы",
+            text=f"{toggle_icon(notify_backup_created)} Снимки",
             callback_data=(f"toggle_{project_id}_notify_backup_created" if project_id else "toggle_notify_backup_created"),
         ),
     )
@@ -954,7 +941,7 @@ def get_settings_keyboard(
 
 
 def get_coowners_keyboard(project_id: int, coowners: list) -> InlineKeyboardMarkup:
-    """Клавиатура управления совладельцами проекта."""
+    """Клавиатура управления совладельцами приложения."""
     builder = InlineKeyboardBuilder()
     
     for co in coowners:
@@ -973,19 +960,19 @@ def get_coowners_keyboard(project_id: int, coowners: list) -> InlineKeyboardMark
     
     builder.row(
         InlineKeyboardButton(
-            text="➕ Добавить совладельца",
+            text="➕ Позвать в команду",
             style="success",
             callback_data=f"coowner_add_{project_id}",
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data=f"bot_settings_{project_id}"),
+        InlineKeyboardButton(text="⬅️ К параметрам", style="primary", callback_data=f"bot_settings_{project_id}"),
     )
     return builder.as_markup()
 
 
 def get_coowner_permissions_keyboard(project_id: int, coowner_id: int, coowner) -> InlineKeyboardMarkup:
-    """Клавиатура настройки разрешений совладельца."""
+    """Клавиатура параметры разрешений совладельца."""
     builder = InlineKeyboardBuilder()
     
     def perm_icon(enabled: bool) -> str:
@@ -993,35 +980,35 @@ def get_coowner_permissions_keyboard(project_id: int, coowner_id: int, coowner) 
     
     builder.row(
         InlineKeyboardButton(
-            text=f"{perm_icon(coowner.can_start_stop)} ▶️ Запуск и остановка",
+            text=f"{perm_icon(coowner.can_start_stop)} ▶️ Старт и пауза",
             style=("success" if coowner.can_start_stop else "primary"),
             callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_start_stop",
         ),
     )
     builder.row(
         InlineKeyboardButton(
-            text=f"{perm_icon(coowner.can_view_logs)} 📜 Просмотр логов",
+            text=f"{perm_icon(coowner.can_view_logs)} 🧾 Консоль",
             style=("success" if coowner.can_view_logs else "primary"),
             callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_view_logs",
         ),
     )
     builder.row(
         InlineKeyboardButton(
-            text=f"{perm_icon(coowner.can_edit_files)} 📂 Редактирование файлов",
+            text=f"{perm_icon(coowner.can_edit_files)} 🗂 Файлы",
             style=("success" if coowner.can_edit_files else "primary"),
             callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_edit_files",
         ),
     )
     builder.row(
         InlineKeyboardButton(
-            text=f"{perm_icon(coowner.can_manage_deps)} 📦 Зависимости",
+            text=f"{perm_icon(coowner.can_manage_deps)} 📦 Модули",
             style=("success" if coowner.can_manage_deps else "primary"),
             callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_manage_deps",
         ),
     )
     builder.row(
         InlineKeyboardButton(
-            text=f"{perm_icon(coowner.can_view_settings)} ⚙️ Настройки",
+            text=f"{perm_icon(coowner.can_view_settings)} ⚙️ Параметры",
             style=("success" if coowner.can_view_settings else "primary"),
             callback_data=f"coowner_perm_{project_id}_{coowner_id}_can_view_settings",
         ),

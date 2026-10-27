@@ -97,7 +97,7 @@ async def backup_view(callback: CallbackQuery, project_service, db_user, session
     backup_repo = BackupRepository(session)
     backup = await backup_repo.get_by_id(backup_id)
     if backup is None or backup.project_id != project_id:
-        await callback.answer("Бэкап не найден", show_alert=True)
+        await callback.answer("Снимок не найден", show_alert=True)
         return
 
     success, msg = await backup_svc.restore_backup(backup_id)

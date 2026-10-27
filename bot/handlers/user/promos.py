@@ -20,7 +20,7 @@ class PromoStates(StatesGroup):
 async def promo_menu(callback: CallbackQuery, state: FSMContext):
     await edit_photo_or_text(
         callback.message,
-        f"{Emoji.GIFT} <b>Активация промокода</b>\n\n"
+        f"{Emoji.GIFT} <b>Активация ключа</b>\n\n"
         f"Введите код:",
         "control_panel",
         reply_markup=get_back_keyboard("main_menu"),

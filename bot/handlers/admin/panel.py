@@ -98,7 +98,7 @@ async def admin_users(callback: CallbackQuery, session):
     users = await user_svc.get_all_users()
 
     await callback.message.edit_text(
-        f"{Emoji.PEOPLE} <b>Пользователи</b> ({len(users)})",
+        f"{Emoji.PEOPLE} <b>Люди</b> ({len(users)})",
         reply_markup=get_admin_users_keyboard(users),
     )
     await callback.answer()
@@ -114,7 +114,7 @@ async def admin_users_page(callback: CallbackQuery, session):
     users = await user_svc.get_all_users()
 
     await callback.message.edit_text(
-        f"{Emoji.PEOPLE} <b>Пользователи</b> ({len(users)})",
+        f"{Emoji.PEOPLE} <b>Люди</b> ({len(users)})",
         reply_markup=get_admin_users_keyboard(users, page),
     )
     await callback.answer()
@@ -255,7 +255,7 @@ async def admin_locations(callback: CallbackQuery, session):
     servers = await server_repo.get_all()
 
     await callback.message.edit_text(
-        f"{Emoji.HOME} <b>Серверы</b> ({len(servers)})",
+        f"{Emoji.HOME} <b>Узлы</b> ({len(servers)})",
         reply_markup=get_admin_servers_keyboard(servers),
     )
     await callback.answer()
@@ -523,7 +523,7 @@ async def admin_promos(callback: CallbackQuery, session):
     promos = await promo_svc.get_promos()
 
     await callback.message.edit_text(
-        f"{Emoji.GIFT} <b>Промокоды</b> ({len(promos)})",
+        f"{Emoji.GIFT} <b>Ключи</b> ({len(promos)})",
         reply_markup=get_admin_promos_keyboard(promos),
     )
     await callback.answer()
@@ -544,12 +544,12 @@ async def admin_promo_view(callback: CallbackQuery, session):
     from repositories.promo import PromoRepository
     promo = await PromoRepository(session).get_by_id(promo_id)
     if promo is None:
-        await callback.answer("Промокод не найден", show_alert=True)
+        await callback.answer("Ключ не найден", show_alert=True)
         return
 
     expires = promo.expires_at.strftime("%d.%m.%Y %H:%M") if promo.expires_at else "бессрочно"
     text = (
-        f"🎁 <b>Промокод</b>\n\n"
+        f"🎁 <b>Ключ</b>\n\n"
         f"<blockquote><b>Код:</b> <code>{escape(str(promo.code))}</code>\n"
         f"<b>Награда:</b> {escape(str(promo.reward_type))} = {escape(str(promo.reward_value))}\n"
         f"<b>Активации:</b> {promo.activated_count}/{promo.max_activations}\n"
@@ -609,7 +609,7 @@ async def admin_settings(callback: CallbackQuery):
         return
     from bot.config import settings as cfg
     await callback.message.edit_text(
-        f"{Emoji.SETTINGS} <b>Настройки</b>",
+        f"{Emoji.SETTINGS} <b>Параметры</b>",
         reply_markup=get_admin_settings_keyboard(cfg.AUTO_SLEEP_MINUTES),
     )
     await callback.answer()
@@ -731,7 +731,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
 
     status_msg = await message.answer(
         texts.ADMIN_SERVER_CHECKING + "\n\n"
-        f"📋 Логи подключения:\n"
+        f"📋 Консоль подключения:\n"
         + "\n".join(log_lines),
     )
 
@@ -749,7 +749,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
             log_lines.append(f"   {Emoji.CROSS} Ответ агента: {health}")
             try:
                 await status_msg.edit_text(
-                    f"📋 <b>Логи подключения:</b>\n\n"
+                    f"📋 <b>Консоль подключения:</b>\n\n"
                     + "\n".join(log_lines)
                     + f"\n\n{Emoji.CROSS} <b>Агент ответил, но статус не OK</b>",
                     reply_markup=get_back_keyboard("admin_panel"),
@@ -763,7 +763,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         log_lines.append(f"   {Emoji.CROSS} Ошибка: <code>{error_text[:200]}</code>")
         try:
             await status_msg.edit_text(
-                f"📋 <b>Логи подключения:</b>\n\n"
+                f"📋 <b>Консоль подключения:</b>\n\n"
                 + "\n".join(log_lines)
                 + f"\n\n{Emoji.CROSS} <b>Не удалось подключиться к агенту</b>\n\n"
                 f"Убедитесь что:\n"
@@ -778,7 +778,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
 
     try:
         await status_msg.edit_text(
-            f"📋 <b>Логи подключения:</b>\n\n"
+            f"📋 <b>Консоль подключения:</b>\n\n"
             + "\n".join(log_lines)
             + f"\n\n{Emoji.LOADING} Проверка Docker...",
         )
@@ -798,7 +798,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         log_lines.append(f"   {Emoji.CROSS} Docker недоступен: <code>{str(e)[:150]}</code>")
         try:
             await status_msg.edit_text(
-                f"📋 <b>Логи подключения:</b>\n\n"
+                f"📋 <b>Консоль подключения:</b>\n\n"
                 + "\n".join(log_lines)
                 + f"\n\n{Emoji.CROSS} <b>Docker недоступен на сервере</b>",
                 reply_markup=get_back_keyboard("admin_panel"),
@@ -809,7 +809,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
 
     try:
         await status_msg.edit_text(
-            f"📋 <b>Логи подключения:</b>\n\n"
+            f"📋 <b>Консоль подключения:</b>\n\n"
             + "\n".join(log_lines)
             + f"\n\n{Emoji.LOADING} Тестовый запуск контейнера...",
         )
@@ -833,7 +833,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
             log_lines.append(f"   {Emoji.CROSS} Ошибка создания: <code>{test_result['error'][:150]}</code>")
             try:
                 await status_msg.edit_text(
-                    f"📋 <b>Логи подключения:</b>\n\n"
+                    f"📋 <b>Консоль подключения:</b>\n\n"
                     + "\n".join(log_lines)
                     + f"\n\n{Emoji.CROSS} <b>Не удалось создать тестовый контейнер</b>\n\n"
                     f"Возможные причины:\n"
@@ -854,7 +854,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         if start_result.get("success"):
             log_lines.append(f"   {Emoji.CHECK} Контейнер запущен")
         else:
-            log_lines.append(f"   {Emoji.CROSS} Не удалось запустить контейнер")
+            log_lines.append(f"   {Emoji.CROSS} Не удалось поднять контейнер")
 
         await client.remove_container(test_container_id)
         log_lines.append(f"   {Emoji.CHECK} Тестовый контейнер удалён")
@@ -863,7 +863,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         log_lines.append(f"   {Emoji.CROSS} Ошибка: <code>{str(e)[:150]}</code>")
         try:
             await status_msg.edit_text(
-                f"📋 <b>Логи подключения:</b>\n\n"
+                f"📋 <b>Консоль подключения:</b>\n\n"
                 + "\n".join(log_lines)
                 + f"\n\n{Emoji.CROSS} <b>Ошибка при тестировании контейнера</b>",
                 reply_markup=get_back_keyboard("admin_panel"),
@@ -874,7 +874,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
 
     try:
         await status_msg.edit_text(
-            f"📋 <b>Логи подключения:</b>\n\n"
+            f"📋 <b>Консоль подключения:</b>\n\n"
             + "\n".join(log_lines)
             + f"\n\n{Emoji.LOADING} Сохранение сервера...",
         )
@@ -899,7 +899,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
     await state.clear()
     try:
         await status_msg.edit_text(
-            f"📋 <b>Логи подключения:</b>\n\n"
+            f"📋 <b>Консоль подключения:</b>\n\n"
             + "\n".join(log_lines)
             + f"\n\n{Emoji.CHECK} <b>Сервер {escape(str(server_name))} успешно добавлен!</b>\n\n"
             f"🌍 Страна: {escape(str(data['server_country']))}\n"
@@ -910,7 +910,7 @@ async def server_slots_received(message: Message, state: FSMContext, session):
         )
     except Exception:
         await message.answer(
-            f"📋 <b>Логи подключения:</b>\n\n"
+            f"📋 <b>Консоль подключения:</b>\n\n"
             + "\n".join(log_lines)
             + f"\n\n{Emoji.CHECK} <b>Сервер {escape(str(server_name))} успешно добавлен!</b>\n\n"
             f"🌍 Страна: {escape(str(data['server_country']))}\n"
@@ -984,6 +984,6 @@ async def promo_max_input(message: Message, state: FSMContext, session):
 
     await state.clear()
     await message.answer(
-        f"{Emoji.CHECK} Промокод <b>{escape(str(data['promo_code']))}</b> создан.",
+        f"{Emoji.CHECK} Ключ <b>{escape(str(data['promo_code']))}</b> создан.",
         reply_markup=get_back_keyboard("admin_panel"),
     )

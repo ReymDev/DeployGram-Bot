@@ -16,7 +16,7 @@ router = Router()
 async def subscription_menu(callback: CallbackQuery, db_user, project_service):
     is_premium = db_user.tariff == "premium"
     
-    # Получаем количество проектов пользователя
+    # Получаем количество приложений пользователя
     projects = await project_service.get_user_projects(db_user.id)
     projects_count = len(projects)
     max_projects = settings.PREMIUM_TARIFF_PROJECTS if is_premium else settings.FREE_TARIFF_PROJECTS

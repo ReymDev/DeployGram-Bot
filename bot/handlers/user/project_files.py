@@ -69,11 +69,11 @@ async def files_main_menu(callback: CallbackQuery, project_service, db_user, ses
 
     from bot.keyboards.user import get_files_main_menu_keyboard
     
-    text = f"""📁 <b>Файловый менеджер</b>
+    text = f"""🗄 <b>ХРАНИЛИЩЕ</b>
 
-<b>Проект:</b> {project.name}
+<blockquote><b>Сервис:</b> {project.name}</blockquote>
 
-Выбери действие:"""
+<i>Выбери режим работы:</i>"""
 
     await edit_photo_or_text(
         callback.message,
@@ -105,16 +105,16 @@ async def files_browse(callback: CallbackQuery, project_service, db_user, sessio
     from bot.keyboards.user import get_file_browser_keyboard
     files = await project_service.list_files(project_id, "/app")
     
-    # Логируем для отладки
+    # Консольруем для отладки
     import logging
     logger = logging.getLogger(__name__)
     logger.info(f"[FILES_BROWSE] Project: {project.name}, Files count: {len(files)}, Files: {files}")
 
-    text = f"""📂 <b>Просмотр файлов</b>
+    text = f"""🗂 <b>ПРОВОДНИК</b>
 
-<b>Путь:</b> <code>/app</code>
+<blockquote>📂 <code>/app</code></blockquote>
 
-Нажми на файл для действий или на папку чтобы открыть:"""
+<i>Файл открывает действия, папка — переход внутрь.</i>"""
 
     await edit_photo_or_text(
         callback.message,
@@ -147,11 +147,11 @@ async def files_upload_mode(callback: CallbackQuery, project_service, db_user, s
     from bot.keyboards.user import get_file_upload_browser_keyboard
     files = await project_service.list_files(project_id, "/app")
 
-    text = f"""📤 <b>Загрузка файлов</b>
+    text = f"""📤 <b>ЗАГРУЗКА</b>
 
-<b>Путь:</b> <code>/app</code>
+<blockquote>📂 <code>/app</code></blockquote>
 
-Выбери папку или нажми "📤 Загрузить сюда":"""
+<i>Выбери папку или отправь файл в текущую.</i>"""
 
     await edit_photo_or_text(
         callback.message,
@@ -195,11 +195,11 @@ async def file_browse_nav(callback: CallbackQuery, project_service, db_user, ses
     from bot.keyboards.user import get_file_browser_keyboard
     files = await project_service.list_files(project_id, path)
 
-    text = f"""📂 <b>Просмотр файлов</b>
+    text = f"""🗂 <b>ПРОВОДНИК</b>
 
-<b>Путь:</b> <code>{escape(path)}</code>
+<blockquote>📂 <code>{escape(path)}</code></blockquote>
 
-Нажми на файл для действий или на папку чтобы открыть:"""
+<i>Файл открывает действия, папка — переход внутрь.</i>"""
 
     await edit_photo_or_text(
         callback.message,
@@ -231,11 +231,11 @@ async def file_upload_nav(callback: CallbackQuery, project_service, db_user, ses
     from bot.keyboards.user import get_file_upload_browser_keyboard
     files = await project_service.list_files(project_id, path)
 
-    text = f"""📤 <b>Загрузка файлов</b>
+    text = f"""📤 <b>ЗАГРУЗКА</b>
 
-<b>Путь:</b> <code>{escape(path)}</code>
+<blockquote>📂 <code>{escape(path)}</code></blockquote>
 
-Выбери папку или нажми "📤 Загрузить сюда":"""
+<i>Выбери папку или отправь файл в текущую.</i>"""
 
     await edit_photo_or_text(
         callback.message,
@@ -268,11 +268,12 @@ async def file_action_menu(callback: CallbackQuery, project_service, db_user, se
     import os
     filename = os.path.basename(file_path)
     
-    text = f"""📄 <b>{escape(filename)}</b>
+    text = f"""📄 <b>ФАЙЛ</b>
 
-<b>Путь:</b> <code>{escape(file_path)}</code>
+<blockquote>📄 <b>{escape(filename)}</b>
+📂 <code>{escape(file_path)}</code></blockquote>
 
-Выбери действие:"""
+<i>Выбери действие:</i>"""
 
     await edit_photo_or_text(
         callback.message,

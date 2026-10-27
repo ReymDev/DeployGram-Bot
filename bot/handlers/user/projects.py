@@ -17,14 +17,14 @@ async def my_projects(callback: CallbackQuery, db_user, project_service):
     if not projects_with_flags:
         await edit_photo_or_text(
             callback.message,
-            "📦 У вас пока нет проектов.\n\nНажмите «Создать проект» чтобы начать.",
+            "📦 У вас пока нет приложений.\n\nНажмите «Развернуть сервис» чтобы начать.",
             "control_panel",
             reply_markup=get_bot_list_keyboard([]),
         )
     else:
         await edit_photo_or_text(
             callback.message,
-            f"📦 <b>Ваши проекты</b> ({len(projects_with_flags)})",
+            f"📦 <b>Ваши приложения</b> ({len(projects_with_flags)})",
             "control_panel",
             reply_markup=get_bot_list_keyboard(projects_with_flags),
         )
@@ -37,7 +37,7 @@ async def projects_page(callback: CallbackQuery, db_user, project_service):
     projects_with_flags = await project_service.get_all_user_projects(db_user.id)
     await edit_photo_or_text(
         callback.message,
-        f"📦 <b>Ваши проекты</b> ({len(projects_with_flags)})",
+        f"📦 <b>Ваши приложения</b> ({len(projects_with_flags)})",
         "control_panel",
         reply_markup=get_bot_list_keyboard(projects_with_flags, page),
     )
