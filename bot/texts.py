@@ -29,9 +29,11 @@ def welcome_text(username: str, projects_count: int = 0) -> str:
 <i>💡 Загрузи код, нажми «Запустить» — и готово!</i>"""
 
 
-CONTROL_PANEL_TEXT = """<b>📱 Мои проекты</b>
+CONTROL_PANEL_TEXT = """<b>🚀 Мои проекты</b>
 
-<i>Выбери проект для управления:</i>"""
+<blockquote>Выбери проект, чтобы открыть панель управления.</blockquote>
+
+<i>Новый проект можно создать кнопкой ниже.</i>"""
 
 
 EMPTY_PROJECTS = """<b>📭 Пока пусто</b>
@@ -237,6 +239,41 @@ BOT_SETTINGS_TEXT = """<b>⚙️ Настройки проекта</b>
 
 <i>Выбери, что хочешь изменить:</i>"""
 
+
+def bot_settings_text(name: str) -> str:
+    return (
+        f"<b>⚙️ Настройки проекта</b>\n\n"
+        f"<b>{html.escape(str(name))}</b>\n\n"
+        f"<blockquote>Здесь можно изменить параметры запуска, зависимости, доступ и уведомления.</blockquote>"
+    )
+
+
+def bot_notifications_text(name: str) -> str:
+    return (
+        f"<b>🔔 Уведомления</b>\n\n"
+        f"<b>{html.escape(str(name))}</b>\n\n"
+        f"<i>Нажми на пункт, чтобы включить или выключить уведомление.</i>"
+    )
+
+def bot_rename_text(name: str) -> str:
+    return (
+        f"<b>✏️ Переименовать проект</b>\n\n"
+        f"<b>{html.escape(str(name))}</b>\n\n"
+        f"<blockquote><b>Правила:</b>\n"
+        f"• латиница, цифры, <code>_</code> и <code>-</code>\n"
+        f"• от 1 до 50 символов</blockquote>"
+    )
+
+
+def bot_delete_text(name: str) -> str:
+    return (
+        f"<b>🗑 Удаление проекта</b>\n\n"
+        f"<b>{html.escape(str(name))}</b>\n\n"
+        f"<blockquote>Контейнер, файлы и резервные копии будут удалены.\n"
+        f"⚠️ <b>Это действие нельзя отменить.</b></blockquote>"
+    )
+
+
 BOT_RENAME_TEXT = """<b>📝 Переименовать проект</b>
 
 Отправь новое название:
@@ -437,6 +474,15 @@ BOT_LIBS_TEXT = """<b>📦 Зависимости проекта</b>
 🔄 обновить версию
 
 <i>💡 Зависимости ставятся через pip.</i>"""
+
+
+def bot_libs_text(name: str) -> str:
+    return (
+        f"<b>📦 Зависимости</b>\n\n"
+        f"<b>{html.escape(str(name))}</b>\n\n"
+        f"<blockquote>Пакеты из виртуального окружения проекта.\n"
+        f"Добавляй и удаляй библиотеки прямо здесь.</blockquote>"
+    )
 
 BOT_LIB_ADD_TEXT = """<b>📦 Установка библиотеки</b>
 

@@ -350,7 +350,7 @@ async def show_confirmation(message, state: FSMContext, edit: bool = False):
     from aiogram.types import InlineKeyboardButton
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="✅ Создать проект", callback_data="create_confirm"),
+        InlineKeyboardButton(style="success", text="✅ Создать проект", callback_data="create_confirm"),
         InlineKeyboardButton(text="❌ Отмена", style="primary", callback_data="main_menu"),
     )
     kb = builder.as_markup()

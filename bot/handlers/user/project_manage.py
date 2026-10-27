@@ -121,6 +121,7 @@ async def project_delete(callback: CallbackQuery, project_service, db_user):
             style="danger",
         ),
         InlineKeyboardButton(
+            style="primary",
             text="❌ Нет",
             callback_data=f"project_view_{project_id}",
         ),

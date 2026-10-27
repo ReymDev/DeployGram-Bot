@@ -44,6 +44,7 @@ async def admin_photos_menu(callback: CallbackQuery, state: FSMContext):
         has_photo = "✅" if photos.get(key) else "⬜"
         builder.row(
             InlineKeyboardButton(
+                style="primary",
                 text=f"{has_photo} {label}",
                 callback_data=f"admin_photo_set_{key}",
             )

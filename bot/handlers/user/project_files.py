@@ -42,7 +42,7 @@ async def _check_file_access(callback: CallbackQuery, project_service, db_user, 
 
 
 @router.callback_query(F.data.startswith("bot_files_"))
-async def bot_files_redirect(callback: CallbackQuery, project_service, db_user, session):
+async def bot_files_redirect(callback: CallbackQuery, project_service, db_user, session, state: FSMContext):
     """Редирект с bot_files_ на files_main_menu_."""
     project_id = int(callback.data.split("_")[-1])
     redirected = callback.model_copy(update={"data": f"files_main_menu_{project_id}"})
@@ -337,6 +337,7 @@ async def file_delete(callback: CallbackQuery, project_service, db_user, session
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(
+            style="danger",
             text="✅ Да, удалить",
             callback_data=f"file_del_confirm_{project_id}_{encode_path(file_path)}",
         ),

@@ -33,13 +33,14 @@ async def locations_menu(callback: CallbackQuery, session):
     for s in servers:
         builder.row(
             InlineKeyboardButton(
+                style="primary",
                 text=f"🌍 {s.name} ({s.country}) — {s.free_slots} слотов",
                 callback_data=f"location_view_{s.id}",
                 icon_custom_emoji_id=EmojiID.EARTH,
             )
         )
     builder.row(
-        InlineKeyboardButton(text="🔄 Обновить", callback_data="locations"),
+        InlineKeyboardButton(style="primary", text="🔄 Обновить", callback_data="locations"),
     )
     builder.row(
         InlineKeyboardButton(text="◁ Меню", style="primary", callback_data="main_menu"),

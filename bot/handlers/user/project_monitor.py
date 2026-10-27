@@ -37,6 +37,7 @@ async def project_monitor(callback: CallbackQuery, project_service, db_user):
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(
+            style="primary",
             text="🔄 Обновить",
             callback_data=f"project_monitor_{project_id}",
             icon_custom_emoji_id=EmojiID.LOADING,
@@ -44,6 +45,7 @@ async def project_monitor(callback: CallbackQuery, project_service, db_user):
     )
     builder.row(
         InlineKeyboardButton(
+            style="primary",
             text="📊 Графики (24ч)",
             callback_data=f"project_graphs_24_{project_id}",
             icon_custom_emoji_id=EmojiID.GRAPH_STATS,
@@ -93,6 +95,7 @@ async def project_graphs(callback: CallbackQuery, project_service, db_user, sess
         label = {24: "24ч", 168: "7д", 720: "30д"}[h]
         builder.row(
             InlineKeyboardButton(
+                style="primary",
                 text=f"📊 {label}",
                 callback_data=f"project_graphs_{h}_{project_id}",
                 icon_custom_emoji_id=EmojiID.GRAPH_STATS,

@@ -24,7 +24,7 @@ def home_menu(has_projects: bool = False) -> InlineKeyboardMarkup:
     if has_projects:
         # Для пользователей с проектами - быстрый доступ
         builder.row(
-            InlineKeyboardButton(text="📱 Мои проекты", callback_data="my_projects")
+            InlineKeyboardButton(style="primary", text="📱 Мои проекты", callback_data="my_projects")
         )
         builder.row(
             InlineKeyboardButton(text="✨ Создать проект", style="success", callback_data="create_new")
@@ -32,16 +32,16 @@ def home_menu(has_projects: bool = False) -> InlineKeyboardMarkup:
     else:
         # Для новых пользователей - призыв к действию
         builder.row(
-            InlineKeyboardButton(text="🚀 Создать первый проект", callback_data="create_first")
+            InlineKeyboardButton(style="primary", text="🚀 Создать первый проект", callback_data="create_first")
         )
         builder.row(
-            InlineKeyboardButton(text="📖 Как это работает?", callback_data="help_quick_start")
+            InlineKeyboardButton(style="primary", text="📖 Как это работает?", callback_data="help_quick_start")
         )
     
     # Общие кнопки
     builder.row(
-        InlineKeyboardButton(text="💳 Подписка", callback_data="subscription"),
-        InlineKeyboardButton(text="📖 Помощь", callback_data="help_menu")
+        InlineKeyboardButton(style="primary", text="💳 Подписка", callback_data="subscription"),
+        InlineKeyboardButton(style="primary", text="📖 Помощь", callback_data="help_menu")
     )
     
     return builder.as_markup()
@@ -94,17 +94,17 @@ def projects_list(projects: list, page: int = 0, items_per_page: int = 6) -> Inl
         )
     if end_idx < len(projects):
         nav_buttons.append(
-            InlineKeyboardButton(text="Вперёд ➡️", callback_data=f"projects:page:{page+1}")
+            InlineKeyboardButton(style="primary", text="Вперёд ➡️", callback_data=f"projects:page:{page+1}")
         )
     if nav_buttons:
         builder.row(*nav_buttons)
     
     # Действия
     builder.row(
-        InlineKeyboardButton(text="✨ Новый проект", callback_data="create_new")
+        InlineKeyboardButton(style="primary", text="✨ Новый проект", callback_data="create_new")
     )
     builder.row(
-        InlineKeyboardButton(text="🏠 Главная", callback_data="home")
+        InlineKeyboardButton(style="primary", text="🏠 Главная", callback_data="home")
     )
     
     return builder.as_markup()
@@ -123,7 +123,7 @@ def project_control(project_id: int, status: str, is_owner: bool = True) -> Inli
     # Основные действия в зависимости от статуса
     if status == "running":
         builder.row(
-            InlineKeyboardButton(text="⏸️ Остановить", callback_data=f"proj:{project_id}:stop")
+            InlineKeyboardButton(style="primary", text="⏸️ Остановить", callback_data=f"proj:{project_id}:stop")
         )
     else:
         builder.row(
@@ -132,28 +132,28 @@ def project_control(project_id: int, status: str, is_owner: bool = True) -> Inli
     
     # Информация и мониторинг
     builder.row(
-        InlineKeyboardButton(text="📋 Логи", callback_data=f"proj:{project_id}:logs"),
-        InlineKeyboardButton(text="📊 Статистика", callback_data=f"proj:{project_id}:stats")
+        InlineKeyboardButton(style="primary", text="📋 Логи", callback_data=f"proj:{project_id}:logs"),
+        InlineKeyboardButton(style="primary", text="📊 Статистика", callback_data=f"proj:{project_id}:stats")
     )
     
     # Управление файлами и настройками
     builder.row(
-        InlineKeyboardButton(text="📁 Файлы", callback_data=f"proj:{project_id}:files"),
-        InlineKeyboardButton(text="⚙️ Настройки", callback_data=f"proj:{project_id}:settings")
+        InlineKeyboardButton(style="primary", text="📁 Файлы", callback_data=f"proj:{project_id}:files"),
+        InlineKeyboardButton(style="primary", text="⚙️ Настройки", callback_data=f"proj:{project_id}:settings")
     )
     
     # Опасная зона (только для владельца)
     if is_owner:
         builder.row(
-            InlineKeyboardButton(text="👥 Доступ", callback_data=f"proj:{project_id}:sharing")
+            InlineKeyboardButton(style="primary", text="👥 Доступ", callback_data=f"proj:{project_id}:sharing")
         )
         builder.row(
-            InlineKeyboardButton(text="🗑️ Удалить проект", callback_data=f"proj:{project_id}:delete")
+            InlineKeyboardButton(style="primary", text="🗑️ Удалить проект", callback_data=f"proj:{project_id}:delete")
         )
     
     # Навигация
     builder.row(
-        InlineKeyboardButton(text="⬅️ К проектам", callback_data="my_projects")
+        InlineKeyboardButton(style="primary", text="⬅️ К проектам", callback_data="my_projects")
     )
     
     return builder.as_markup()
@@ -170,13 +170,13 @@ def create_project_upload_method() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="📦 Загрузить ZIP", callback_data="create:upload:zip")
+        InlineKeyboardButton(style="primary", text="📦 Загрузить ZIP", callback_data="create:upload:zip")
     )
     builder.row(
-        InlineKeyboardButton(text="🔗 Из GitHub", callback_data="create:upload:github")
+        InlineKeyboardButton(style="primary", text="🔗 Из GitHub", callback_data="create:upload:github")
     )
     builder.row(
-        InlineKeyboardButton(text="🎨 Шаблон проекта", callback_data="create:upload:template")
+        InlineKeyboardButton(style="primary", text="🎨 Шаблон проекта", callback_data="create:upload:template")
     )
     builder.row(
         InlineKeyboardButton(text="❌ Отмена", style="primary", callback_data="home")
@@ -192,11 +192,11 @@ def python_version_selector() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="🔥 Python 3.12 (рекомендуем)", callback_data="create:python:3.12")
+        InlineKeyboardButton(style="primary", text="🔥 Python 3.12 (рекомендуем)", callback_data="create:python:3.12")
     )
     builder.row(
-        InlineKeyboardButton(text="Python 3.11", callback_data="create:python:3.11"),
-        InlineKeyboardButton(text="Python 3.10", callback_data="create:python:3.10")
+        InlineKeyboardButton(style="primary", text="Python 3.11", callback_data="create:python:3.11"),
+        InlineKeyboardButton(style="primary", text="Python 3.10", callback_data="create:python:3.10")
     )
     builder.row(
         InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="create:back:upload")
@@ -212,10 +212,10 @@ def entry_point_method() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="🎯 Найти автоматически", callback_data="create:entry:auto")
+        InlineKeyboardButton(style="primary", text="🎯 Найти автоматически", callback_data="create:entry:auto")
     )
     builder.row(
-        InlineKeyboardButton(text="📝 Указать файл", callback_data="create:entry:manual")
+        InlineKeyboardButton(style="primary", text="📝 Указать файл", callback_data="create:entry:manual")
     )
     builder.row(
         InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="create:back:python")
@@ -233,11 +233,11 @@ def entry_point_files(files: list[str], project_id: int = 0) -> InlineKeyboardMa
     # Показываем до 8 файлов
     for file in files[:8]:
         builder.row(
-            InlineKeyboardButton(text=f"📄 {file}", callback_data=f"create:entry:select:{file}")
+            InlineKeyboardButton(style="primary", text=f"📄 {file}", callback_data=f"create:entry:select:{file}")
         )
     
     builder.row(
-        InlineKeyboardButton(text="✏️ Ввести вручную", callback_data="create:entry:manual")
+        InlineKeyboardButton(style="primary", text="✏️ Ввести вручную", callback_data="create:entry:manual")
     )
     builder.row(
         InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data="create:back:python")
@@ -253,13 +253,13 @@ def project_ready_actions(project_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="🚀 Запустить сейчас", callback_data=f"proj:{project_id}:start")
+        InlineKeyboardButton(style="primary", text="🚀 Запустить сейчас", callback_data=f"proj:{project_id}:start")
     )
     builder.row(
-        InlineKeyboardButton(text="⚙️ Проверить настройки", callback_data=f"proj:{project_id}:settings"),
+        InlineKeyboardButton(style="primary", text="⚙️ Проверить настройки", callback_data=f"proj:{project_id}:settings"),
     )
     builder.row(
-        InlineKeyboardButton(text="📱 К проектам", callback_data="my_projects")
+        InlineKeyboardButton(style="primary", text="📱 К проектам", callback_data="my_projects")
     )
     
     return builder.as_markup()
@@ -279,7 +279,7 @@ def file_browser(project_id: int, files: list, current_path: str = "/app") -> In
     if current_path != "/app":
         parent_path = "/".join(current_path.rstrip("/").split("/")[:-1]) or "/app"
         builder.row(
-            InlineKeyboardButton(text="📁 ..", callback_data=f"files:{project_id}:nav:{parent_path}")
+            InlineKeyboardButton(style="primary", text="📁 ..", callback_data=f"files:{project_id}:nav:{parent_path}")
         )
     
     # Файлы и папки (показываем до 10)
@@ -303,6 +303,7 @@ def file_browser(project_id: int, files: list, current_path: str = "/app") -> In
         
         builder.row(
             InlineKeyboardButton(
+                style="primary",
                 text=f"{icon} {item[:30]}",
                 callback_data=f"files:{project_id}:{action}:{current_path}/{item}"
             )
@@ -310,12 +311,12 @@ def file_browser(project_id: int, files: list, current_path: str = "/app") -> In
     
     # Действия
     builder.row(
-        InlineKeyboardButton(text="➕ Создать файл", callback_data=f"files:{project_id}:create"),
-        InlineKeyboardButton(text="📤 Загрузить", callback_data=f"files:{project_id}:upload")
+        InlineKeyboardButton(style="primary", text="➕ Создать файл", callback_data=f"files:{project_id}:create"),
+        InlineKeyboardButton(style="primary", text="📤 Загрузить", callback_data=f"files:{project_id}:upload")
     )
     
     builder.row(
-        InlineKeyboardButton(text="⬅️ К проекту", callback_data=f"proj:{project_id}")
+        InlineKeyboardButton(style="primary", text="⬅️ К проекту", callback_data=f"proj:{project_id}")
     )
     
     return builder.as_markup()
@@ -328,14 +329,14 @@ def file_actions(project_id: int, file_path: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="👁️ Просмотр", callback_data=f"files:{project_id}:read:{file_path}")
+        InlineKeyboardButton(style="primary", text="👁️ Просмотр", callback_data=f"files:{project_id}:read:{file_path}")
     )
     builder.row(
-        InlineKeyboardButton(text="✏️ Редактировать", callback_data=f"files:{project_id}:edit:{file_path}"),
-        InlineKeyboardButton(text="💾 Скачать", callback_data=f"files:{project_id}:download:{file_path}")
+        InlineKeyboardButton(style="primary", text="✏️ Редактировать", callback_data=f"files:{project_id}:edit:{file_path}"),
+        InlineKeyboardButton(style="primary", text="💾 Скачать", callback_data=f"files:{project_id}:download:{file_path}")
     )
     builder.row(
-        InlineKeyboardButton(text="🗑️ Удалить", callback_data=f"files:{project_id}:delete:{file_path}")
+        InlineKeyboardButton(style="primary", text="🗑️ Удалить", callback_data=f"files:{project_id}:delete:{file_path}")
     )
     builder.row(
         InlineKeyboardButton(text="⬅️ Назад", style="primary", callback_data=f"files:{project_id}:back")
@@ -355,23 +356,23 @@ def project_settings_menu(project_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="📝 Переименовать", callback_data=f"settings:{project_id}:rename")
+        InlineKeyboardButton(style="primary", text="📝 Переименовать", callback_data=f"settings:{project_id}:rename")
     )
     builder.row(
-        InlineKeyboardButton(text="🐍 Изменить Python", callback_data=f"settings:{project_id}:python"),
-        InlineKeyboardButton(text="🎯 Точка входа", callback_data=f"settings:{project_id}:entry")
+        InlineKeyboardButton(style="primary", text="🐍 Изменить Python", callback_data=f"settings:{project_id}:python"),
+        InlineKeyboardButton(style="primary", text="🎯 Точка входа", callback_data=f"settings:{project_id}:entry")
     )
     builder.row(
-        InlineKeyboardButton(text="🔐 Переменные окружения", callback_data=f"settings:{project_id}:env")
+        InlineKeyboardButton(style="primary", text="🔐 Переменные окружения", callback_data=f"settings:{project_id}:env")
     )
     builder.row(
-        InlineKeyboardButton(text="📦 Зависимости", callback_data=f"settings:{project_id}:deps")
+        InlineKeyboardButton(style="primary", text="📦 Зависимости", callback_data=f"settings:{project_id}:deps")
     )
     builder.row(
-        InlineKeyboardButton(text="🌍 Сменить сервер", callback_data=f"settings:{project_id}:server")
+        InlineKeyboardButton(style="primary", text="🌍 Сменить сервер", callback_data=f"settings:{project_id}:server")
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ К проекту", callback_data=f"proj:{project_id}")
+        InlineKeyboardButton(style="primary", text="⬅️ К проекту", callback_data=f"proj:{project_id}")
     )
     
     return builder.as_markup()
@@ -388,14 +389,14 @@ def logs_actions(project_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="🔄 Обновить", callback_data=f"proj:{project_id}:logs:refresh")
+        InlineKeyboardButton(style="primary", text="🔄 Обновить", callback_data=f"proj:{project_id}:logs:refresh")
     )
     builder.row(
-        InlineKeyboardButton(text="💾 Скачать всё", callback_data=f"proj:{project_id}:logs:download"),
-        InlineKeyboardButton(text="🗑️ Очистить", callback_data=f"proj:{project_id}:logs:clear")
+        InlineKeyboardButton(style="primary", text="💾 Скачать всё", callback_data=f"proj:{project_id}:logs:download"),
+        InlineKeyboardButton(style="primary", text="🗑️ Очистить", callback_data=f"proj:{project_id}:logs:clear")
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ К проекту", callback_data=f"proj:{project_id}")
+        InlineKeyboardButton(style="primary", text="⬅️ К проекту", callback_data=f"proj:{project_id}")
     )
     
     return builder.as_markup()
@@ -418,16 +419,16 @@ def stats_timerange(project_id: int, current: str = "24h") -> InlineKeyboardMark
     for label, value in periods:
         if value == current:
             row_buttons.append(
-                InlineKeyboardButton(text=f"✓ {label}", callback_data="noop")
+                InlineKeyboardButton(style="primary", text=f"✓ {label}", callback_data="noop")
             )
         else:
             row_buttons.append(
-                InlineKeyboardButton(text=label, callback_data=f"proj:{project_id}:stats:{value}")
+                InlineKeyboardButton(style="primary", text=label, callback_data=f"proj:{project_id}:stats:{value}")
             )
     
     builder.row(*row_buttons)
     builder.row(
-        InlineKeyboardButton(text="⬅️ К проекту", callback_data=f"proj:{project_id}")
+        InlineKeyboardButton(style="primary", text="⬅️ К проекту", callback_data=f"proj:{project_id}")
     )
     
     return builder.as_markup()
@@ -444,11 +445,11 @@ def subscription_menu() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="🎁 Промокод", callback_data="subscription:promo"),
-        InlineKeyboardButton(text="📜 История", callback_data="subscription:history")
+        InlineKeyboardButton(style="primary", text="🎁 Промокод", callback_data="subscription:promo"),
+        InlineKeyboardButton(style="primary", text="📜 История", callback_data="subscription:history")
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Главная", callback_data="home")
+        InlineKeyboardButton(style="primary", text="⬅️ Главная", callback_data="home")
     )
     
     return builder.as_markup()
@@ -461,10 +462,10 @@ def premium_purchase() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="💳 Оплатить 299₽/мес", callback_data="pay:premium:monthly")
+        InlineKeyboardButton(style="primary", text="💳 Оплатить 299₽/мес", callback_data="pay:premium:monthly")
     )
     builder.row(
-        InlineKeyboardButton(text="🎯 Попробовать неделю бесплатно", callback_data="pay:premium:trial")
+        InlineKeyboardButton(style="primary", text="🎯 Попробовать неделю бесплатно", callback_data="pay:premium:trial")
     )
     builder.row(
         InlineKeyboardButton(text="❌ Отмена", style="primary", callback_data="subscription")
@@ -487,10 +488,12 @@ def sharing_menu(project_id: int, coowners: list) -> InlineKeyboardMarkup:
     for co in coowners[:5]:  # Показываем до 5
         builder.row(
             InlineKeyboardButton(
+                style="primary",
                 text=f"👤 {co.username or f'ID{co.user_id}'}",
                 callback_data="noop"
             ),
             InlineKeyboardButton(
+                style="primary",
                 text="🗑️",
                 callback_data=f"sharing:{project_id}:remove:{co.id}"
             )
@@ -498,11 +501,11 @@ def sharing_menu(project_id: int, coowners: list) -> InlineKeyboardMarkup:
     
     # Добавление
     builder.row(
-        InlineKeyboardButton(text="➕ Добавить совладельца", callback_data=f"sharing:{project_id}:add")
+        InlineKeyboardButton(style="primary", text="➕ Добавить совладельца", callback_data=f"sharing:{project_id}:add")
     )
     
     builder.row(
-        InlineKeyboardButton(text="⬅️ К проекту", callback_data=f"proj:{project_id}")
+        InlineKeyboardButton(style="primary", text="⬅️ К проекту", callback_data=f"proj:{project_id}")
     )
     
     return builder.as_markup()
@@ -519,17 +522,17 @@ def help_menu() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="🚀 Быстрый старт", callback_data="help:quick_start")
+        InlineKeyboardButton(style="primary", text="🚀 Быстрый старт", callback_data="help:quick_start")
     )
     builder.row(
-        InlineKeyboardButton(text="❓ Частые вопросы", callback_data="help:faq"),
-        InlineKeyboardButton(text="📖 Документация", callback_data="help:docs")
+        InlineKeyboardButton(style="primary", text="❓ Частые вопросы", callback_data="help:faq"),
+        InlineKeyboardButton(style="primary", text="📖 Документация", callback_data="help:docs")
     )
     builder.row(
-        InlineKeyboardButton(text="💬 Написать в поддержку", callback_data="help:support")
+        InlineKeyboardButton(style="primary", text="💬 Написать в поддержку", callback_data="help:support")
     )
     builder.row(
-        InlineKeyboardButton(text="⬅️ Главная", callback_data="home")
+        InlineKeyboardButton(style="primary", text="⬅️ Главная", callback_data="home")
     )
     
     return builder.as_markup()
@@ -546,7 +549,7 @@ def confirm_action(action_callback: str, cancel_callback: str = "home") -> Inlin
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="✅ Да, продолжить", callback_data=action_callback)
+        InlineKeyboardButton(style="primary", text="✅ Да, продолжить", callback_data=action_callback)
     )
     builder.row(
         InlineKeyboardButton(text="❌ Отмена", style="primary", callback_data=cancel_callback)
@@ -572,6 +575,6 @@ def close_button() -> InlineKeyboardMarkup:
     """
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="❌ Закрыть", callback_data="delete_message")
+        InlineKeyboardButton(style="primary", text="❌ Закрыть", callback_data="delete_message")
     )
     return builder.as_markup()

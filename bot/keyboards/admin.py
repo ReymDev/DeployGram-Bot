@@ -21,13 +21,13 @@ def get_admin_keyboard(users_count: int, projects_count: int, servers_count: int
             text="💎 Подписки",
             callback_data="admin_subscriptions",
             icon_custom_emoji_id=EmojiID.DIAMOND,
-            style="default",
+            style="primary",
         ),
         InlineKeyboardButton(
             text="🌍 Локации",
             callback_data="admin_locations",
             icon_custom_emoji_id=EmojiID.EARTH,
-            style="default",
+            style="primary",
         ),
     )
     builder.row(
@@ -35,13 +35,13 @@ def get_admin_keyboard(users_count: int, projects_count: int, servers_count: int
             text=f"🖥 Серверы ({servers_count})",
             callback_data="admin_servers",
             icon_custom_emoji_id=EmojiID.HOME,
-            style="default",
+            style="primary",
         ),
         InlineKeyboardButton(
             text=f"📊 Статистика",
             callback_data="admin_stats",
             icon_custom_emoji_id=EmojiID.GRAPH_STATS,
-            style="default",
+            style="primary",
         ),
     )
     builder.row(
@@ -49,13 +49,13 @@ def get_admin_keyboard(users_count: int, projects_count: int, servers_count: int
             text="🎁 Промокоды",
             callback_data="admin_promos",
             icon_custom_emoji_id=EmojiID.GIFT,
-            style="default",
+            style="primary",
         ),
         InlineKeyboardButton(
             text="🔗 Рефералы",
             callback_data="admin_referrals",
             icon_custom_emoji_id=EmojiID.LINK,
-            style="default",
+            style="primary",
         ),
     )
     builder.row(
@@ -63,7 +63,7 @@ def get_admin_keyboard(users_count: int, projects_count: int, servers_count: int
             text="📢 Рассылки",
             callback_data="admin_broadcast",
             icon_custom_emoji_id=EmojiID.SPEAKER,
-            style="default",
+            style="primary",
         ),
     )
     builder.row(
@@ -71,14 +71,14 @@ def get_admin_keyboard(users_count: int, projects_count: int, servers_count: int
             text="⚙ Настройки",
             callback_data="admin_settings",
             icon_custom_emoji_id=EmojiID.SETTINGS,
-            style="default",
+            style="primary",
         ),
     )
     builder.row(
         InlineKeyboardButton(
             text="🖼 Фото экранов",
             callback_data="admin_photos",
-            style="default",
+            style="primary",
         ),
     )
     return builder.as_markup()
@@ -95,6 +95,7 @@ def get_admin_users_keyboard(users: list, page: int = 0, per_page: int = 5) -> I
         emoji_id = EmojiID.CROSS if u.is_banned else EmojiID.CHECK
         builder.row(
             InlineKeyboardButton(
+                style="primary",
                 text=f"{status_icon} {u.username or u.telegram_id} ({u.tariff})",
                 callback_data=f"admin_user_view_{u.id}",
                 icon_custom_emoji_id=emoji_id,
@@ -104,11 +105,11 @@ def get_admin_users_keyboard(users: list, page: int = 0, per_page: int = 5) -> I
     nav_row = []
     if page > 0:
         nav_row.append(
-            InlineKeyboardButton(text="◁", callback_data=f"admin_users_page_{page - 1}")
+            InlineKeyboardButton(style="primary", text="◁", callback_data=f"admin_users_page_{page - 1}")
         )
     if end < len(users):
         nav_row.append(
-            InlineKeyboardButton(text="▷", callback_data=f"admin_users_page_{page + 1}")
+            InlineKeyboardButton(style="primary", text="▷", callback_data=f"admin_users_page_{page + 1}")
         )
     if nav_row:
         builder.row(*nav_row)
@@ -143,11 +144,13 @@ def get_admin_user_detail_keyboard(user_id: int, is_banned: bool) -> InlineKeybo
 
     builder.row(
         InlineKeyboardButton(
+            style="primary",
             text="💎 Изменить тариф",
             callback_data=f"admin_user_tariff_{user_id}",
             icon_custom_emoji_id=EmojiID.DIAMOND,
         ),
         InlineKeyboardButton(
+            style="primary",
             text="💰 Баланс",
             callback_data=f"admin_user_balance_{user_id}",
             icon_custom_emoji_id=EmojiID.COIN,
@@ -167,6 +170,7 @@ def get_admin_servers_keyboard(servers: list) -> InlineKeyboardMarkup:
         emoji_id = EmojiID.CHECK if s.status == "online" else EmojiID.CROSS
         builder.row(
             InlineKeyboardButton(
+                style="primary",
                 text=f"{status_icon} {s.name} ({s.country})",
                 callback_data=f"admin_server_view_{s.id}",
                 icon_custom_emoji_id=emoji_id,
@@ -193,6 +197,7 @@ def get_admin_promos_keyboard(promos: list) -> InlineKeyboardMarkup:
     for p in promos:
         builder.row(
             InlineKeyboardButton(
+                style="primary",
                 text=f"🎁 {p.code} ({p.activated_count}/{p.max_activations})",
                 callback_data=f"admin_promo_view_{p.id}",
                 icon_custom_emoji_id=EmojiID.GIFT,
@@ -224,6 +229,7 @@ def get_admin_settings_keyboard(auto_sleep: int) -> InlineKeyboardMarkup:
         emoji_id = EmojiID.CHECK if auto_sleep == opt else EmojiID.CLOCK
         builder.row(
             InlineKeyboardButton(
+                style=("success" if auto_sleep == opt else "primary"),
                 text=f"{icon} Автосон: {label}",
                 callback_data=f"admin_sleep_{opt}",
                 icon_custom_emoji_id=emoji_id,

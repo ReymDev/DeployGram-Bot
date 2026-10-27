@@ -31,12 +31,14 @@ async def project_settings(callback: CallbackQuery, project_service, db_user, st
 
     builder.row(
         InlineKeyboardButton(
+            style="primary",
             text=f"🐍 Python: {project.python_version}",
             callback_data=f"ps_python_{project_id}",
         ),
     )
     builder.row(
         InlineKeyboardButton(
+            style="primary",
             text=f"📄 Entry: {project.entry_point}",
             callback_data=f"ps_entry_{project_id}",
         ),
@@ -63,6 +65,7 @@ async def ps_python_select(callback: CallbackQuery, state: FSMContext):
     for ver in ("3.10", "3.11", "3.12"):
         builder.row(
             InlineKeyboardButton(
+                style="primary",
                 text=f"Python {ver}",
                 callback_data=f"ps_python_set_{project_id}_{ver}",
             )

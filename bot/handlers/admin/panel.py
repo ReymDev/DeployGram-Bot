@@ -434,6 +434,7 @@ async def admin_server_delete(callback: CallbackQuery, session):
             style="danger",
         ),
         InlineKeyboardButton(
+            style="primary",
             text="❌ Нет",
             callback_data=f"admin_server_view_{server_id}",
         ),

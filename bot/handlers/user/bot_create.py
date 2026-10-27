@@ -81,7 +81,7 @@ def _get_entry_keyboard(tmpdir: str, current_path: str, project_id: int = 0) -> 
     if current_path != "/":
         parent = "/".join(current_path.strip("/").split("/")[:-1]) or "/"
         builder.row(
-            InlineKeyboardButton(text="⬆ ..", callback_data=f"create_nav_{encode_path(parent)}"),
+            InlineKeyboardButton(style="primary", text="⬆ ..", callback_data=f"create_nav_{encode_path(parent)}"),
         )
 
     items = _list_dir(full_current)
@@ -91,19 +91,19 @@ def _get_entry_keyboard(tmpdir: str, current_path: str, project_id: int = 0) -> 
     for d in dirs:
         rel = os.path.relpath(d["path"], tmpdir).replace("\\", "/")
         builder.row(
-            InlineKeyboardButton(text=f"📁 {d['name']}", callback_data=f"create_nav_{encode_path(rel)}"),
+            InlineKeyboardButton(style="primary", text=f"📁 {d['name']}", callback_data=f"create_nav_{encode_path(rel)}"),
         )
 
     py_files = [f for f in files if f["name"].endswith(".py")]
     for f in py_files[:15]:
         rel = os.path.relpath(f["path"], tmpdir).replace("\\", "/")
         builder.row(
-            InlineKeyboardButton(text=f"📄 {f['name']}", callback_data=f"create_select_{encode_path(rel)}"),
+            InlineKeyboardButton(style="primary", text=f"📄 {f['name']}", callback_data=f"create_select_{encode_path(rel)}"),
         )
 
     if not py_files and not dirs:
         builder.row(
-            InlineKeyboardButton(text="📝 Ввести вручную", callback_data="create_manual_entry"),
+            InlineKeyboardButton(style="primary", text="📝 Ввести вручную", callback_data="create_manual_entry"),
         )
 
     builder.row(
@@ -190,7 +190,7 @@ async def source_github(callback: CallbackQuery, state: FSMContext):
         ),
     )
     builder.row(
-        InlineKeyboardButton(text="🔄 Обновить", callback_data="github_refresh"),
+        InlineKeyboardButton(style="primary", text="🔄 Обновить", callback_data="github_refresh"),
     )
     builder.row(
         InlineKeyboardButton(text="Назад", style="primary", callback_data="create_back"),
@@ -290,7 +290,7 @@ async def create_select_file(callback: CallbackQuery, state: FSMContext):
     from aiogram.types import InlineKeyboardButton
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="⬆ ..", callback_data="create_nav_/"),
+        InlineKeyboardButton(style="primary", text="⬆ ..", callback_data="create_nav_/"),
     )
     builder.row(
         InlineKeyboardButton(text="✅ Подтвердить", callback_data="create_confirmed_entry", style="success"),

@@ -407,7 +407,7 @@ async def bot_settings(callback: CallbackQuery, project_service, db_user, sessio
     from bot.keyboards.user import get_bot_settings_keyboard
     await edit_photo_or_text(
         callback.message,
-        texts.BOT_SETTINGS_TEXT,
+        texts.bot_settings_text(project.name),
         "bot_settings",
         reply_markup=get_bot_settings_keyboard(project_id),
     )
@@ -430,7 +430,7 @@ async def bot_rename(callback: CallbackQuery, state: FSMContext, project_service
 
     await edit_photo_or_text(
         callback.message,
-        texts.BOT_RENAME_TEXT,
+        texts.bot_rename_text(project.name),
         "rename_bot",
         reply_markup=get_back_keyboard(f"bot_settings_{project_id}"),
         parse_mode="HTML"
@@ -486,7 +486,7 @@ async def bot_delete(callback: CallbackQuery, project_service, db_user, session)
 
     await edit_photo_or_text(
         callback.message,
-        texts.BOT_DELETE_TEXT,
+        texts.bot_delete_text(project.name),
         "delete_bot",
         reply_markup=get_delete_confirm_keyboard(project_id),
     )
@@ -669,7 +669,7 @@ async def bot_libs(callback: CallbackQuery, project_service, db_user, session, n
 
     await edit_photo_or_text(
         callback.message,
-        texts.BOT_LIBS_TEXT,
+        texts.bot_libs_text(project.name),
         "library_manager",
         reply_markup=get_libs_keyboard(project_id, all_libs),
     )
@@ -1047,22 +1047,24 @@ async def bot_graphs(callback: CallbackQuery, project_service, db_user, session)
     for h in [24, 168, 720]:
         label = {24: "24ч", 168: "7д", 720: "30д"}[h]
         builder.row(
-            InlineKeyboardButton(text=f"📊 {label}", callback_data=f"bot_graphs_{project_id}_{h}")
+            InlineKeyboardButton(style="primary", text=f"📊 {label}", callback_data=f"bot_graphs_{project_id}_{h}")
         )
     builder.row(
         InlineKeyboardButton(text="Назад", style="primary", callback_data=f"bot_view_{project_id}"),
     )
 
     period_label = {24: "24 часа", 168: "7 дней", 720: "30 дней"}[hours]
+    from html import escape
     await edit_photo_or_text(
         callback.message,
-        f"📊 <b>Статистика за {period_label}</b>\n\n"
+        f"📊 <b>Мониторинг</b>\n\n"
+        f"<b>{escape(project.name)}</b> · <i>{period_label}</i>\n\n"
         f"<blockquote>🖥 <b>CPU</b>\n"
         f"Среднее: <b>{avg_cpu:.1f}%</b>\n"
-        f"Максимум: <b>{max_cpu:.1f}%</b></blockquote>\n\n"
+        f"Пик: <b>{max_cpu:.1f}%</b></blockquote>\n\n"
         f"<blockquote>💾 <b>RAM</b>\n"
         f"Среднее: <b>{avg_ram:.1f} MB</b>\n"
-        f"Максимум: <b>{max_ram:.1f} MB</b></blockquote>\n\n"
+        f"Пик: <b>{max_ram:.1f} MB</b></blockquote>\n\n"
         f"<i>Точек данных: {len(stats)}</i>",
         "bot_control",
         reply_markup=builder.as_markup(),
@@ -1108,6 +1110,7 @@ async def bot_notify(callback: CallbackQuery, user_service, db_user, project_ser
         icon = "✅" if val else "❌"
         builder.row(
             InlineKeyboardButton(
+                style=("success" if val else "primary"),
                 text=f"{icon} {label}",
                 callback_data=f"toggle_{project_id}_{data_key}",
             ),
@@ -1119,8 +1122,7 @@ async def bot_notify(callback: CallbackQuery, user_service, db_user, project_ser
 
     await edit_photo_or_text(
         callback.message,
-        "🔔 <b>Настройки уведомлений</b>\n\n"
-        "<i>Нажми на пункт, чтобы включить или выключить уведомление.</i>",
+        texts.bot_notifications_text(project.name),
         "bot_settings",
         reply_markup=builder.as_markup(),
     )
@@ -1177,7 +1179,7 @@ async def toggle_notification(callback: CallbackQuery, user_service, db_user):
                 f"toggle_{project_id}_{data_key}" if project_id else f"toggle_{data_key}"
             )
             builder.row(
-                InlineKeyboardButton(text=f"{icon} {label}", callback_data=callback),
+                InlineKeyboardButton(style="primary", text=f"{icon} {label}", callback_data=callback),
             )
 
         back_callback = f"bot_settings_{project_id}" if project_id else "profile"
